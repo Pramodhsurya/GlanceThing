@@ -1,0 +1,18 @@
+.widget {
+  flex: 1;
+  margin: 5px;
+  border-radius: 20px;
+  background: #111;
+  display: flex;
+  border: 2px solid transparent;
+  outline: none;
+  transition: 200ms ease;
+}
+
+.widget:focus-within {
+  border-color: rgba(0, 100, 255, 0.5);
+}
+
+.widget > div {
+  outline: none;
+}

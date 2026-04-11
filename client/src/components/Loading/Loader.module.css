@@ -1,0 +1,19 @@
+.loader:after {
+  display: block;
+  content: '';
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 10px solid rgba(0, 150, 255, 0.5);
+  border-top-color: rgba(0, 150, 255, 1);
+  animation: spin 500ms linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

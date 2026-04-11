@@ -1,0 +1,40 @@
+.loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: 200ms ease;
+}
+
+.loading[data-shown='true'] {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.loading p {
+  color: white;
+  font-size: 2rem;
+  margin-top: 1rem;
+}
+
+.loading img {
+  height: 150px;
+  width: 150px;
+  object-fit: cover;
+  margin-bottom: 1rem;
+}
+
+.loading p {
+  max-width: 600px;
+}

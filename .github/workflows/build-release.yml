@@ -1,0 +1,137 @@
+name: Build GlanceThing Release
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the project
+        run: npm run build:win
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: glancething-windows-${{ github.ref_name }}
+          path: ./dist/glancething-*-setup.exe
+
+      - name: Upload to GitHub Releases
+        if: github.event_name == 'release' && github.event.action == 'created'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./dist/glancething-*-setup.exe
+
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the project
+        run: npm run build:mac
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: glancething-macos-${{ github.ref_name }}
+          path: ./dist/glancething-*.dmg
+
+      - name: Upload to GitHub Releases
+        if: github.event_name == 'release' && github.event.action == 'created'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./dist/glancething-*.dmg
+
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the project
+        run: npm run build:linux
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: glancething-linux-${{ github.ref_name }}
+          path: ./dist/glancething-*.AppImage
+
+      - name: Upload to GitHub Releases
+        if: github.event_name == 'release' && github.event.action == 'created'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./dist/glancething-*.AppImage
+
+  build-client:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./client
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the project
+        run: npm run build
+
+      - name: Zip the build output
+        run: zip -r /tmp/glancething-client-${{ github.ref_name }}.zip ./*
+        working-directory: ./client/dist
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: glancething-client-${{ github.ref_name }}
+          path: ./client/dist
+
+      - name: Upload to GitHub Releases
+        if: github.event_name == 'release' && github.event.action == 'created'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: /tmp/glancething-client-*.zip

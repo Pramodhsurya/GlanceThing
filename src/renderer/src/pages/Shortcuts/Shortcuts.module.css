@@ -1,0 +1,176 @@
+.shortcuts {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: 200ms ease;
+}
+
+.shortcuts[data-open='true'] {
+  opacity: 1;
+  backdrop-filter: blur(5px);
+  pointer-events: all;
+}
+
+.grid {
+  display: flex;
+  width: 370px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 5px 0;
+  background: #111;
+  border-radius: 20px;
+  transition: transform 200ms ease;
+  transform: scale(1.05);
+}
+
+.shortcuts[data-open='true'] .grid {
+  transform: scale(1);
+}
+
+.shortcut {
+  all: unset;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  border: 2px solid transparent;
+  outline: none;
+  transition: 200ms ease;
+
+  padding: 10px;
+  margin: 5px;
+
+  border-radius: 50%;
+}
+
+.shortcut:hover {
+  border-color: rgba(0, 100, 255, 0.5);
+}
+
+.shortcut img {
+  height: 56px;
+  width: 56px;
+  object-fit: cover;
+}
+
+.shortcut[data-type='add'] span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 56px;
+  width: 56px;
+  font-size: 30px;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: 200ms ease;
+}
+
+.modal[data-shown='true'] {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modalContent {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background: #111;
+  border-radius: 20px;
+  width: 500px;
+}
+
+.modalContent h1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalContent h1 button {
+  all: unset;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: 200ms ease;
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.uploadImage {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  cursor: pointer;
+
+  border: 2px solid rgba(0, 100, 255, 0.2);
+  outline: none;
+  transition: 200ms ease;
+
+  padding: 10px;
+  margin: 10px auto;
+  width: fit-content;
+
+  border-radius: 50%;
+}
+
+.uploadImage:hover {
+  border-color: rgba(0, 100, 255, 0.5);
+}
+
+.uploadImage img {
+  height: 56px;
+  width: 56px;
+  object-fit: cover;
+}
+
+.uploadImage img[src=''] {
+  opacity: 0;
+}
+
+.uploadImage img:not([src='']) ~ .hint {
+  opacity: 0;
+}
+
+.uploadImage .hint {
+  position: absolute;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+}
+
+.uploadImage .hint > span {
+  font-size: 22px;
+}

@@ -1,0 +1,16 @@
+.statusbar {
+  display: flex;
+  background: #111;
+  padding: 8px 12px;
+}
+
+.timedate {
+  display: flex;
+  align-items: center;
+}
+
+.time {
+  font-weight: 700;
+  font-size: 1.2em;
+  margin-right: 15px;
+}

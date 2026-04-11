@@ -1,0 +1,224 @@
+.player {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  z-index: 999;
+  transform: translateY(100%);
+  transition: 500ms ease;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  outline: none;
+}
+
+.player[data-shown='true'] {
+  transform: translateY(0);
+}
+
+.background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  filter: blur(50px) saturate(1.5);
+  opacity: 0.5;
+  object-fit: cover;
+  scale: 1.5;
+  z-index: -1;
+  background: #222;
+}
+
+.track {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 50px;
+  margin-bottom: 30px;
+}
+
+.track .cover {
+  width: 256px;
+  height: 256px;
+  margin-right: 30px;
+}
+
+.track .cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.track .cover span {
+  height: 100%;
+  width: 100%;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 120px;
+  background: #222;
+}
+
+.track .info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.track .info .title {
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+  margin-bottom: 5px;
+}
+
+.track .info .artist {
+  font-size: 28px;
+  font-weight: 400;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+.progress {
+  height: 8px;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  position: relative;
+  margin: 0 50px;
+}
+
+.progress .bar {
+  height: 100%;
+  width: 75%;
+  background: #fff;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  height: 120px;
+  position: relative;
+}
+
+.controls button {
+  all: unset;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: 200ms ease;
+}
+
+.controls[data-hide-buttons='true'] > button {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.controls button span {
+  font-size: 56px;
+}
+
+.controls button[data-shuffle-state='true'],
+.controls button[data-repeat-state='true'] {
+  color: #1dd05d;
+}
+
+.close {
+  all: unset;
+  display: flex;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 25px;
+}
+
+.close span {
+  font-size: 48px;
+}
+
+.volume {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  padding: 10px;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: 500ms ease;
+  height: 100%;
+}
+
+.volume[data-shown='true'] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.volume .slider {
+  width: 400px;
+  height: 12px;
+  background: #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+
+  /* visually centered */
+  margin-right: 5px;
+}
+
+.volume .slider .fill {
+  height: 100%;
+  background: #0064ff;
+  transition: width 200ms ease;
+}
+
+.volume button {
+  all: unset;
+  display: flex;
+  padding: 10px;
+}
+
+.volume span {
+  font-size: 1.5em;
+}
+
+.notPlaying {
+  display: flex;
+  gap: 5px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex: 1;
+}
+
+.notPlaying span {
+  font-size: 50px;
+  margin-bottom: 5px;
+}
+
+.notPlaying .title {
+  font-size: 32px;
+}
+
+.notPlaying .note {
+  font-size: 24px;
+  color: #aaa;
+  max-width: 80%;
+}
