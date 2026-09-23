@@ -257,6 +257,40 @@
   object-fit: cover;
 }
 
+.usageItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #161616;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.usageText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.usageText small {
+  color: #9a9a9a;
+  font-weight: 400;
+}
+
+.usageText span {
+  overflow: hidden;
+  font-size: 12px;
+  color: #9a9a9a;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.usageItem > button:disabled {
+  opacity: 0.5;
+}
+
 .action {
   display: grid;
   grid-template-columns: 28px 72px minmax(0, 1fr) 28px;

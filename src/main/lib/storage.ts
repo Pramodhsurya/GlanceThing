@@ -41,6 +41,9 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
   dialMode: () => {
     serverManager.broadcast({ type: 'layout', data: getLayoutPayload() })
   },
+  aiUsage: () => {
+    serverManager.broadcast({ type: 'layout', data: getLayoutPayload() })
+  },
   logLevel: async value => setLogLevel(value as LogLevel),
   port: async p => {
     const newPort = p as number | null
@@ -92,13 +95,15 @@ export function getLayoutPayload() {
   const savedMode = getStorageValue('dialMode')
   const dialMode =
     savedMode === 'pages' || savedMode === 'items' ? savedMode : 'both'
+  const aiUsage = getStorageValue('aiUsage') || undefined
   if (!layout || typeof layout !== 'object' || Array.isArray(layout)) {
-    return { tiles: [], dialNavigation, dialMode }
+    return { tiles: [], dialNavigation, dialMode, aiUsage }
   }
   return {
     ...(layout as Record<string, unknown>),
     dialNavigation,
-    dialMode
+    dialMode,
+    aiUsage
   }
 }
 

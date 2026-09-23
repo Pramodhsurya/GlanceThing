@@ -116,6 +116,7 @@ declare global {
         message: string
         query: string
       } | null>
+      refreshAiUsage: () => Promise<unknown>
     }
   }
 }

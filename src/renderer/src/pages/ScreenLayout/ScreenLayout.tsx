@@ -7,19 +7,29 @@ import {
   LayoutFace,
   PlayerFace,
   StatusFace,
+  UsageFace,
   WeatherFace,
   type ItemProps
 } from '../../../../../client/src/components/Widgets/Screen'
 import {
+  USAGE_NAMES,
   screenStyles,
+  type AiUsageInfo,
   type CalendarInfo as ScreenCalendar,
+  type UsageTarget,
   type WeatherInfo as ScreenWeather
 } from '../../../../../client/src/components/Widgets/screenModel'
 import { syncMacClock } from '../../../../../client/src/lib/macClock'
 
 import styles from './ScreenLayout.module.css'
 
-type TileKind = 'layout' | 'playback' | 'actions' | 'calendar' | 'weather'
+type TileKind =
+  | 'layout'
+  | 'playback'
+  | 'actions'
+  | 'calendar'
+  | 'weather'
+  | 'usage'
 
 type CalendarSource = 'mac'
 
@@ -32,6 +42,7 @@ interface Tile {
   h: number
   shortcutIds: string[]
   actionIds: string[]
+  provider?: UsageTarget
 }
 
 interface ActionItem {
@@ -51,7 +62,8 @@ const KIND_LABELS: Record<TileKind, string> = {
   playback: 'Playback',
   actions: 'Actions',
   calendar: 'Calendar',
-  weather: 'Weather'
+  weather: 'Weather',
+  usage: 'AI usage'
 }
 
 interface CalendarEvent {
@@ -452,7 +464,8 @@ function isTile(value: unknown): value is Tile {
       tile.kind === 'playback' ||
       tile.kind === 'actions' ||
       tile.kind === 'calendar' ||
-      tile.kind === 'weather')
+      tile.kind === 'weather' ||
+      tile.kind === 'usage')
   )
 }
 
@@ -613,8 +626,16 @@ const FRAME_CARDS: {
     icon: 'wb_sunny',
     label: 'Weather',
     hint: 'Now and hourly'
+  },
+  {
+    kind: 'usage',
+    icon: 'data_usage',
+    label: 'AI usage',
+    hint: 'Codex, Claude, Cursor'
   }
 ]
+
+const USAGE_TARGETS: UsageTarget[] = ['all', 'codex', 'claude', 'cursor']
 
 const CALENDAR_NAMES: Record<CalendarSource, string> = {
   mac: 'Mac Calendar'
@@ -625,14 +646,21 @@ const CHIP_DRAG_TYPE = 'application/glancething-chip'
 
 type ChipField = 'shortcutIds' | 'actionIds'
 
-type SectionId = 'add' | 'shortcuts' | 'actions' | 'calendar' | 'weather'
+type SectionId =
+  | 'add'
+  | 'shortcuts'
+  | 'actions'
+  | 'calendar'
+  | 'weather'
+  | 'usage'
 
 const SECTION_DEFAULTS: Record<SectionId, boolean> = {
   add: true,
   shortcuts: true,
   actions: true,
   calendar: false,
-  weather: false
+  weather: false,
+  usage: false
 }
 
 function loadOpenSections(): Record<SectionId, boolean> {
@@ -758,6 +786,31 @@ const ScreenLayout: React.FC = () => {
     'auto'
   )
   const [openSections, setOpenSections] = useState(loadOpenSections)
+  const [aiUsage, setAiUsage] = useState<AiUsageInfo | null>(null)
+  const [loadingUsage, setLoadingUsage] = useState(false)
+
+  useEffect(() => {
+    const load = () =>
+      window.api.getStorageValue('aiUsage').then(value => {
+        if (value && typeof value === 'object')
+          setAiUsage(value as AiUsageInfo)
+      })
+    load()
+    const timer = setInterval(load, 60 * 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  async function updateUsage() {
+    setLoadingUsage(true)
+    setStatus('Loading AI usage…')
+    const result =
+      (await window.api.refreshAiUsage()) as AiUsageInfo | null
+    if (result) {
+      setAiUsage(result)
+      setStatus('AI usage updated')
+    }
+    setLoadingUsage(false)
+  }
 
   function toggleSection(id: SectionId) {
     setOpenSections(current => {
@@ -892,9 +945,21 @@ const ScreenLayout: React.FC = () => {
     setStatus(`Moved page ${from + 1} to position ${to + 1}`)
   }
 
-  function addFrame(kind: TileKind, x: number, y: number) {
+  function addFrame(
+    kind: TileKind,
+    x: number,
+    y: number,
+    provider: UsageTarget = 'all'
+  ) {
     const w = kind === 'layout' ? 42 : 46
-    const h = kind === 'layout' ? 48 : kind === 'weather' ? 54 : 50
+    const h =
+      kind === 'layout'
+        ? 48
+        : kind === 'weather'
+          ? 54
+          : kind === 'usage'
+            ? 60
+            : 50
     const tile: Tile = {
       id: crypto.randomUUID(),
       kind,
@@ -903,8 +968,10 @@ const ScreenLayout: React.FC = () => {
       w,
       h,
       shortcutIds: [],
-      actionIds: []
+      actionIds: [],
+      ...(kind === 'usage' ? { provider } : {})
     }
+    if (kind === 'usage' && !aiUsage) updateUsage()
     if (kind !== 'layout') {
       updateTiles(current => fitTiles([...current, tile]))
       return
@@ -955,6 +1022,7 @@ const ScreenLayout: React.FC = () => {
     if (kind === 'actions') addActionsLayout()
     else if (kind === 'calendar') addCalendarFrame()
     else if (kind === 'weather') addWeatherFrame()
+    else if (kind === 'usage') addFrame('usage', 75, 50)
     else if (kind === 'playback') {
       if (!hasTile('playback')) addFrame('playback', 25, 50)
     } else addFrame('layout', 25, 50)
@@ -1174,6 +1242,15 @@ const ScreenLayout: React.FC = () => {
         />
       )
     }
+    if (tile.kind === 'usage') {
+      return (
+        <UsageFace
+          usage={aiUsage || undefined}
+          target={tile.provider}
+          now={clock}
+        />
+      )
+    }
     return <PlayerFace />
   }
 
@@ -1381,6 +1458,18 @@ const ScreenLayout: React.FC = () => {
     : typeof config.weather?.temp === 'number'
       ? `${config.weather.place} · ${Math.round(config.weather.temp)}°${config.weather.unit}`
       : 'Not loaded yet'
+  const usageProviders = aiUsage?.providers || []
+  const usageConnected = usageProviders.filter(
+    provider => (provider.windows || []).length > 0
+  ).length
+  const usageSummary =
+    usageProviders.length > 0
+      ? `${usageConnected} of ${usageProviders.length} connected`
+      : 'Not loaded yet'
+  const usageOnPage = (target: UsageTarget) =>
+    pageTiles.some(
+      tile => tile.kind === 'usage' && (tile.provider || 'all') === target
+    )
 
   return (
     <div className={styles.page}>
@@ -1734,6 +1823,75 @@ const ScreenLayout: React.FC = () => {
               <p className={styles.notice}>{config.weather.message}</p>
             ) : null}
           </Section>
+
+          <Section
+            icon="data_usage"
+            title="AI usage"
+            summary={usageSummary}
+            open={openSections.usage}
+            onToggle={() => toggleSection('usage')}
+          >
+            <p className={styles.hint}>
+              Add an overview of every subscription, or one frame per
+              subscription.
+            </p>
+            <div className={styles.list}>
+              {USAGE_TARGETS.map(target => {
+                const provider = usageProviders.find(
+                  item => item.id === target
+                )
+                const windows = provider?.windows || []
+                const detail =
+                  target === 'all'
+                    ? 'Every subscription at a glance'
+                    : windows.length > 0
+                      ? windows
+                          .slice(0, 2)
+                          .map(
+                            window =>
+                              `${window.label} ${Math.round(window.left)}% left`
+                          )
+                          .join(' · ')
+                      : provider?.message || 'Not loaded yet'
+                const onPage = usageOnPage(target)
+                return (
+                  <div key={target} className={styles.usageItem}>
+                    <div className={styles.usageText}>
+                      <strong>
+                        {target === 'all'
+                          ? 'Overview'
+                          : USAGE_NAMES[target]}
+                        {provider?.plan ? (
+                          <small> {provider.plan}</small>
+                        ) : null}
+                      </strong>
+                      <span>{detail}</span>
+                    </div>
+                    <button
+                      className={styles.add}
+                      disabled={onPage}
+                      onClick={() => addFrame('usage', 75, 50, target)}
+                    >
+                      {onPage ? 'Added' : 'Add'}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+            <button
+              className={styles.primary}
+              disabled={loadingUsage}
+              onClick={updateUsage}
+            >
+              <span className="material-icons">sync</span>
+              {loadingUsage ? 'Loading…' : 'Update now'}
+            </button>
+            <p className={styles.hint}>
+              Refreshes by itself every 5 minutes while a usage frame is on
+              the screen. Reads the sign-ins of the Codex, Claude Code and
+              Cursor apps on this computer; nothing is sent anywhere else.
+            </p>
+          </Section>
         </div>
         <div className={styles.footer}>
           <p className={styles.status}>
@@ -1951,7 +2109,9 @@ const ScreenLayout: React.FC = () => {
                       {renderFace(tile)}
                       <span className={styles.frameOutline} />
                       <span className={styles.frameBadge}>
-                        {KIND_LABELS[tile.kind]}
+                        {tile.kind === 'usage'
+                          ? USAGE_NAMES[tile.provider || 'all']
+                          : KIND_LABELS[tile.kind]}
                       </span>
                       {tile.kind === 'layout' &&
                       tile.shortcutIds.length === 0 ? (
