@@ -29,6 +29,7 @@ mac:
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+    - NSAppleEventsUsageDescription: GlanceThing reads your meetings from Calendar to show them on the Car Thing.
   notarize: false
 dmg:
   artifactName: ${name}-${version}.${ext}

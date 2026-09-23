@@ -7,7 +7,8 @@
     "src/preload/*.d.ts",
     "client/src/components/Widgets/Screen.tsx",
     "client/src/components/Widgets/screenModel.ts",
-    "client/src/components/Widgets/widgets/BaseWidget/BaseWidget.tsx"
+    "client/src/components/Widgets/widgets/BaseWidget/BaseWidget.tsx",
+    "client/src/lib/macClock.ts"
   ],
   "compilerOptions": {
     "composite": true,

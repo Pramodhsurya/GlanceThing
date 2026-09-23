@@ -2,7 +2,12 @@ import styles from './Widgets.module.css'
 
 export const screenStyles = styles
 
-export type TileKind = 'layout' | 'playback' | 'actions' | 'weather'
+export type TileKind =
+  | 'layout'
+  | 'playback'
+  | 'actions'
+  | 'calendar'
+  | 'weather'
 
 export interface Tile {
   id: string
@@ -25,6 +30,27 @@ export interface ActionItem {
 export interface ScreenPage {
   id?: string
   tiles?: Tile[]
+}
+
+export interface CalendarEvent {
+  title: string
+  start: string
+  end: string
+  where?: string
+  when?: string
+  day?: number
+  startMin?: number
+  endMin?: number
+  online?: boolean
+  organizer?: string
+  canceled?: boolean
+  canJoin?: boolean
+}
+
+export interface CalendarInfo {
+  source?: string
+  events?: CalendarEvent[]
+  message?: string
 }
 
 export interface WeatherInfo {
@@ -61,6 +87,7 @@ export interface ScreenConfig {
   tiles: Tile[]
   pages?: ScreenPage[]
   actions: ActionItem[]
+  calendar?: CalendarInfo
   weather?: WeatherInfo
   dialNavigation?: boolean
   dialMode?: 'pages' | 'items' | 'both'

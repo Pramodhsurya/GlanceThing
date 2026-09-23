@@ -2,6 +2,7 @@ import { Handler } from '../../types/WebSocketHandler.js'
 
 import * as actions from './actions.js'
 import * as apps from './apps.js'
+import * as calendar from './calendar.js'
 import * as layout from './layout.js'
 import * as lock from './lock.js'
 import * as ping from './ping.js'
@@ -18,6 +19,7 @@ import * as wake from './wake.js'
 export const handlers: Handler[] = [
   actions,
   apps,
+  calendar,
   layout,
   lock,
   ping,
