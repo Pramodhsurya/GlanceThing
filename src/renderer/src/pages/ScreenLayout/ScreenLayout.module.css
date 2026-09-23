@@ -367,6 +367,77 @@
   justify-content: center;
 }
 
+.pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.pages button,
+.pageTab {
+  border: 0;
+  border-radius: 999px;
+  background: #222;
+  color: #fff;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.pageTab[data-active='true'] {
+  background: #fff;
+  color: #111;
+}
+
+.pageTab[draggable='true'] {
+  display: flex;
+  user-select: none;
+  align-items: center;
+  gap: 2px;
+  padding-left: 6px;
+  cursor: grab;
+}
+
+.pageGrip {
+  font-size: 16px !important;
+  opacity: 0.5;
+}
+
+.pageRemove {
+  margin-left: 6px;
+  margin-right: -4px;
+  padding: 2px;
+  border-radius: 50%;
+  font-size: 16px !important;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.pageRemove:hover,
+.pageRemove:focus-visible {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.12);
+  color: #c62828;
+}
+
+.pageTab[data-dragging='true'] {
+  opacity: 0.4;
+}
+
+.pageTab[data-drop='before'] {
+  box-shadow: -3px 0 0 #2f6bff;
+}
+
+.pageTab[data-drop='after'] {
+  box-shadow: 3px 0 0 #2f6bff;
+}
+
+.pageHint {
+  margin: 0 0 8px;
+  color: #888;
+  font-size: 13px;
+}
+
 .stage {
   flex: 1;
   min-width: 0;
