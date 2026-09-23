@@ -53,7 +53,9 @@ const DEFAULT_ACTIONS: ActionItem[] = [
 ]
 
 const PRESET_ACTIONS: Omit<ActionItem, 'id'>[] = [
-  { label: 'Lock', icon: 'lock', command: '__builtin:lock' }
+  { label: 'Lock', icon: 'lock', command: '__builtin:lock' },
+  { label: 'Sleep', icon: 'brightness_3', command: '__builtin:sleep' },
+  { label: 'Wake', icon: 'wb_sunny', command: '__builtin:unlock' }
 ]
 
 const DEFAULT_CONFIG: ScreenConfig = {
@@ -392,7 +394,7 @@ const FRAME_CARDS: {
     kind: 'actions',
     icon: 'touch_app',
     label: 'Actions',
-    hint: 'Lock, commands…'
+    hint: 'Lock, sleep…'
   },
   {
     kind: 'playback',
