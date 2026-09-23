@@ -6,13 +6,17 @@ import {
   LayoutFace,
   PlayerFace,
   StatusFace,
+  WeatherFace,
   type ItemProps
 } from '../../../../../client/src/components/Widgets/Screen'
-import { screenStyles } from '../../../../../client/src/components/Widgets/screenModel'
+import {
+  screenStyles,
+  type WeatherInfo as ScreenWeather
+} from '../../../../../client/src/components/Widgets/screenModel'
 
 import styles from './ScreenLayout.module.css'
 
-type TileKind = 'layout' | 'playback' | 'actions'
+type TileKind = 'layout' | 'playback' | 'actions' | 'weather'
 
 interface Tile {
   id: string
@@ -40,13 +44,45 @@ interface Page {
 const KIND_LABELS: Record<TileKind, string> = {
   layout: 'Layout',
   playback: 'Playback',
-  actions: 'Actions'
+  actions: 'Actions',
+  weather: 'Weather'
+}
+
+interface WeatherInfo {
+  query: string
+  place: string
+  temp: number | null
+  unit: 'F' | 'C'
+  label: string
+  icon: string
+  high: number | null
+  low: number | null
+  feels: number | null
+  humidity: number | null
+  wind: number | null
+  windUnit: string
+  windDir: string
+  rain: number | null
+  tomorrowDay: string
+  tomorrowHigh: number | null
+  tomorrowLow: number | null
+  isDay: boolean
+  hours: WeatherHour[]
+  message: string
+}
+
+interface WeatherHour {
+  time: string
+  temp: number | null
+  icon: string
+  kind: 'hour' | 'sunrise' | 'sunset'
 }
 
 interface ScreenConfig {
   tiles: Tile[]
   pages?: Page[]
   actions: ActionItem[]
+  weather?: WeatherInfo
 }
 
 interface Shortcut {
@@ -109,8 +145,9 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
 
-function fitTiles(tiles: Tile[]) {
-  if (tiles.length === 0) return tiles
+function fitTiles(input: Tile[]) {
+  if (input.length === 0) return input
+  const tiles = input.map(withWeatherMinimum)
   const tolerance = 6
 
   function stops(points: number[]) {
@@ -197,6 +234,22 @@ function repairTiles(tiles: Tile[], list: Shortcut[]) {
   if (!tiles.some(tile => tile.kind === 'layout' && broken(tile)))
     return fixed
   return arrangeLayouts(fixed, list, freeArea(others))
+}
+
+const WEATHER_MIN_W = 40
+const WEATHER_MIN_H = 54
+
+function withWeatherMinimum(tile: Tile) {
+  if (tile.kind !== 'weather') return tile
+  const w = Math.min(100, Math.max(tile.w, WEATHER_MIN_W))
+  const h = Math.min(100, Math.max(tile.h, WEATHER_MIN_H))
+  return {
+    ...tile,
+    x: Math.min(tile.x, 100 - w),
+    y: Math.min(tile.y, 100 - h),
+    w,
+    h
+  }
 }
 
 function layoutArea(tiles: Tile[]) {
@@ -296,6 +349,55 @@ function writePageTiles(
   return { ...config, pages, tiles: pages[0]?.tiles || [] }
 }
 
+function readOptionalNumber(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function readWeather(value: unknown): WeatherInfo | undefined {
+  if (!value || typeof value !== 'object') return undefined
+  const raw = value as Partial<WeatherInfo>
+  return {
+    query: typeof raw.query === 'string' ? raw.query : '',
+    place: typeof raw.place === 'string' ? raw.place : '',
+    temp: readOptionalNumber(raw.temp),
+    unit: raw.unit === 'C' ? 'C' : 'F',
+    label: typeof raw.label === 'string' ? raw.label : '',
+    icon: typeof raw.icon === 'string' ? raw.icon : 'cloud',
+    high: readOptionalNumber(raw.high),
+    low: readOptionalNumber(raw.low),
+    feels: readOptionalNumber(raw.feels),
+    humidity: readOptionalNumber(raw.humidity),
+    wind: readOptionalNumber(raw.wind),
+    windUnit: typeof raw.windUnit === 'string' ? raw.windUnit : '',
+    windDir: typeof raw.windDir === 'string' ? raw.windDir : '',
+    rain: readOptionalNumber(raw.rain),
+    tomorrowDay:
+      typeof raw.tomorrowDay === 'string' ? raw.tomorrowDay : '',
+    tomorrowHigh: readOptionalNumber(raw.tomorrowHigh),
+    tomorrowLow: readOptionalNumber(raw.tomorrowLow),
+    isDay: raw.isDay !== false,
+    hours: Array.isArray(raw.hours)
+      ? raw.hours
+          .filter(
+            hour =>
+              !!hour &&
+              typeof hour.time === 'string' &&
+              typeof hour.icon === 'string'
+          )
+          .map(hour => ({
+            time: hour.time,
+            temp: readOptionalNumber(hour.temp),
+            icon: hour.icon,
+            kind:
+              hour.kind === 'sunrise' || hour.kind === 'sunset'
+                ? hour.kind
+                : ('hour' as const)
+          }))
+      : [],
+    message: typeof raw.message === 'string' ? raw.message : ''
+  }
+}
+
 function isTile(value: unknown): value is Tile {
   if (!value || typeof value !== 'object') return false
   const tile = value as Tile
@@ -304,7 +406,8 @@ function isTile(value: unknown): value is Tile {
     typeof tile.x === 'number' &&
     (tile.kind === 'layout' ||
       tile.kind === 'playback' ||
-      tile.kind === 'actions')
+      tile.kind === 'actions' ||
+      tile.kind === 'weather')
   )
 }
 
@@ -358,7 +461,8 @@ function loadConfig(value: unknown): ScreenConfig {
     return {
       tiles: pages[0]?.tiles || readyTiles,
       pages,
-      actions
+      actions,
+      weather: readWeather((stored as { weather?: unknown }).weather)
     }
   }
 
@@ -451,6 +555,12 @@ const FRAME_CARDS: {
     icon: 'music_note',
     label: 'Playback',
     hint: 'Now playing'
+  },
+  {
+    kind: 'weather',
+    icon: 'wb_sunny',
+    label: 'Weather',
+    hint: 'Now and hourly'
   }
 ]
 
@@ -459,12 +569,13 @@ const CHIP_DRAG_TYPE = 'application/glancething-chip'
 
 type ChipField = 'shortcutIds' | 'actionIds'
 
-type SectionId = 'add' | 'shortcuts' | 'actions'
+type SectionId = 'add' | 'shortcuts' | 'actions' | 'weather'
 
 const SECTION_DEFAULTS: Record<SectionId, boolean> = {
   add: true,
   shortcuts: true,
-  actions: true
+  actions: true,
+  weather: false
 }
 
 function loadOpenSections(): Record<SectionId, boolean> {
@@ -579,6 +690,11 @@ const ScreenLayout: React.FC = () => {
   const [status, setStatus] = useState(
     'Drag the corner of a frame to resize'
   )
+  const [weatherQuery, setWeatherQuery] = useState('')
+  const [loadingWeather, setLoadingWeather] = useState(false)
+  const [weatherUnit, setWeatherUnit] = useState<'auto' | 'C' | 'F'>(
+    'auto'
+  )
   const [openSections, setOpenSections] = useState(loadOpenSections)
 
   function toggleSection(id: SectionId) {
@@ -590,6 +706,9 @@ const ScreenLayout: React.FC = () => {
   }
 
   useEffect(() => {
+    window.api.getStorageValue('weatherUnit').then(value => {
+      if (value === 'C' || value === 'F') setWeatherUnit(value)
+    })
     Promise.all([
       window.api.getStorageValue('screenLayout'),
       window.api.getShortcuts()
@@ -604,6 +723,7 @@ const ScreenLayout: React.FC = () => {
       })
       if (repaired) skipSave.current = false
       setConfig({ ...loaded, pages, tiles: pages[0]?.tiles || [] })
+      if (loaded.weather?.query) setWeatherQuery(loaded.weather.query)
       setShortcuts(loadedShortcuts || [])
       setTimeout(() => {
         skipSave.current = false
@@ -613,12 +733,19 @@ const ScreenLayout: React.FC = () => {
 
   useEffect(() => {
     if (skipSave.current) return
-    const timer = setTimeout(() => {
-      window.api.setStorageValue('screenLayout', config).then(() => {
-        setSaved(true)
-        setStatus('Saved to the Car Thing')
-        setTimeout(() => setSaved(false), 1200)
-      })
+    const timer = setTimeout(async () => {
+      // Weather is refreshed by the main process; keep its newest copy.
+      const stored = (await window.api.getStorageValue(
+        'screenLayout'
+      )) as { weather?: unknown } | null
+      const next = {
+        ...config,
+        weather: stored?.weather ?? config.weather
+      }
+      await window.api.setStorageValue('screenLayout', next)
+      setSaved(true)
+      setStatus('Saved to the Car Thing')
+      setTimeout(() => setSaved(false), 1200)
     }, 250)
     return () => clearTimeout(timer)
   }, [config])
@@ -704,7 +831,7 @@ const ScreenLayout: React.FC = () => {
 
   function addFrame(kind: TileKind, x: number, y: number) {
     const w = kind === 'layout' ? 42 : 46
-    const h = kind === 'layout' ? 48 : 50
+    const h = kind === 'layout' ? 48 : kind === 'weather' ? 54 : 50
     const tile: Tile = {
       id: crypto.randomUUID(),
       kind,
@@ -740,11 +867,37 @@ const ScreenLayout: React.FC = () => {
     addFrame('actions', 72, 28 + (index % 4) * 16)
   }
 
+  function addWeatherFrame() {
+    const pages = ensurePages(config)
+    if (
+      pages.some(page => page.tiles.some(tile => tile.kind === 'weather'))
+    ) {
+      return
+    }
+    addFrame('weather', 75, 67)
+    if (!config.weather?.place) updateWeather()
+  }
+
   function addFrameCard(kind: TileKind) {
     if (kind === 'actions') addActionsLayout()
+    else if (kind === 'weather') addWeatherFrame()
     else if (kind === 'playback') {
       if (!hasTile('playback')) addFrame('playback', 25, 50)
     } else addFrame('layout', 25, 50)
+  }
+
+  async function updateWeather(unit = weatherUnit) {
+    setLoadingWeather(true)
+    setStatus('Loading weather…')
+    const result = await window.api.refreshWeather(weatherQuery, unit)
+    if (result) {
+      setConfig(current => ({ ...current, weather: result }))
+      setStatus(
+        result.message ||
+          `${result.place} ${Math.round(result.temp || 0)}°`
+      )
+    }
+    setLoadingWeather(false)
   }
 
   function placeAction(layoutId: string, actionId: string) {
@@ -891,6 +1044,13 @@ const ScreenLayout: React.FC = () => {
         />
       )
     }
+    if (tile.kind === 'weather') {
+      return (
+        <WeatherFace
+          weather={config.weather as ScreenWeather | undefined}
+        />
+      )
+    }
     return <PlayerFace />
   }
 
@@ -952,8 +1112,10 @@ const ScreenLayout: React.FC = () => {
         current.map(item => {
           if (item.id !== tile.id) return item
           if (role === 'resize') {
-            let w = Math.max(origin.w + dx, 18)
-            let h = Math.max(origin.h + dy, 18)
+            const minW = item.kind === 'weather' ? WEATHER_MIN_W : 18
+            const minH = item.kind === 'weather' ? WEATHER_MIN_H : 18
+            let w = Math.max(origin.w + dx, minW)
+            let h = Math.max(origin.h + dy, minH)
             let x = origin.x
             let y = origin.y
             if (x + w > 100) x = Math.max(0, 100 - w)
@@ -1087,6 +1249,12 @@ const ScreenLayout: React.FC = () => {
         )
       )
   ).length
+  const weatherSummary = config.weather?.message
+    ? config.weather.message
+    : typeof config.weather?.temp === 'number'
+      ? `${config.weather.place} · ${Math.round(config.weather.temp)}°${config.weather.unit}`
+      : 'Not loaded yet'
+
   return (
     <div className={styles.page}>
       <aside className={styles.palette}>
@@ -1111,7 +1279,13 @@ const ScreenLayout: React.FC = () => {
             <div className={styles.frameGrid}>
               {FRAME_CARDS.map(card => {
                 const used =
-                  card.kind === 'playback' && hasTile('playback')
+                  card.kind === 'playback'
+                    ? hasTile('playback')
+                    : card.kind === 'weather'
+                      ? ensurePages(config).some(page =>
+                          page.tiles.some(tile => tile.kind === card.kind)
+                        )
+                      : false
                 return (
                   <div
                     key={card.kind}
@@ -1353,6 +1527,59 @@ const ScreenLayout: React.FC = () => {
                 Custom
               </button>
             </div>
+          </Section>
+
+          <Section
+            icon="wb_sunny"
+            title="Weather"
+            summary={weatherSummary}
+            warning={!!config.weather?.message}
+            open={openSections.weather}
+            onToggle={() => toggleSection('weather')}
+          >
+            <label className={styles.field}>
+              <span>City</span>
+              <input
+                className={styles.preset}
+                value={weatherQuery}
+                placeholder="Leave blank to use this Mac's location"
+                onChange={e => setWeatherQuery(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') updateWeather()
+                }}
+              />
+            </label>
+            <label className={styles.field}>
+              <span>Temperature</span>
+              <select
+                className={styles.preset}
+                value={weatherUnit}
+                disabled={loadingWeather}
+                onChange={e => {
+                  const unit = e.target.value as 'auto' | 'C' | 'F'
+                  setWeatherUnit(unit)
+                  updateWeather(unit)
+                }}
+              >
+                <option value="auto">Automatic (by country)</option>
+                <option value="C">°C Celsius</option>
+                <option value="F">°F Fahrenheit</option>
+              </select>
+            </label>
+            <button
+              className={styles.primary}
+              disabled={loadingWeather}
+              onClick={() => updateWeather()}
+            >
+              <span className="material-icons">sync</span>
+              {loadingWeather ? 'Loading…' : 'Update now'}
+            </button>
+            <p className={styles.hint}>
+              Refreshes by itself every 30 minutes.
+            </p>
+            {config.weather?.message ? (
+              <p className={styles.notice}>{config.weather.message}</p>
+            ) : null}
           </Section>
         </div>
         <div className={styles.footer}>

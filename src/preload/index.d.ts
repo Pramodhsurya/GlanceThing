@@ -76,6 +76,36 @@ declare global {
       } | null>
       findOpenPort: () => Promise<number>
       isPortOpen: (port: number) => Promise<boolean>
+      refreshWeather: (
+        query?: string,
+        unit?: 'auto' | 'C' | 'F'
+      ) => Promise<{
+        place: string
+        temp: number | null
+        unit: 'F' | 'C'
+        label: string
+        icon: string
+        high: number | null
+        low: number | null
+        feels: number | null
+        humidity: number | null
+        wind: number | null
+        windUnit: string
+        windDir: string
+        rain: number | null
+        tomorrowDay: string
+        tomorrowHigh: number | null
+        tomorrowLow: number | null
+        isDay: boolean
+        hours: {
+          time: string
+          temp: number | null
+          icon: string
+          kind: 'hour' | 'sunrise' | 'sunset'
+        }[]
+        message: string
+        query: string
+      } | null>
     }
   }
 }
