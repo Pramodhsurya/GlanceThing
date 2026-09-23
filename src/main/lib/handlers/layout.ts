@@ -1,4 +1,4 @@
-import { getStorageValue } from '../storage.js'
+import { getLayoutPayload } from '../storage.js'
 
 import { HandlerFunction } from '../../types/WebSocketHandler.js'
 
@@ -10,7 +10,7 @@ export const handle: HandlerFunction = async ws => {
   ws.send(
     JSON.stringify({
       type: 'layout',
-      data: getStorageValue('screenLayout')
+      data: getLayoutPayload()
     })
   )
 }

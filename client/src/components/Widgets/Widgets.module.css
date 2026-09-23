@@ -84,6 +84,11 @@
   border-radius: 16px;
 }
 
+.app[data-selected='true'],
+.action[data-selected='true'] {
+  box-shadow: inset 0 0 0 3px #8eb4ff;
+}
+
 .layoutTile .app {
   position: relative;
   width: 100%;

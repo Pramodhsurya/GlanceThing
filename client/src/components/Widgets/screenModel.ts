@@ -31,6 +31,8 @@ export interface ScreenConfig {
   tiles: Tile[]
   pages?: ScreenPage[]
   actions: ActionItem[]
+  dialNavigation?: boolean
+  dialMode?: 'pages' | 'items' | 'both'
 }
 
 export interface AppShortcut {
