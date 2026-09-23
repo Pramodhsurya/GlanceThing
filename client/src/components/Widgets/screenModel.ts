@@ -22,8 +22,14 @@ export interface ActionItem {
   command: string
 }
 
+export interface ScreenPage {
+  id?: string
+  tiles?: Tile[]
+}
+
 export interface ScreenConfig {
   tiles: Tile[]
+  pages?: ScreenPage[]
   actions: ActionItem[]
 }
 

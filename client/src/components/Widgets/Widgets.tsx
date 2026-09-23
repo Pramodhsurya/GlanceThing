@@ -1,4 +1,10 @@
-import { useContext, useEffect, useRef, useState } from 'react'
+import {
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type TouchEvent
+} from 'react'
 
 import { SocketContext } from '@/contexts/SocketContext.tsx'
 
@@ -109,6 +115,8 @@ const Widgets: React.FC = () => {
   const { ready, socket } = useContext(SocketContext)
   const [config, setConfig] = useState<ScreenConfig | null>(null)
   const [apps, setApps] = useState<AppShortcut[] | null>(null)
+  const [pageIndex, setPageIndex] = useState(0)
+  const touchStart = useRef({ x: 0, y: 0 })
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
@@ -147,11 +155,37 @@ const Widgets: React.FC = () => {
     return () => socket.removeEventListener('message', listener)
   }, [ready, socket])
 
-  const tiles = config?.tiles ? fitTiles(config.tiles) : config?.tiles
+  const pages =
+    config?.pages && config.pages.length > 0
+      ? config.pages
+      : [{ tiles: config?.tiles }]
+  const safeIndex = Math.min(pageIndex, Math.max(pages.length - 1, 0))
+  const rawTiles = pages[safeIndex]?.tiles
+  const tiles = rawTiles ? fitTiles(rawTiles) : rawTiles
   const actions = config?.actions || []
 
+  function onTouchStart(event: TouchEvent) {
+    const touch = event.changedTouches[0]
+    touchStart.current = { x: touch.clientX, y: touch.clientY }
+  }
+
+  function onTouchEnd(event: TouchEvent) {
+    const touch = event.changedTouches[0]
+    const dx = touch.clientX - touchStart.current.x
+    const dy = touch.clientY - touchStart.current.y
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return
+    if (dx < 0)
+      setPageIndex(current => Math.min(pages.length - 1, current + 1))
+    else setPageIndex(current => Math.max(0, current - 1))
+  }
+
   return (
-    <div className={styles.widgets} ref={widgetsRef}>
+    <div
+      className={styles.widgets}
+      ref={widgetsRef}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       {tiles ? (
         <div className={styles.board}>
           {tiles.map(tile => (
@@ -187,6 +221,17 @@ const Widgets: React.FC = () => {
           </div>
         </>
       )}
+      {pages.length > 1 ? (
+        <div className={styles.pager}>
+          {pages.map((page, index) => (
+            <span
+              key={page.id || index}
+              className={styles.dot}
+              data-on={index === safeIndex}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }

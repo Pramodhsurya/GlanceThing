@@ -32,6 +32,11 @@ interface ActionItem {
   command: string
 }
 
+interface Page {
+  id: string
+  tiles: Tile[]
+}
+
 const KIND_LABELS: Record<TileKind, string> = {
   layout: 'Layout',
   playback: 'Playback',
@@ -40,6 +45,7 @@ const KIND_LABELS: Record<TileKind, string> = {
 
 interface ScreenConfig {
   tiles: Tile[]
+  pages?: Page[]
   actions: ActionItem[]
 }
 
@@ -274,6 +280,22 @@ function arrangeLayouts(
   )
 }
 
+function ensurePages(config: ScreenConfig): Page[] {
+  if (config.pages && config.pages.length > 0) return config.pages
+  return [{ id: 'page-1', tiles: config.tiles }]
+}
+
+function writePageTiles(
+  config: ScreenConfig,
+  index: number,
+  tiles: Tile[]
+): ScreenConfig {
+  const pages = ensurePages(config).map((page, i) =>
+    i === index ? { ...page, tiles } : page
+  )
+  return { ...config, pages, tiles: pages[0]?.tiles || [] }
+}
+
 function isTile(value: unknown): value is Tile {
   if (!value || typeof value !== 'object') return false
   const tile = value as Tile
@@ -313,8 +335,29 @@ function loadConfig(value: unknown): ScreenConfig {
             : tile
         )
       : tiles
+    const storedPages = (
+      stored as { pages?: { id?: string; tiles?: unknown[] }[] }
+    ).pages
+    const pages =
+      Array.isArray(storedPages) && storedPages.length > 0
+        ? storedPages.map(page => ({
+            id: page.id || crypto.randomUUID(),
+            tiles: Array.isArray(page.tiles)
+              ? page.tiles.filter(isTile).map(tile => ({
+                  ...tile,
+                  shortcutIds: Array.isArray(tile.shortcutIds)
+                    ? tile.shortcutIds
+                    : [],
+                  actionIds: Array.isArray(tile.actionIds)
+                    ? tile.actionIds
+                    : []
+                }))
+              : []
+          }))
+        : [{ id: 'page-1', tiles: readyTiles }]
     return {
-      tiles: readyTiles,
+      tiles: pages[0]?.tiles || readyTiles,
+      pages,
       actions
     }
   }
@@ -364,7 +407,13 @@ function loadConfig(value: unknown): ScreenConfig {
         })
       }
     }
-    if (tiles.length > 0) return { tiles, actions: DEFAULT_ACTIONS }
+    if (tiles.length > 0) {
+      return {
+        tiles,
+        pages: [{ id: 'page-1', tiles }],
+        actions: DEFAULT_ACTIONS
+      }
+    }
   }
 
   const tiles = DEFAULT_CONFIG.tiles.map(tile => ({
@@ -374,6 +423,7 @@ function loadConfig(value: unknown): ScreenConfig {
   }))
   return {
     tiles,
+    pages: [{ id: 'page-1', tiles }],
     actions: DEFAULT_ACTIONS.map(action => ({ ...action }))
   }
 }
@@ -404,6 +454,7 @@ const FRAME_CARDS: {
   }
 ]
 
+const PAGE_DRAG_TYPE = 'application/glancething-page'
 const CHIP_DRAG_TYPE = 'application/glancething-chip'
 
 type ChipField = 'shortcutIds' | 'actionIds'
@@ -476,11 +527,16 @@ const ScreenLayout: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null)
   const skipSave = useRef(true)
   const dragPayload = useRef('')
+  const pageIndexRef = useRef(0)
+  const [pageIndex, setPageIndex] = useState(0)
+  const [draggingPage, setDraggingPage] = useState<number | null>(null)
   const [chipDrag, setChipDrag] = useState<{
     tileId: string
     id: string
   } | null>(null)
   const [chipDrop, setChipDrop] = useState<string | null>(null)
+  const [pageDropIndex, setPageDropIndex] = useState<number | null>(null)
+  pageIndexRef.current = pageIndex
   const [shortcuts, setShortcuts] = useState<Shortcut[]>([])
   const [config, setConfig] = useState<ScreenConfig>(DEFAULT_CONFIG)
   const stageRef = useRef<HTMLDivElement>(null)
@@ -539,9 +595,15 @@ const ScreenLayout: React.FC = () => {
       window.api.getShortcuts()
     ]).then(([layout, loadedShortcuts]) => {
       const loaded = loadConfig(layout)
-      const tiles = repairTiles(loaded.tiles, loadedShortcuts || [])
-      if (tiles !== loaded.tiles) skipSave.current = false
-      setConfig({ ...loaded, tiles: fitTiles(tiles) })
+      const list = loadedShortcuts || []
+      let repaired = false
+      const pages = ensurePages(loaded).map(page => {
+        const tiles = repairTiles(page.tiles, list)
+        if (tiles !== page.tiles) repaired = true
+        return { ...page, tiles: fitTiles(tiles) }
+      })
+      if (repaired) skipSave.current = false
+      setConfig({ ...loaded, pages, tiles: pages[0]?.tiles || [] })
       setShortcuts(loadedShortcuts || [])
       setTimeout(() => {
         skipSave.current = false
@@ -561,16 +623,83 @@ const ScreenLayout: React.FC = () => {
     return () => clearTimeout(timer)
   }, [config])
 
+  const pageTiles =
+    config.pages?.[pageIndex]?.tiles ||
+    config.pages?.[0]?.tiles ||
+    config.tiles
+
   function updateTiles(next: Tile[] | ((current: Tile[]) => Tile[])) {
     skipSave.current = false
-    setConfig(current => ({
-      ...current,
-      tiles: typeof next === 'function' ? next(current.tiles) : next
-    }))
+    setConfig(current => {
+      const pages = ensurePages(current)
+      const index = Math.min(pageIndexRef.current, pages.length - 1)
+      const existing = pages[index]?.tiles || []
+      const tiles = typeof next === 'function' ? next(existing) : next
+      return writePageTiles(current, index, tiles)
+    })
   }
 
   function hasTile(kind: 'playback' | 'actions') {
-    return config.tiles.some(tile => tile.kind === kind)
+    return pageTiles.some(tile => tile.kind === kind)
+  }
+
+  function addPage() {
+    skipSave.current = false
+    const nextIndex = ensurePages(config).length
+    setConfig(current => {
+      const pages = ensurePages(current)
+      return {
+        ...current,
+        pages: [...pages, { id: crypto.randomUUID(), tiles: [] }],
+        tiles: pages[0].tiles
+      }
+    })
+    setPageIndex(nextIndex)
+  }
+
+  function removePage(index: number) {
+    const pages = ensurePages(config)
+    if (pages.length < 2 || !pages[index]) return
+    const count = pages[index].tiles.length
+    if (
+      count > 0 &&
+      !window.confirm(
+        `Remove page ${index + 1} and its ${count} frame${count === 1 ? '' : 's'}?`
+      )
+    ) {
+      return
+    }
+    const next = pages.filter((_, i) => i !== index)
+    skipSave.current = false
+    setConfig(current => ({
+      ...current,
+      pages: next,
+      tiles: next[0].tiles
+    }))
+    const active = pageIndexRef.current
+    setPageIndex(
+      active > index ? active - 1 : Math.min(active, next.length - 1)
+    )
+    setStatus(`Removed page ${index + 1}`)
+  }
+
+  function movePage(from: number, to: number) {
+    const pages = ensurePages(config)
+    if (from === to || from < 0 || to < 0) return
+    if (from >= pages.length || to >= pages.length) return
+    const activeId = pages[pageIndexRef.current]?.id
+    const next = [...pages]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+    skipSave.current = false
+    setConfig(current => ({
+      ...current,
+      pages: next,
+      tiles: next[0].tiles
+    }))
+    const nextActive = next.findIndex(page => page.id === activeId)
+    setPageIndex(nextActive >= 0 ? nextActive : to)
+    setStatus(`Moved page ${from + 1} to position ${to + 1}`)
   }
 
   function addFrame(kind: TileKind, x: number, y: number) {
@@ -592,23 +721,22 @@ const ScreenLayout: React.FC = () => {
     }
     skipSave.current = false
     setConfig(current => {
-      const existing = current.tiles
+      const pages = ensurePages(current)
+      const index = Math.min(pageIndexRef.current, pages.length - 1)
+      const existing = pages[index]?.tiles || []
       const area = existing.some(item => item.kind === 'layout')
         ? layoutArea(existing)
         : { x: tile.x, y: tile.y, w: tile.w, h: tile.h }
-      return {
-        ...current,
-        tiles: fitTiles(
-          arrangeLayouts([...existing, tile], shortcuts, area)
-        )
-      }
+      return writePageTiles(
+        current,
+        index,
+        fitTiles(arrangeLayouts([...existing, tile], shortcuts, area))
+      )
     })
   }
 
   function addActionsLayout() {
-    const index = config.tiles.filter(
-      tile => tile.kind === 'actions'
-    ).length
+    const index = pageTiles.filter(tile => tile.kind === 'actions').length
     addFrame('actions', 72, 28 + (index % 4) * 16)
   }
 
@@ -871,37 +999,37 @@ const ScreenLayout: React.FC = () => {
     setShortcuts(current => [...current, shortcut])
     skipSave.current = false
     setConfig(current => {
-      const existing = current.tiles
+      const pages = ensurePages(current)
+      const index = Math.min(pageIndexRef.current, pages.length - 1)
+      const existing = pages[index]?.tiles || []
       const layouts = existing.filter(tile => tile.kind === 'layout')
       if (layouts.length === 0) {
-        return {
-          ...current,
-          tiles: [
-            ...existing,
-            {
-              id: crypto.randomUUID(),
-              kind: 'layout' as const,
-              x: 0,
-              y: 0,
-              w: 50,
-              h: 100,
-              shortcutIds: [shortcut.id],
-              actionIds: []
-            }
-          ]
-        }
+        return writePageTiles(current, index, [
+          ...existing,
+          {
+            id: crypto.randomUUID(),
+            kind: 'layout' as const,
+            x: 0,
+            y: 0,
+            w: 50,
+            h: 100,
+            shortcutIds: [shortcut.id],
+            actionIds: []
+          }
+        ])
       }
       const target = layouts.reduce((best, tile) =>
         tile.shortcutIds.length < best.shortcutIds.length ? tile : best
       )
-      return {
-        ...current,
-        tiles: existing.map(tile =>
+      return writePageTiles(
+        current,
+        index,
+        existing.map(tile =>
           tile.id === target.id
             ? { ...tile, shortcutIds: [...tile.shortcutIds, shortcut.id] }
             : tile
         )
-      }
+      )
     })
     setAddingShortcut(false)
     setNewCommand('')
@@ -942,11 +1070,14 @@ const ScreenLayout: React.FC = () => {
     }))
   }
 
+  const allPages = ensurePages(config)
   const unplacedActions = config.actions.filter(
     action =>
-      !config.tiles.some(
-        tile =>
-          tile.kind === 'actions' && tile.actionIds.includes(action.id)
+      !allPages.some(page =>
+        page.tiles.some(
+          tile =>
+            tile.kind === 'actions' && tile.actionIds.includes(action.id)
+        )
       )
   ).length
   return (
@@ -963,12 +1094,12 @@ const ScreenLayout: React.FC = () => {
           <Section
             icon="add_box"
             title="Add to screen"
-            summary={`${config.tiles.length} ${config.tiles.length === 1 ? 'frame' : 'frames'}`}
+            summary={`Page ${pageIndex + 1} · ${pageTiles.length} ${pageTiles.length === 1 ? 'frame' : 'frames'}`}
             open={openSections.add}
             onToggle={() => toggleSection('add')}
           >
             <p className={styles.hint}>
-              Click to add to the screen, or drag onto the preview.
+              Click to add to this page, or drag onto the preview.
             </p>
             <div className={styles.frameGrid}>
               {FRAME_CARDS.map(card => {
@@ -1120,10 +1251,12 @@ const ScreenLayout: React.FC = () => {
                   >
                     drag_indicator
                   </span>
-                  {!config.tiles.some(
-                    tile =>
-                      tile.kind === 'actions' &&
-                      tile.actionIds.includes(action.id)
+                  {!ensurePages(config).some(page =>
+                    page.tiles.some(
+                      tile =>
+                        tile.kind === 'actions' &&
+                        tile.actionIds.includes(action.id)
+                    )
                   ) ? (
                     <em className={styles.unplaced}>
                       Not on a layout yet
@@ -1166,18 +1299,25 @@ const ScreenLayout: React.FC = () => {
                     className={styles.iconButton}
                     onClick={() => {
                       skipSave.current = false
-                      setConfig(current => ({
-                        ...current,
-                        tiles: current.tiles.map(tile => ({
-                          ...tile,
-                          actionIds: tile.actionIds.filter(
-                            value => value !== action.id
+                      setConfig(current => {
+                        const pages = ensurePages(current).map(page => ({
+                          ...page,
+                          tiles: page.tiles.map(tile => ({
+                            ...tile,
+                            actionIds: tile.actionIds.filter(
+                              value => value !== action.id
+                            )
+                          }))
+                        }))
+                        return {
+                          ...current,
+                          pages,
+                          tiles: pages[0]?.tiles || [],
+                          actions: current.actions.filter(
+                            item => item.id !== action.id
                           )
-                        })),
-                        actions: current.actions.filter(
-                          item => item.id !== action.id
-                        )
-                      }))
+                        }
+                      })
                     }}
                   >
                     <span className="material-icons">close</span>
@@ -1241,6 +1381,99 @@ const ScreenLayout: React.FC = () => {
       </aside>
 
       <div className={styles.stage} ref={stageRef}>
+        <div className={styles.pages}>
+          {ensurePages(config).map((page, index) => (
+            <div
+              key={page.id}
+              role="button"
+              tabIndex={0}
+              className={styles.pageTab}
+              data-active={index === pageIndex}
+              data-dragging={draggingPage === index}
+              data-drop={
+                pageDropIndex === index && draggingPage !== null
+                  ? draggingPage < index
+                    ? 'after'
+                    : draggingPage > index
+                      ? 'before'
+                      : undefined
+                  : undefined
+              }
+              draggable={ensurePages(config).length > 1}
+              title="Drag to reorder"
+              onClick={() => setPageIndex(index)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setPageIndex(index)
+                }
+              }}
+              onDragStart={e => {
+                e.dataTransfer.effectAllowed = 'move'
+                e.dataTransfer.setData(PAGE_DRAG_TYPE, String(index))
+                setDraggingPage(index)
+              }}
+              onDragOver={e => {
+                if (!e.dataTransfer.types.includes(PAGE_DRAG_TYPE)) return
+                e.preventDefault()
+                e.dataTransfer.dropEffect = 'move'
+                if (pageDropIndex !== index) setPageDropIndex(index)
+              }}
+              onDragLeave={() => {
+                if (pageDropIndex === index) setPageDropIndex(null)
+              }}
+              onDrop={e => {
+                if (!e.dataTransfer.types.includes(PAGE_DRAG_TYPE)) return
+                e.preventDefault()
+                const from = Number(e.dataTransfer.getData(PAGE_DRAG_TYPE))
+                setDraggingPage(null)
+                setPageDropIndex(null)
+                if (Number.isInteger(from)) movePage(from, index)
+              }}
+              onDragEnd={() => {
+                setDraggingPage(null)
+                setPageDropIndex(null)
+              }}
+            >
+              {ensurePages(config).length > 1 ? (
+                <span className={`material-icons ${styles.pageGrip}`}>
+                  drag_indicator
+                </span>
+              ) : null}
+              Page {index + 1}
+              {index === pageIndex && ensurePages(config).length > 1 ? (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className={`material-icons ${styles.pageRemove}`}
+                  title={`Remove page ${index + 1}`}
+                  aria-label={`Remove page ${index + 1}`}
+                  draggable={false}
+                  onClick={e => {
+                    e.stopPropagation()
+                    removePage(index)
+                  }}
+                  onKeyDown={e => {
+                    if (e.key !== 'Enter' && e.key !== ' ') return
+                    e.preventDefault()
+                    e.stopPropagation()
+                    removePage(index)
+                  }}
+                >
+                  close
+                </span>
+              ) : null}
+            </div>
+          ))}
+          <button type="button" onClick={addPage}>
+            Add page
+          </button>
+        </div>
+        <p className={styles.pageHint}>
+          Swipe left on the Car Thing to open the next page. Drag a page
+          tab to change the order, or press × on the selected page to
+          remove it.
+        </p>
         <div className={styles.device}>
           <div
             className={styles.viewport}
@@ -1269,7 +1502,7 @@ const ScreenLayout: React.FC = () => {
                   }}
                   onDrop={onCanvasDrop}
                 >
-                  {config.tiles.map(tile => (
+                  {pageTiles.map(tile => (
                     <div
                       key={tile.id}
                       className={`${screenStyles.placed} ${styles.frame}`}
@@ -1357,16 +1590,26 @@ const ScreenLayout: React.FC = () => {
                             return
                           }
                           skipSave.current = false
-                          setConfig(current => ({
-                            ...current,
-                            tiles: arrangeLayouts(
-                              current.tiles.filter(
-                                item => item.id !== tile.id
-                              ),
-                              shortcuts,
-                              layoutArea(current.tiles)
+                          setConfig(current => {
+                            const pages = ensurePages(current)
+                            const index = Math.min(
+                              pageIndexRef.current,
+                              pages.length - 1
                             )
-                          }))
+                            const existing = pages[index]?.tiles || []
+                            const area = layoutArea(existing)
+                            return writePageTiles(
+                              current,
+                              index,
+                              arrangeLayouts(
+                                existing.filter(
+                                  item => item.id !== tile.id
+                                ),
+                                shortcuts,
+                                area
+                              )
+                            )
+                          })
                         }}
                       >
                         <span className="material-icons">close</span>
@@ -1375,6 +1618,17 @@ const ScreenLayout: React.FC = () => {
                     </div>
                   ))}
                 </div>
+                {ensurePages(config).length > 1 ? (
+                  <div className={screenStyles.pager}>
+                    {ensurePages(config).map((page, index) => (
+                      <span
+                        key={page.id}
+                        className={screenStyles.dot}
+                        data-on={index === pageIndex}
+                      />
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
