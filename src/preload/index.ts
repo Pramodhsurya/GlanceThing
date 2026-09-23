@@ -25,6 +25,7 @@ enum IPCHandler {
   AddShortcut = 'addShortcut',
   RemoveShortcut = 'removeShortcut',
   UpdateShortcut = 'updateShortcut',
+  RefreshCarThing = 'refreshCarThing',
   IsDevMode = 'isDevMode',
   GetBrightness = 'getBrightness',
   SetBrightness = 'setBrightness',
@@ -87,6 +88,7 @@ const api = {
     ipcRenderer.invoke(IPCHandler.RemoveShortcut, shortcut),
   updateShortcut: (shortcut: Shortcut) =>
     ipcRenderer.invoke(IPCHandler.UpdateShortcut, shortcut),
+  refreshCarThing: () => ipcRenderer.invoke(IPCHandler.RefreshCarThing),
   isDevMode: () => ipcRenderer.invoke(IPCHandler.IsDevMode),
   getBrightness: () => ipcRenderer.invoke(IPCHandler.GetBrightness),
   setBrightness: (brightness: number) =>

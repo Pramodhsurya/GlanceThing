@@ -131,7 +131,7 @@ export async function findCarThing() {
   return null
 }
 
-async function restartChromium(device: string | null) {
+export async function restartChromium(device: string | null) {
   if (!device) device = await findCarThing()
   if (!device) throw new Error('No valid CarThing found')
 
@@ -274,7 +274,7 @@ export async function installApp(device: string | null) {
   const adb = await getAdbExecutable()
 
   log('Installing app...', 'adb')
-  await execAsync(`${adb} -s ${device} push ${appDir} /tmp/webapp`)
+  await execAsync(`${adb} -s ${device} push "${appDir}" /tmp/webapp`)
   await execAsync(
     `${adb} -s ${device} shell "echo ${WS_PASSWORD} > /tmp/webapp/ws-password"`
   )

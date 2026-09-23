@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { WebSocketServer } from 'ws'
+import { WebSocket, WebSocketServer } from 'ws'
 import EventEmitter from 'events'
 
 import {
@@ -150,6 +150,15 @@ class ServerManager extends (EventEmitter as new () => TypedEmitter<{
 
   getServer(): WebSocketServer | null {
     return this.wss
+  }
+
+  broadcast(payload: unknown) {
+    const data = JSON.stringify(payload)
+    this.wss?.clients.forEach(client => {
+      const ws = client as AuthenticatedWebSocket
+      if (ws.authenticated && ws.readyState === WebSocket.OPEN)
+        ws.send(data)
+    })
   }
 }
 
