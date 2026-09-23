@@ -169,6 +169,52 @@ export function getParsedPlatformCommand(command: string) {
   }
 }
 
+export function getWakePlatformCommand() {
+  const platform = process.platform
+
+  if (platform === 'darwin') {
+    return {
+      cmd: 'caffeinate -u -t 1',
+      shell: '/bin/sh'
+    }
+  } else if (platform === 'win32') {
+    return {
+      cmd: 'powershell -NoProfile -Command "(Add-Type \'[DllImport(\\"user32.dll\\")] public static extern void mouse_event(int dwFlags, int dx, int dy, int dwData, int dwExtraInfo);\' -Name u -Pas)::mouse_event(1,0,0,0,0)"',
+      shell: 'powershell.exe'
+    }
+  } else if (platform === 'linux') {
+    return {
+      cmd: 'xset dpms force on',
+      shell: '/bin/sh'
+    }
+  } else {
+    return null
+  }
+}
+
+export function getSleepPlatformCommand() {
+  const platform = process.platform
+
+  if (platform === 'darwin') {
+    return {
+      cmd: 'pmset sleepnow',
+      shell: '/bin/sh'
+    }
+  } else if (platform === 'win32') {
+    return {
+      cmd: 'rundll32.exe powrprof.dll,SetSuspendState 0,1,0',
+      shell: 'powershell.exe'
+    }
+  } else if (platform === 'linux') {
+    return {
+      cmd: 'systemctl suspend',
+      shell: '/bin/sh'
+    }
+  } else {
+    return null
+  }
+}
+
 export function getLockPlatformCommand() {
   const platform = process.platform
 

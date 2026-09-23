@@ -1,7 +1,11 @@
 import { exec } from 'child_process'
 
 import { getStorageValue } from '../storage.js'
-import { getParsedPlatformCommand } from '../utils.js'
+import {
+  getParsedPlatformCommand,
+  getSleepPlatformCommand,
+  getWakePlatformCommand
+} from '../utils.js'
 
 import { HandlerAction } from '../../types/WebSocketHandler.js'
 
@@ -22,8 +26,20 @@ export const actions: HandlerAction[] = [
         actions?: StoredAction[]
       } | null
       const action = stored?.actions?.find(item => item.id === data)
-      if (!action?.command || action.command.startsWith('__builtin:'))
+      if (!action?.command) return
+      if (action.command === '__builtin:sleep') {
+        const sleep = getSleepPlatformCommand()
+        if (!sleep) return
+        exec(sleep.cmd, { shell: sleep.shell })
         return
+      }
+      if (action.command === '__builtin:unlock') {
+        const wake = getWakePlatformCommand()
+        if (!wake) return
+        exec(wake.cmd, { shell: wake.shell })
+        return
+      }
+      if (action.command.startsWith('__builtin:')) return
 
       const parsed = getParsedPlatformCommand(action.command)
       if (!parsed) return
