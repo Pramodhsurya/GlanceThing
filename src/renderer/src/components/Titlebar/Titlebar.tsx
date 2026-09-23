@@ -1,4 +1,5 @@
 import React, { useContext } from 'react'
+import { NavLink } from 'react-router-dom'
 
 import { DevModeContext } from '@/contexts/DevModeContext.js'
 import { ModalContext } from '@/contexts/ModalContext.js'
@@ -37,6 +38,14 @@ const Titlebar: React.FC = () => {
 
   return (
     <div className={styles.titlebar}>
+      <div className={styles.tabs}>
+        <NavLink to="/" end className={styles.tab}>
+          Home
+        </NavLink>
+        <NavLink to="/layout" className={styles.tab}>
+          Layout
+        </NavLink>
+      </div>
       <div className={styles.actions}>
         {buttons.map(({ icon, action }) => (
           <button key={icon} onClick={action}>

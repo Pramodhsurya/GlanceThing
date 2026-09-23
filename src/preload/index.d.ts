@@ -36,6 +36,7 @@ declare global {
       addShortcut: (shortcut: Shortcut) => Promise<void>
       removeShortcut: (id: string) => Promise<void>
       updateShortcut: (shortcut: Shortcut) => Promise<void>
+      refreshCarThing: () => Promise<void>
       isDevMode: () => Promise<boolean>
       getBrightness: () => Promise<number>
       setBrightness: (brightness: number) => Promise<void>

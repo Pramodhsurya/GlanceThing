@@ -1,0 +1,311 @@
+.page {
+  display: flex;
+  height: 100vh;
+  padding: 58px 16px 16px;
+  gap: 16px;
+}
+
+.palette {
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.paletteBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow: auto;
+  flex: 1;
+}
+
+.palette h1 {
+  font-size: 22px;
+}
+
+.palette h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #888;
+  margin-top: 8px;
+}
+
+.palette p {
+  color: #aaa;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.list,
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #161616;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: grab;
+}
+
+.item[data-used='true'] {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.item img {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.action {
+  display: grid;
+  grid-template-columns: 52px 1fr 22px;
+  grid-template-rows: auto auto;
+  gap: 4px;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.action input:nth-child(2) {
+  grid-column: 2;
+}
+
+.action input:nth-child(3) {
+  grid-column: 1 / span 2;
+}
+
+.action input {
+  width: 100%;
+  font-size: 12px;
+  padding: 4px 6px;
+}
+
+.iconButton,
+.add,
+.reset,
+.refresh {
+  background: #222;
+}
+
+.addForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 8px;
+}
+
+.addForm input {
+  width: 100%;
+  font-size: 12px;
+  padding: 6px 8px;
+}
+
+.upload {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1a1a1a;
+}
+
+.upload img {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.formButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.formButtons button {
+  flex: 1;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  margin-top: auto;
+}
+
+.refresh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.iconButton {
+  grid-row: 1 / span 2;
+  grid-column: 3;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.device {
+  width: 560px;
+  height: 336px;
+  background: #050505;
+  border: 2px solid #333;
+  border-radius: 28px;
+  padding: 14px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.statusBar {
+  text-align: center;
+  color: #888;
+  font-size: 12px;
+}
+
+.canvas {
+  position: relative;
+  flex: 1;
+  background: #000;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.tile {
+  position: absolute;
+  background: #141414;
+  border: 1px dashed #555;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px;
+  cursor: grab;
+  user-select: none;
+  overflow: hidden;
+}
+
+.tile[data-kind='playback'],
+.tile[data-kind='actions'] {
+  border-style: solid;
+}
+
+.tile[data-hot='true'] {
+  border-color: #0064ff;
+  background: #0c1a33;
+}
+
+.tile strong {
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  pointer-events: auto;
+}
+
+.chips em {
+  color: #777;
+  font-size: 12px;
+  font-style: normal;
+  pointer-events: none;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #222;
+  border-radius: 8px;
+  padding: 2px 4px 2px 6px;
+  font-size: 11px;
+}
+
+.chip button {
+  all: unset;
+  cursor: pointer;
+  padding: 0 4px;
+  pointer-events: auto;
+}
+
+.remove {
+  all: unset;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.remove .material-icons {
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 22px;
+  height: 22px;
+  cursor: nwse-resize;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.resize::after {
+  content: '';
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid #ddd;
+  border-bottom: 2px solid #ddd;
+}
+
+.reset {
+  align-self: flex-start;
+}
+
+.status {
+  color: #888;
+}

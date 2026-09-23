@@ -32,6 +32,9 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
   brightness: async value => {
     await setBrightnessSmooth(null, value as number)
   },
+  screenLayout: value => {
+    serverManager.broadcast({ type: 'layout', data: value })
+  },
   logLevel: async value => setLogLevel(value as LogLevel),
   port: async p => {
     const newPort = p as number | null

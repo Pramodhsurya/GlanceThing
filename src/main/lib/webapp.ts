@@ -12,6 +12,18 @@ import {
 } from './utils.js'
 
 export async function getWebAppDir() {
+  const customClient = path.join(app.getPath('userData'), 'customClient')
+  if (fs.existsSync(path.join(customClient, 'index.html'))) {
+    log('Using custom client webapp', 'Client Webapp')
+    return customClient
+  }
+
+  const localClient = path.join(process.cwd(), 'client/dist')
+  if (fs.existsSync(path.join(localClient, 'index.html'))) {
+    log('Using local client webapp', 'Client Webapp')
+    return localClient
+  }
+
   if (isDev() && hasCustomWebApp()) {
     log('Using custom client webapp', 'Client Webapp')
     return path.join(app.getPath('userData'), 'customClient')

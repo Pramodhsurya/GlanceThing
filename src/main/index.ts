@@ -50,7 +50,8 @@ import {
   setBrightnessSmooth,
   getAutoBrightness,
   setAutoBrightness,
-  restore
+  restore,
+  restartChromium
 } from './lib/adb.js'
 import {
   getShortcuts,
@@ -226,6 +227,7 @@ enum IPCHandler {
   AddShortcut = 'addShortcut',
   RemoveShortcut = 'removeShortcut',
   UpdateShortcut = 'updateShortcut',
+  RefreshCarThing = 'refreshCarThing',
   IsDevMode = 'isDevMode',
   GetBrightness = 'getBrightness',
   SetBrightness = 'setBrightness',
@@ -394,6 +396,15 @@ async function setupIpcHandlers() {
   ipcMain.handle(IPCHandler.UpdateShortcut, async (_event, shortcut) => {
     updateShortcut(shortcut)
     await updateApps()
+  })
+
+  ipcMain.handle(IPCHandler.RefreshCarThing, async () => {
+    await updateApps()
+    serverManager.broadcast({
+      type: 'layout',
+      data: getStorageValue('screenLayout')
+    })
+    await restartChromium(null)
   })
 
   ipcMain.handle(IPCHandler.IsDevMode, async () => {

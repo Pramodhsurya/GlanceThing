@@ -4,6 +4,34 @@
   -webkit-app-region: drag;
   z-index: 999;
   padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-left: 8px;
+  -webkit-app-region: no-drag;
+}
+
+.tab {
+  color: #aaa;
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.tab:hover {
+  background: #222;
+  opacity: 1;
+}
+
+.tab[aria-current='page'] {
+  color: white;
+  background: #222;
 }
 
 .actions {
