@@ -49,6 +49,7 @@ enum IPCHandler {
   CheckUpdate = 'checkUpdate',
   FindOpenPort = 'findOpenPort',
   IsPortOpen = 'isPortOpen',
+  ImportCalendar = 'importCalendar',
   RefreshWeather = 'refreshWeather'
 }
 
@@ -128,6 +129,8 @@ const api = {
   checkUpdate: () => ipcRenderer.invoke(IPCHandler.CheckUpdate),
   findOpenPort: () => ipcRenderer.invoke(IPCHandler.FindOpenPort),
   isPortOpen: port => ipcRenderer.invoke(IPCHandler.IsPortOpen, port),
+  importCalendar: (source: 'mac') =>
+    ipcRenderer.invoke(IPCHandler.ImportCalendar, source),
   refreshWeather: (query?: string, unit?: 'auto' | 'C' | 'F') =>
     ipcRenderer.invoke(IPCHandler.RefreshWeather, query, unit)
 }

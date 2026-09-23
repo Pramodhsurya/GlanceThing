@@ -8,13 +8,22 @@ import {
 
 import { SocketContext } from '@/contexts/SocketContext.tsx'
 import { SleepContext } from '@/contexts/SleepContext.tsx'
+import { macNow, syncMacClock } from '@/lib/macClock.ts'
 
+import MeetingReminder from '@/components/MeetingReminder/MeetingReminder.tsx'
 import Player from './widgets/Player/Player.tsx'
-import { ActionsFace, LayoutFace, WeatherFace } from './Screen.tsx'
+import {
+  ActionsFace,
+  CalendarFace,
+  LayoutFace,
+  WeatherFace
+} from './Screen.tsx'
 import {
   fitTiles,
   type ActionItem,
   type AppShortcut,
+  type CalendarEvent,
+  type CalendarInfo,
   type ScreenConfig,
   type Tile,
   type WeatherInfo
@@ -99,6 +108,28 @@ const ActionsTile: React.FC<{
   )
 }
 
+const CalendarTile: React.FC<{ calendar?: CalendarInfo; now: number }> = ({
+  calendar,
+  now
+}) => {
+  const { socket } = useContext(SocketContext)
+  return (
+    <CalendarFace
+      calendar={calendar}
+      now={now}
+      onJoin={(event: CalendarEvent) =>
+        socket?.send(
+          JSON.stringify({
+            type: 'calendar',
+            action: 'join',
+            data: { title: event.title, start: event.start }
+          })
+        )
+      }
+    />
+  )
+}
+
 function isConfig(value: unknown): value is ScreenConfig {
   if (!value || typeof value !== 'object' || Array.isArray(value))
     return false
@@ -108,15 +139,22 @@ function isConfig(value: unknown): value is ScreenConfig {
 function TileView({
   tile,
   actions,
+  calendar,
   weather,
-  selectedKey
+  selectedKey,
+  now
 }: {
   tile: Tile
   actions: ActionItem[]
+  calendar?: CalendarInfo
   weather?: WeatherInfo
   selectedKey: string
+  now: number
 }) {
   if (tile.kind === 'playback') return <Player />
+  if (tile.kind === 'calendar') {
+    return <CalendarTile calendar={calendar} now={now} />
+  }
   if (tile.kind === 'weather') return <WeatherFace weather={weather} />
   if (tile.kind === 'actions') {
     const ids = tile.actionIds
@@ -149,13 +187,19 @@ const Widgets: React.FC = () => {
   const [apps, setApps] = useState<AppShortcut[] | null>(null)
   const [pageIndex, setPageIndex] = useState(0)
   const [dialIndex, setDialIndex] = useState(0)
-  const touchStart = useRef({ x: 0, y: 0 })
+  const touchStart = useRef({ x: 0, y: 0, scrolling: false })
   const dialRef = useRef({ index: 0, count: 0, pages: 1, mode: 'both' })
   const dialEdge = useRef<'start' | 'end' | null>(null)
   const dialStepAt = useRef(0)
   const { sleepState } = useContext(SleepContext)
   const sleepRef = useRef(sleepState)
   sleepRef.current = sleepState
+  const [now, setNow] = useState(macNow)
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(macNow()), 20 * 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
@@ -178,6 +222,10 @@ const Widgets: React.FC = () => {
       if (message.type === 'layout' && isConfig(message.data)) {
         setConfig(message.data)
       }
+      if (message.type === 'time' && message.data) {
+        syncMacClock(message.data)
+        setNow(macNow())
+      }
       if (
         message.type === 'apps' &&
         !message.action &&
@@ -190,6 +238,7 @@ const Widgets: React.FC = () => {
     socket.addEventListener('message', listener)
     socket.send(JSON.stringify({ type: 'layout' }))
     socket.send(JSON.stringify({ type: 'apps' }))
+    socket.send(JSON.stringify({ type: 'time' }))
 
     return () => socket.removeEventListener('message', listener)
   }, [ready, socket])
@@ -329,14 +378,26 @@ const Widgets: React.FC = () => {
 
   function onTouchStart(event: TouchEvent) {
     const touch = event.changedTouches[0]
-    touchStart.current = { x: touch.clientX, y: touch.clientY }
+    const target = event.target as HTMLElement | null
+    touchStart.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      scrolling: !!(
+        target &&
+        target.closest &&
+        target.closest('[data-scroll]')
+      )
+    }
   }
 
   function onTouchEnd(event: TouchEvent) {
     const touch = event.changedTouches[0]
     const dx = touch.clientX - touchStart.current.x
     const dy = touch.clientY - touchStart.current.y
-    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return
+    const sideways = touchStart.current.scrolling
+      ? Math.abs(dx) >= Math.abs(dy) * 2
+      : Math.abs(dx) >= Math.abs(dy)
+    if (Math.abs(dx) < 50 || !sideways) return
     if (dx < 0)
       setPageIndex(current => Math.min(pages.length - 1, current + 1))
     else setPageIndex(current => Math.max(0, current - 1))
@@ -365,8 +426,10 @@ const Widgets: React.FC = () => {
               <TileView
                 tile={tile}
                 actions={actions}
+                calendar={config?.calendar}
                 weather={config?.weather}
                 selectedKey={selectedKey}
+                now={now}
               />
             </div>
           ))}
@@ -406,6 +469,7 @@ const Widgets: React.FC = () => {
           ))}
         </div>
       ) : null}
+      <MeetingReminder events={config?.calendar?.events || []} now={now} />
     </div>
   )
 }

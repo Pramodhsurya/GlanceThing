@@ -76,6 +76,16 @@ declare global {
       } | null>
       findOpenPort: () => Promise<number>
       isPortOpen: (port: number) => Promise<boolean>
+      importCalendar: (source: 'mac') => Promise<{
+        source: 'mac'
+        events: {
+          title: string
+          start: string
+          end: string
+          where: string
+        }[]
+        message: string
+      }>
       refreshWeather: (
         query?: string,
         unit?: 'auto' | 'C' | 'F'

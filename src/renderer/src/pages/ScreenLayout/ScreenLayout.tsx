@@ -3,6 +3,7 @@ import moment from 'moment'
 
 import {
   ActionsFace,
+  CalendarFace,
   LayoutFace,
   PlayerFace,
   StatusFace,
@@ -11,12 +12,16 @@ import {
 } from '../../../../../client/src/components/Widgets/Screen'
 import {
   screenStyles,
+  type CalendarInfo as ScreenCalendar,
   type WeatherInfo as ScreenWeather
 } from '../../../../../client/src/components/Widgets/screenModel'
+import { syncMacClock } from '../../../../../client/src/lib/macClock'
 
 import styles from './ScreenLayout.module.css'
 
-type TileKind = 'layout' | 'playback' | 'actions' | 'weather'
+type TileKind = 'layout' | 'playback' | 'actions' | 'calendar' | 'weather'
+
+type CalendarSource = 'mac'
 
 interface Tile {
   id: string
@@ -45,7 +50,23 @@ const KIND_LABELS: Record<TileKind, string> = {
   layout: 'Layout',
   playback: 'Playback',
   actions: 'Actions',
+  calendar: 'Calendar',
   weather: 'Weather'
+}
+
+interface CalendarEvent {
+  title: string
+  start: string
+  end: string
+  where: string
+  when?: string
+}
+
+interface CalendarInfo {
+  source: CalendarSource
+  events: CalendarEvent[]
+  message: string
+  updatedAt?: string
 }
 
 interface WeatherInfo {
@@ -82,6 +103,7 @@ interface ScreenConfig {
   tiles: Tile[]
   pages?: Page[]
   actions: ActionItem[]
+  calendar?: CalendarInfo
   weather?: WeatherInfo
 }
 
@@ -349,6 +371,28 @@ function writePageTiles(
   return { ...config, pages, tiles: pages[0]?.tiles || [] }
 }
 
+function readCalendar(value: unknown): CalendarInfo | undefined {
+  if (!value || typeof value !== 'object') return undefined
+  const raw = value as CalendarInfo
+  const source: CalendarSource = 'mac'
+  const events = Array.isArray(raw.events)
+    ? raw.events.filter(
+        event =>
+          !!event &&
+          typeof event.title === 'string' &&
+          typeof event.start === 'string' &&
+          typeof event.end === 'string'
+      )
+    : []
+  return {
+    source,
+    events,
+    message: typeof raw.message === 'string' ? raw.message : '',
+    updatedAt:
+      typeof raw.updatedAt === 'string' ? raw.updatedAt : undefined
+  }
+}
+
 function readOptionalNumber(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
@@ -407,6 +451,7 @@ function isTile(value: unknown): value is Tile {
     (tile.kind === 'layout' ||
       tile.kind === 'playback' ||
       tile.kind === 'actions' ||
+      tile.kind === 'calendar' ||
       tile.kind === 'weather')
   )
 }
@@ -462,6 +507,7 @@ function loadConfig(value: unknown): ScreenConfig {
       tiles: pages[0]?.tiles || readyTiles,
       pages,
       actions,
+      calendar: readCalendar((stored as { calendar?: unknown }).calendar),
       weather: readWeather((stored as { weather?: unknown }).weather)
     }
   }
@@ -557,6 +603,12 @@ const FRAME_CARDS: {
     hint: 'Now playing'
   },
   {
+    kind: 'calendar',
+    icon: 'calendar_today',
+    label: 'Calendar',
+    hint: 'Today, tomorrow'
+  },
+  {
     kind: 'weather',
     icon: 'wb_sunny',
     label: 'Weather',
@@ -564,17 +616,22 @@ const FRAME_CARDS: {
   }
 ]
 
+const CALENDAR_NAMES: Record<CalendarSource, string> = {
+  mac: 'Mac Calendar'
+}
+
 const PAGE_DRAG_TYPE = 'application/glancething-page'
 const CHIP_DRAG_TYPE = 'application/glancething-chip'
 
 type ChipField = 'shortcutIds' | 'actionIds'
 
-type SectionId = 'add' | 'shortcuts' | 'actions' | 'weather'
+type SectionId = 'add' | 'shortcuts' | 'actions' | 'calendar' | 'weather'
 
 const SECTION_DEFAULTS: Record<SectionId, boolean> = {
   add: true,
   shortcuts: true,
   actions: true,
+  calendar: false,
   weather: false
 }
 
@@ -671,6 +728,10 @@ const ScreenLayout: React.FC = () => {
   const [dateFormat, setDateFormat] = useState('ddd, D MMM')
 
   useEffect(() => {
+    syncMacClock({
+      now: Date.now(),
+      utcOffset: -new Date().getTimezoneOffset()
+    })
     window.api.getStorageValue('timeFormat').then(value => {
       if (typeof value === 'string' && value) setTimeFormat(value)
     })
@@ -690,6 +751,7 @@ const ScreenLayout: React.FC = () => {
   const [status, setStatus] = useState(
     'Drag the corner of a frame to resize'
   )
+  const [importing, setImporting] = useState(false)
   const [weatherQuery, setWeatherQuery] = useState('')
   const [loadingWeather, setLoadingWeather] = useState(false)
   const [weatherUnit, setWeatherUnit] = useState<'auto' | 'C' | 'F'>(
@@ -734,13 +796,14 @@ const ScreenLayout: React.FC = () => {
   useEffect(() => {
     if (skipSave.current) return
     const timer = setTimeout(async () => {
-      // Weather is refreshed by the main process; keep its newest copy.
+      // Weather and calendar are refreshed by the main process; keep its newest copy.
       const stored = (await window.api.getStorageValue(
         'screenLayout'
-      )) as { weather?: unknown } | null
+      )) as { weather?: unknown; calendar?: unknown } | null
       const next = {
         ...config,
-        weather: stored?.weather ?? config.weather
+        weather: stored?.weather ?? config.weather,
+        calendar: stored?.calendar ?? config.calendar
       }
       await window.api.setStorageValue('screenLayout', next)
       setSaved(true)
@@ -867,6 +930,16 @@ const ScreenLayout: React.FC = () => {
     addFrame('actions', 72, 28 + (index % 4) * 16)
   }
 
+  function addCalendarFrame() {
+    const pages = ensurePages(config)
+    if (
+      pages.some(page => page.tiles.some(tile => tile.kind === 'calendar'))
+    ) {
+      return
+    }
+    addFrame('calendar', 24, 40)
+  }
+
   function addWeatherFrame() {
     const pages = ensurePages(config)
     if (
@@ -880,6 +953,7 @@ const ScreenLayout: React.FC = () => {
 
   function addFrameCard(kind: TileKind) {
     if (kind === 'actions') addActionsLayout()
+    else if (kind === 'calendar') addCalendarFrame()
     else if (kind === 'weather') addWeatherFrame()
     else if (kind === 'playback') {
       if (!hasTile('playback')) addFrame('playback', 25, 50)
@@ -898,6 +972,47 @@ const ScreenLayout: React.FC = () => {
       )
     }
     setLoadingWeather(false)
+  }
+
+  async function importCalendar() {
+    setImporting(true)
+    setStatus('Reading the calendar…')
+    const result = await window.api.importCalendar('mac')
+    skipSave.current = false
+    setConfig(current => {
+      const next: ScreenConfig = {
+        ...current,
+        calendar: {
+          source: result.source,
+          events: result.events,
+          message: result.message,
+          updatedAt: new Date().toISOString()
+        }
+      }
+      const pages = ensurePages(next)
+      if (
+        pages.some(page =>
+          page.tiles.some(tile => tile.kind === 'calendar')
+        )
+      ) {
+        return { ...next, pages, tiles: pages[0].tiles }
+      }
+      const index = Math.min(pageIndexRef.current, pages.length - 1)
+      const existing = pages[index]?.tiles || []
+      const tile: Tile = {
+        id: crypto.randomUUID(),
+        kind: 'calendar',
+        x: 2,
+        y: 4,
+        w: 48,
+        h: 92,
+        shortcutIds: [],
+        actionIds: []
+      }
+      return writePageTiles(next, index, [...existing, tile])
+    })
+    setStatus(result.message)
+    setImporting(false)
   }
 
   function placeAction(layoutId: string, actionId: string) {
@@ -1041,6 +1156,14 @@ const ScreenLayout: React.FC = () => {
           tileId={tile.id}
           selectedKey=""
           {...faceItem(tile, 'actionIds')}
+        />
+      )
+    }
+    if (tile.kind === 'calendar') {
+      return (
+        <CalendarFace
+          calendar={config.calendar as ScreenCalendar | undefined}
+          now={clock}
         />
       )
     }
@@ -1249,6 +1372,10 @@ const ScreenLayout: React.FC = () => {
         )
       )
   ).length
+  const calendarCount = config.calendar?.events.length || 0
+  const calendarSummary = config.calendar
+    ? `${CALENDAR_NAMES[config.calendar.source]} · ${calendarCount} ${calendarCount === 1 ? 'event' : 'events'}`
+    : 'Not imported yet'
   const weatherSummary = config.weather?.message
     ? config.weather.message
     : typeof config.weather?.temp === 'number'
@@ -1281,7 +1408,7 @@ const ScreenLayout: React.FC = () => {
                 const used =
                   card.kind === 'playback'
                     ? hasTile('playback')
-                    : card.kind === 'weather'
+                    : card.kind === 'calendar' || card.kind === 'weather'
                       ? ensurePages(config).some(page =>
                           page.tiles.some(tile => tile.kind === card.kind)
                         )
@@ -1527,6 +1654,32 @@ const ScreenLayout: React.FC = () => {
                 Custom
               </button>
             </div>
+          </Section>
+
+          <Section
+            icon="calendar_today"
+            title="Calendar"
+            summary={calendarSummary}
+            open={openSections.calendar}
+            onToggle={() => toggleSection('calendar')}
+          >
+            <button
+              className={styles.primary}
+              disabled={importing}
+              onClick={importCalendar}
+            >
+              <span className="material-icons">sync</span>
+              {importing ? 'Importing…' : 'Import now'}
+            </button>
+            <p className={styles.hint}>
+              Reads today and tomorrow from macOS Calendar and refreshes
+              every 5 minutes. Work accounts such as Exchange or Google
+              show up once they are added in System Settings → Internet
+              Accounts.
+            </p>
+            {config.calendar?.message ? (
+              <p className={styles.hint}>{config.calendar.message}</p>
+            ) : null}
           </Section>
 
           <Section

@@ -1,7 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react'
 
+import {
+  macClockSynced,
+  macDayFromToday,
+  macMinuteOfDay,
+  macWeekday
+} from '../../lib/macClock'
+
 import BaseWidget from './widgets/BaseWidget/BaseWidget'
-import type { ActionItem, WeatherInfo } from './screenModel'
+import type {
+  ActionItem,
+  CalendarEvent,
+  CalendarInfo,
+  WeatherInfo
+} from './screenModel'
 
 import styles from './Widgets.module.css'
 import playerStyles from './widgets/Player/Player.module.css'
@@ -172,6 +184,282 @@ export const StatusFace: React.FC<{ time: string; date: string }> = ({
     </div>
   </div>
 )
+
+function hourLabel(minutes: number) {
+  let hour = Math.floor(minutes / 60)
+  const suffix = hour >= 12 ? 'PM' : 'AM'
+  hour = hour % 12 || 12
+  return hour + ' ' + suffix
+}
+
+function placeLanes(events: CalendarEvent[]) {
+  const sorted = events
+    .slice()
+    .sort(
+      (a, b) =>
+        (a.startMin || 0) - (b.startMin || 0) ||
+        (a.endMin || 0) - (b.endMin || 0)
+    )
+  const result: { event: CalendarEvent; lane: number; lanes: number }[] =
+    []
+  let group: { event: CalendarEvent; lane: number; lanes: number }[] = []
+  let laneEnds: number[] = []
+  let groupEnd = -1
+  const closeGroup = () => {
+    group.forEach(item => {
+      item.lanes = Math.max(1, laneEnds.length)
+    })
+    result.push(...group)
+    group = []
+    laneEnds = []
+  }
+  sorted.forEach(event => {
+    const start = event.startMin || 0
+    const end = event.endMin || start + 30
+    if (start >= groupEnd) closeGroup()
+    let lane = laneEnds.findIndex(laneEnd => laneEnd <= start)
+    if (lane < 0) {
+      lane = laneEnds.length
+      laneEnds.push(end)
+    } else {
+      laneEnds[lane] = end
+    }
+    groupEnd = Math.max(groupEnd, end)
+    group.push({ event, lane, lanes: 1 })
+  })
+  closeGroup()
+  return result
+}
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+function timedEvents(events: CalendarEvent[], now: number) {
+  if (!macClockSynced()) {
+    return events.filter(
+      event =>
+        typeof event.startMin === 'number' &&
+        typeof event.endMin === 'number'
+    )
+  }
+  const placed: CalendarEvent[] = []
+  events.forEach(event => {
+    const start = Date.parse(event.start)
+    const end = Date.parse(event.end)
+    if (Number.isNaN(start) || Number.isNaN(end)) return
+    const day = macDayFromToday(start, now)
+    if (day < 0 || day > 1) return
+    const startMin = macMinuteOfDay(start)
+    const endMin =
+      macDayFromToday(end, now) > day ? 24 * 60 : macMinuteOfDay(end)
+    placed.push({
+      ...event,
+      day,
+      startMin,
+      endMin: Math.max(endMin, startMin + 15)
+    })
+  })
+  return placed
+}
+
+export const CalendarFace: React.FC<{
+  calendar?: CalendarInfo
+  now: number
+  onJoin?: (event: CalendarEvent) => void
+}> = ({ calendar, now, onJoin }) => {
+  const events = timedEvents(calendar?.events || [], now)
+  const ready = events.length > 0
+  let gridStart = 7 * 60
+  let gridEnd = 19 * 60
+  if (ready) {
+    const earliest = Math.min(
+      ...events.map(event => event.startMin || gridStart)
+    )
+    const latest = Math.max(
+      ...events.map(event => event.endMin || gridEnd)
+    )
+    gridStart = Math.min(gridStart, Math.floor(earliest / 60) * 60)
+    gridEnd = Math.max(gridEnd, Math.ceil(latest / 60) * 60)
+  }
+  const span = gridEnd - gridStart
+  const hourPx = 96
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const userScrollAt = useRef(0)
+  const autoScrolling = useRef(false)
+  const synced = macClockSynced()
+  const nowMin = synced ? macMinuteOfDay(now) : -1
+  const showNow = synced && nowMin >= gridStart && nowMin <= gridEnd
+
+  useEffect(() => {
+    const node = scrollRef.current
+    if (!node || Date.now() - userScrollAt.current < 2 * 60 * 1000) return
+    const anchor = synced ? Math.max(nowMin, gridStart) : gridStart
+    const target = Math.max(0, ((anchor - gridStart - 45) / 60) * hourPx)
+    if (Math.abs(node.scrollTop - target) < 2) return
+    autoScrolling.current = true
+    node.scrollTop = target
+  }, [ready, gridStart, events.length, nowMin, synced])
+
+  function onScroll() {
+    if (autoScrolling.current) {
+      autoScrolling.current = false
+      return
+    }
+    userScrollAt.current = Date.now()
+  }
+
+  const hours: number[] = []
+  for (let minute = gridStart; minute < gridEnd; minute += 60)
+    hours.push(minute)
+  const dayTitle = (day: number) => {
+    const label = day === 0 ? 'Today' : 'Tomorrow'
+    if (synced)
+      return label + ' ' + WEEKDAYS[macWeekday(now + day * 86400000)]
+    const sample = events.find(event => (event.day || 0) === day)
+    const name = sample?.when?.split(' ')[0]
+    return label + (name ? ' ' + name : '')
+  }
+  const nowMs = synced ? now : 0
+
+  return (
+    <BaseWidget className={styles.calendar}>
+      <p className={styles.calendarTitle}>Calendar</p>
+      {!ready ? (
+        <p className={styles.calendarEmpty}>
+          {calendar?.message || 'No events'}
+        </p>
+      ) : (
+        <>
+          <div className={styles.dayHeads}>
+            <span className={styles.hourSpacer} />
+            <span>{dayTitle(0)}</span>
+            <span>{dayTitle(1)}</span>
+          </div>
+          <div
+            ref={scrollRef}
+            className={styles.timeScroll}
+            data-scroll="calendar"
+            onScroll={onScroll}
+          >
+            <div
+              className={styles.timeGrid}
+              style={{ height: (span / 60) * hourPx + 'px' }}
+            >
+              <div className={styles.hourCol}>
+                {hours.map(minute => (
+                  <span
+                    key={minute}
+                    style={{
+                      top: ((minute - gridStart) / span) * 100 + '%'
+                    }}
+                  >
+                    {hourLabel(minute)}
+                  </span>
+                ))}
+              </div>
+              {[0, 1].map(day => (
+                <div key={day} className={styles.dayCol}>
+                  {hours.map(minute => (
+                    <span
+                      key={minute}
+                      className={styles.hourLine}
+                      style={{
+                        top: ((minute - gridStart) / span) * 100 + '%'
+                      }}
+                    />
+                  ))}
+                  {day === 0 && showNow ? (
+                    <span
+                      className={styles.nowLine}
+                      style={{
+                        top: ((nowMin - gridStart) / span) * 100 + '%'
+                      }}
+                    />
+                  ) : null}
+                  {placeLanes(
+                    events.filter(event => (event.day || 0) === day)
+                  ).map(({ event, lane, lanes }) => {
+                    const canceled =
+                      event.canceled === true ||
+                      /^Canceled:/i.test(event.title)
+                    const title = event.title
+                      .replace(/^Canceled:\s*/i, '')
+                      .trim()
+                    const start = Date.parse(event.start)
+                    const end = Date.parse(event.end)
+                    const state = !nowMs
+                      ? 'later'
+                      : end <= nowMs
+                        ? 'past'
+                        : start <= nowMs
+                          ? 'now'
+                          : 'later'
+                    const place = event.online
+                      ? 'Microsoft Teams Meeting'
+                      : event.where || ''
+                    const joinable =
+                      event.canJoin === true &&
+                      !canceled &&
+                      state !== 'past' &&
+                      start - nowMs <= 15 * 60 * 1000
+                    return (
+                      <div
+                        key={event.start + event.title}
+                        className={styles.block}
+                        data-canceled={canceled ? 'true' : 'false'}
+                        data-state={state}
+                        style={{
+                          top:
+                            (((event.startMin || 0) - gridStart) / span) *
+                              100 +
+                            '%',
+                          height:
+                            (((event.endMin || 0) -
+                              (event.startMin || 0)) /
+                              span) *
+                              100 +
+                            '%',
+                          left: (lane / lanes) * 100 + '%',
+                          width: 100 / lanes + '%'
+                        }}
+                      >
+                        {joinable ? (
+                          <button
+                            className={styles.blockJoin}
+                            onClick={e => {
+                              e.stopPropagation()
+                              if (onJoin) onJoin(event)
+                            }}
+                          >
+                            Join
+                          </button>
+                        ) : null}
+                        <p className={styles.blockTitle}>
+                          {canceled ? 'Canceled: ' : ''}
+                          {title}
+                        </p>
+                        {place ? (
+                          <p className={styles.blockMeta}>{place}</p>
+                        ) : null}
+                        {event.organizer &&
+                        (!place ||
+                          (event.endMin || 0) - (event.startMin || 0) >=
+                            45) ? (
+                          <p className={styles.blockMeta}>
+                            {event.organizer}
+                          </p>
+                        ) : null}
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </BaseWidget>
+  )
+}
 
 function weatherLine(value: number | null | undefined, prefix: string) {
   if (typeof value !== 'number' || Number.isNaN(value)) return ''

@@ -14,7 +14,9 @@ export function formatDate(d = new Date()) {
 
   return {
     time,
-    date
+    date,
+    now: d.getTime(),
+    utcOffset: -d.getTimezoneOffset()
   }
 }
 

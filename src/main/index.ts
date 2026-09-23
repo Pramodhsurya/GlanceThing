@@ -76,6 +76,7 @@ import {
   hasCustomScreensaverImage
 } from './lib/screensaver.js'
 
+import { refreshStoredCalendar } from './lib/calendar.js'
 import { refreshStoredWeather } from './lib/weather.js'
 import { playbackManager } from './lib/playback/playback.js'
 import { applyPatch, getPatches } from './lib/patches.js'
@@ -198,6 +199,19 @@ app.on('ready', async () => {
     30 * 60 * 1000
   )
 
+  const refreshCalendar = () =>
+    refreshStoredCalendar().catch(err =>
+      log(
+        `Calendar refresh failed: ${err.message}`,
+        'Calendar',
+        LogLevel.ERROR
+      )
+    )
+  if (process.platform === 'darwin') {
+    refreshCalendar()
+    setInterval(refreshCalendar, 5 * 60 * 1000)
+  }
+
   await setupIpcHandlers()
   await setupTray()
 
@@ -273,6 +287,7 @@ enum IPCHandler {
   CheckUpdate = 'checkUpdate',
   FindOpenPort = 'findOpenPort',
   IsPortOpen = 'isPortOpen',
+  ImportCalendar = 'importCalendar',
   RefreshWeather = 'refreshWeather'
 }
 
@@ -326,6 +341,10 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.GetVersion, () => {
     return app.getVersion()
+  })
+
+  ipcMain.handle(IPCHandler.ImportCalendar, async () => {
+    return refreshStoredCalendar('mac')
   })
 
   ipcMain.handle(
