@@ -10,13 +10,14 @@ import { SocketContext } from '@/contexts/SocketContext.tsx'
 import { SleepContext } from '@/contexts/SleepContext.tsx'
 
 import Player from './widgets/Player/Player.tsx'
-import { ActionsFace, LayoutFace } from './Screen.tsx'
+import { ActionsFace, LayoutFace, WeatherFace } from './Screen.tsx'
 import {
   fitTiles,
   type ActionItem,
   type AppShortcut,
   type ScreenConfig,
-  type Tile
+  type Tile,
+  type WeatherInfo
 } from './screenModel.ts'
 
 import styles from './Widgets.module.css'
@@ -107,13 +108,16 @@ function isConfig(value: unknown): value is ScreenConfig {
 function TileView({
   tile,
   actions,
+  weather,
   selectedKey
 }: {
   tile: Tile
   actions: ActionItem[]
+  weather?: WeatherInfo
   selectedKey: string
 }) {
   if (tile.kind === 'playback') return <Player />
+  if (tile.kind === 'weather') return <WeatherFace weather={weather} />
   if (tile.kind === 'actions') {
     const ids = tile.actionIds
     const visible = Array.isArray(ids)
@@ -361,6 +365,7 @@ const Widgets: React.FC = () => {
               <TileView
                 tile={tile}
                 actions={actions}
+                weather={config?.weather}
                 selectedKey={selectedKey}
               />
             </div>

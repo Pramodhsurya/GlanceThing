@@ -2,7 +2,7 @@ import styles from './Widgets.module.css'
 
 export const screenStyles = styles
 
-export type TileKind = 'layout' | 'playback' | 'actions'
+export type TileKind = 'layout' | 'playback' | 'actions' | 'weather'
 
 export interface Tile {
   id: string
@@ -27,10 +27,41 @@ export interface ScreenPage {
   tiles?: Tile[]
 }
 
+export interface WeatherInfo {
+  query?: string
+  place?: string
+  temp?: number | null
+  unit?: string
+  label?: string
+  icon?: string
+  high?: number | null
+  low?: number | null
+  feels?: number | null
+  humidity?: number | null
+  wind?: number | null
+  windUnit?: string
+  windDir?: string
+  rain?: number | null
+  tomorrowDay?: string
+  tomorrowHigh?: number | null
+  tomorrowLow?: number | null
+  isDay?: boolean
+  hours?: WeatherHour[]
+  message?: string
+}
+
+export interface WeatherHour {
+  time: string
+  temp: number | null
+  icon: string
+  kind?: 'hour' | 'sunrise' | 'sunset'
+}
+
 export interface ScreenConfig {
   tiles: Tile[]
   pages?: ScreenPage[]
   actions: ActionItem[]
+  weather?: WeatherInfo
   dialNavigation?: boolean
   dialMode?: 'pages' | 'items' | 'both'
 }

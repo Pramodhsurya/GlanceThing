@@ -76,6 +76,7 @@ import {
   hasCustomScreensaverImage
 } from './lib/screensaver.js'
 
+import { refreshStoredWeather } from './lib/weather.js'
 import { playbackManager } from './lib/playback/playback.js'
 import { applyPatch, getPatches } from './lib/patches.js'
 import { getLatestVersion } from './lib/update.js'
@@ -177,6 +178,26 @@ app.on('ready', async () => {
   if (getStorageValue('setupComplete') === true)
     await serverManager.start()
 
+  refreshStoredWeather().catch(err =>
+    log(
+      `Weather refresh failed: ${err.message}`,
+      'Weather',
+      LogLevel.ERROR
+    )
+  )
+  setInterval(
+    () => {
+      refreshStoredWeather().catch(err =>
+        log(
+          `Weather refresh failed: ${err.message}`,
+          'Weather',
+          LogLevel.ERROR
+        )
+      )
+    },
+    30 * 60 * 1000
+  )
+
   await setupIpcHandlers()
   await setupTray()
 
@@ -251,7 +272,8 @@ enum IPCHandler {
   GetChannel = 'getChannel',
   CheckUpdate = 'checkUpdate',
   FindOpenPort = 'findOpenPort',
-  IsPortOpen = 'isPortOpen'
+  IsPortOpen = 'isPortOpen',
+  RefreshWeather = 'refreshWeather'
 }
 
 async function setupIpcHandlers() {
@@ -305,6 +327,17 @@ async function setupIpcHandlers() {
   ipcMain.handle(IPCHandler.GetVersion, () => {
     return app.getVersion()
   })
+
+  ipcMain.handle(
+    IPCHandler.RefreshWeather,
+    async (_event, query, unit) => {
+      const place = typeof query === 'string' ? query : undefined
+      if (unit === 'auto' || unit === 'C' || unit === 'F') {
+        setStorageValue('weatherUnit', unit)
+      }
+      return refreshStoredWeather(place)
+    }
+  )
 
   ipcMain.handle(IPCHandler.GetStorageValue, (_event, key) => {
     return getStorageValue(key)

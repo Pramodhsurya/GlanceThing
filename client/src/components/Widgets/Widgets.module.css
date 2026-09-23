@@ -99,6 +99,137 @@
   overflow: hidden;
 }
 
+.weather {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0.65em 0.9em 0.55em;
+  overflow: hidden;
+  color: #fff;
+  line-height: 1.15;
+  background: linear-gradient(180deg, #1b1d33 0%, #3a4468 100%);
+}
+
+.weather[data-sky='night'] {
+  background: linear-gradient(180deg, #1b1d33 0%, #3a4468 100%);
+}
+
+.weather[data-sky='clear'] {
+  background: linear-gradient(180deg, #2a68c8 0%, #62a3e8 100%);
+}
+
+.weather[data-sky='cloudy'] {
+  background: linear-gradient(180deg, #4d5f78 0%, #7f93aa 100%);
+}
+
+.weatherTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.weatherLeft {
+  min-width: 0;
+  padding-right: 0.6em;
+}
+
+.weatherRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  min-width: 0;
+  padding-top: 0.15em;
+}
+
+.weatherPlace {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-size: 1.05em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.weatherPlace .weatherPin {
+  margin-left: 0.25em;
+  font-size: 0.85em;
+}
+
+.weatherTemp {
+  display: block;
+  font-size: 3.4em;
+  font-weight: 200;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.weatherRight .weatherIcon {
+  font-size: 1.5em;
+  margin-bottom: 0.1em;
+}
+
+.weatherLabel {
+  margin: 0;
+  font-size: 1.05em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.weatherRange {
+  margin: 0.1em 0 0;
+  font-size: 1.05em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.weatherHours {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 0.4em;
+}
+
+.weatherHour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.weatherHour span:first-child {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.weatherHour .weatherIcon {
+  margin: 0.15em 0;
+  font-size: 1.55em;
+}
+
+.weatherHour strong {
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.weatherIcon[data-tone='sun'] {
+  color: #ffd23f;
+}
+
+.weatherIcon[data-tone='rain'] {
+  color: #8fd0ff;
+}
+
+.weather[data-hidden='1'] .weatherHours,
+.weather[data-hidden='2'] .weatherHours {
+  display: none;
+}
+
 .layoutTile .app img {
   position: absolute;
   top: 0;

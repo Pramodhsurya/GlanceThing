@@ -48,7 +48,8 @@ enum IPCHandler {
   GetChannel = 'getChannel',
   CheckUpdate = 'checkUpdate',
   FindOpenPort = 'findOpenPort',
-  IsPortOpen = 'isPortOpen'
+  IsPortOpen = 'isPortOpen',
+  RefreshWeather = 'refreshWeather'
 }
 
 // Custom APIs for renderer
@@ -126,7 +127,9 @@ const api = {
   getChannel: () => ipcRenderer.invoke(IPCHandler.GetChannel),
   checkUpdate: () => ipcRenderer.invoke(IPCHandler.CheckUpdate),
   findOpenPort: () => ipcRenderer.invoke(IPCHandler.FindOpenPort),
-  isPortOpen: port => ipcRenderer.invoke(IPCHandler.IsPortOpen, port)
+  isPortOpen: port => ipcRenderer.invoke(IPCHandler.IsPortOpen, port),
+  refreshWeather: (query?: string, unit?: 'auto' | 'C' | 'F') =>
+    ipcRenderer.invoke(IPCHandler.RefreshWeather, query, unit)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
