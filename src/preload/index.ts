@@ -50,7 +50,8 @@ enum IPCHandler {
   FindOpenPort = 'findOpenPort',
   IsPortOpen = 'isPortOpen',
   ImportCalendar = 'importCalendar',
-  RefreshWeather = 'refreshWeather'
+  RefreshWeather = 'refreshWeather',
+  RefreshAiUsage = 'refreshAiUsage'
 }
 
 // Custom APIs for renderer
@@ -132,7 +133,8 @@ const api = {
   importCalendar: (source: 'mac') =>
     ipcRenderer.invoke(IPCHandler.ImportCalendar, source),
   refreshWeather: (query?: string, unit?: 'auto' | 'C' | 'F') =>
-    ipcRenderer.invoke(IPCHandler.RefreshWeather, query, unit)
+    ipcRenderer.invoke(IPCHandler.RefreshWeather, query, unit),
+  refreshAiUsage: () => ipcRenderer.invoke(IPCHandler.RefreshAiUsage)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

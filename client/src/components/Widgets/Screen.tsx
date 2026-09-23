@@ -8,11 +8,16 @@ import {
 } from '../../lib/macClock'
 
 import BaseWidget from './widgets/BaseWidget/BaseWidget'
-import type {
-  ActionItem,
-  CalendarEvent,
-  CalendarInfo,
-  WeatherInfo
+import {
+  USAGE_NAMES,
+  type ActionItem,
+  type AiUsageInfo,
+  type CalendarEvent,
+  type CalendarInfo,
+  type UsageProvider,
+  type UsageTarget,
+  type UsageWindow,
+  type WeatherInfo
 } from './screenModel'
 
 import styles from './Widgets.module.css'
@@ -607,6 +612,264 @@ export const WeatherFace: React.FC<{ weather?: WeatherInfo }> = ({
           ))}
         </div>
       ) : null}
+    </BaseWidget>
+  )
+}
+
+const USAGE_COLORS: Record<string, string> = {
+  codex: '#00f59b',
+  claude: '#ff7b2e',
+  cursor: '#4f9dff'
+}
+
+function resetText(iso: string | null, now: number) {
+  if (!iso) return ''
+  const ms = Date.parse(iso) - now
+  if (Number.isNaN(ms)) return ''
+  if (ms <= 0) return 'Resetting now'
+  const minutes = Math.floor(ms / 60000)
+  const days = Math.floor(minutes / 1440)
+  const hours = Math.floor((minutes % 1440) / 60)
+  if (days > 0) return 'Resets in ' + days + 'd ' + hours + 'h'
+  if (hours > 0) return 'Resets in ' + hours + 'h ' + (minutes % 60) + 'm'
+  return 'Resets in ' + Math.max(1, minutes) + 'm'
+}
+
+function tokenText(value: number) {
+  if (value >= 1e9) return (value / 1e9).toFixed(1) + 'B'
+  if (value >= 1e6) return Math.round(value / 1e6) + 'M'
+  if (value >= 1e3) return Math.round(value / 1e3) + 'K'
+  return String(Math.round(value))
+}
+
+function money(value: number) {
+  return '$' + (value >= 100 ? value.toFixed(0) : value.toFixed(2))
+}
+
+const UsageBar: React.FC<{ left: number; color: string }> = ({
+  left,
+  color
+}) => (
+  <div className={styles.usageTrack}>
+    <span
+      style={{
+        width: Math.max(0, Math.min(100, left)) + '%',
+        background: left < 15 ? '#ff3b5c' : color,
+        boxShadow: '0 0 0.5em ' + (left < 15 ? '#ff3b5c' : color)
+      }}
+    />
+  </div>
+)
+
+function overviewWindows(windows: UsageWindow[]) {
+  if (windows.length <= 2) return windows
+  const rest = windows.slice(1)
+  let lowest = rest[0]
+  for (let i = 1; i < rest.length; i += 1) {
+    if (rest[i].left < lowest.left) lowest = rest[i]
+  }
+  return [windows[0], lowest]
+}
+
+function usageLines(target: UsageTarget, providers: UsageProvider[]) {
+  if (target === 'all') {
+    const spend = providers.filter(provider => provider.cost).length
+    return 1.6 + providers.length * 2.3 + spend * 0.9
+  }
+  const provider = providers[0]
+  if (!provider) return 4
+  return (
+    2 +
+    (provider.windows || []).length * 2.6 +
+    (provider.notes || []).length * 1.2 +
+    (provider.message ? 1.2 : 0) +
+    (provider.cost ? 3.2 : 0)
+  )
+}
+
+export const UsageFace: React.FC<{
+  usage?: AiUsageInfo
+  target?: UsageTarget
+  now: number
+}> = ({ usage, target = 'all', now }) => {
+  const all = usage?.providers || []
+  const providers =
+    target === 'all' ? all : all.filter(provider => provider.id === target)
+  const boxRef = useRef<HTMLDivElement>(null)
+  const [box, setBox] = useState({ w: 0, h: 0 })
+  const [fontPx, setFontPx] = useState(16)
+  const [hidden, setHidden] = useState(0)
+  const lines = usageLines(target, providers)
+
+  useEffect(() => {
+    const node = boxRef.current
+    if (!node) return
+    const measure = () => {
+      const w = node.clientWidth
+      const h = node.clientHeight
+      setBox(current =>
+        current.w === w && current.h === h ? current : { w, h }
+      )
+    }
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!box.w || !box.h) return
+    const guess = Math.min(
+      box.h / lines,
+      box.w / (target === 'all' ? 19 : 13)
+    )
+    setHidden(0)
+    setFontPx(Math.max(10, Math.min(30, Math.floor(guess))))
+  }, [box, lines, target])
+
+  useEffect(() => {
+    const node = boxRef.current
+    if (!node || !box.w) return
+    const overflow =
+      node.scrollHeight > node.clientHeight + 1 ||
+      node.scrollWidth > node.clientWidth + 1
+    if (!overflow) return
+    if (fontPx > 10) setFontPx(Math.max(10, Math.floor(fontPx * 0.93)))
+    else if (hidden < 1) setHidden(hidden + 1)
+  }, [box, fontPx, hidden, usage, target])
+
+  const provider = target === 'all' ? null : providers[0]
+  const color = USAGE_COLORS[target] || '#9fb4ff'
+  const cost = provider?.cost
+  const peak = Math.max(1, ...(cost?.days || []))
+
+  return (
+    <BaseWidget
+      ref={boxRef}
+      className={styles.usage}
+      data-hidden={hidden}
+      style={{ fontSize: fontPx + 'px' }}
+    >
+      {target === 'all' ? (
+        <>
+          <p className={styles.usageTitle}>
+            AI usage<span>% left</span>
+          </p>
+          {providers.length === 0 ? (
+            <p className={styles.usageMuted}>Loading usage…</p>
+          ) : (
+            providers.map(item => {
+              const windows = overviewWindows(item.windows || [])
+              const tint = USAGE_COLORS[item.id] || '#9fb4ff'
+              return (
+                <div
+                  key={item.id}
+                  className={styles.usageRow}
+                  data-status={item.status || 'ok'}
+                >
+                  <div className={styles.usageRowTop}>
+                    <div className={styles.usageName}>
+                      <strong style={{ color: tint }}>{item.name}</strong>
+                      {item.plan ? <small>{item.plan}</small> : null}
+                    </div>
+                    {windows.length === 0 ? (
+                      <p className={styles.usageMuted}>
+                        {item.message || 'Not connected'}
+                      </p>
+                    ) : (
+                      windows.map(window => (
+                        <div
+                          key={window.label}
+                          className={styles.usageMini}
+                        >
+                          <div className={styles.usageLine}>
+                            <span>{window.label}</span>
+                            <b>{Math.round(window.left)}%</b>
+                          </div>
+                          <UsageBar left={window.left} color={tint} />
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  {item.cost ? (
+                    <p className={styles.usageRowCost}>
+                      <span>
+                        Today <b>{money(item.cost.today)}</b> ·{' '}
+                        {tokenText(item.cost.todayTokens)} tokens
+                      </span>
+                      <span>
+                        30 days <b>{money(item.cost.month)}</b> ·{' '}
+                        {tokenText(item.cost.monthTokens)} tokens
+                      </span>
+                    </p>
+                  ) : null}
+                </div>
+              )
+            })
+          )}
+        </>
+      ) : (
+        <>
+          <div className={styles.usageHead}>
+            <strong style={{ color }}>{USAGE_NAMES[target]}</strong>
+            {provider?.plan ? <small>{provider.plan}</small> : null}
+          </div>
+          {!provider ? (
+            <p className={styles.usageMuted}>Loading usage…</p>
+          ) : null}
+          {provider?.message ? (
+            <p className={styles.usageMuted}>{provider.message}</p>
+          ) : null}
+          {(provider?.windows || []).map(window => (
+            <div key={window.label} className={styles.usageWindow}>
+              <div className={styles.usageLine}>
+                <span>{window.label}</span>
+                <b>{Math.round(window.left)}% left</b>
+              </div>
+              <UsageBar left={window.left} color={color} />
+              <p className={styles.usageReset}>
+                {resetText(window.resetsAt, now)}
+              </p>
+            </div>
+          ))}
+          {(provider?.notes || []).map(note => (
+            <p key={note} className={styles.usageNote}>
+              {note}
+            </p>
+          ))}
+          {cost ? (
+            <div className={styles.usageCost}>
+              <div className={styles.usageSpend}>
+                <span>Today</span>
+                <b>{money(cost.today)}</b>
+                <small>{tokenText(cost.todayTokens)} tokens</small>
+              </div>
+              <div className={styles.usageSpend}>
+                <span>30 days</span>
+                <b>{money(cost.month)}</b>
+                <small>{tokenText(cost.monthTokens)} tokens</small>
+              </div>
+              <div
+                className={styles.usageChart}
+                data-empty={
+                  cost.days.some(value => value > 0) ? 'false' : 'true'
+                }
+              >
+                {cost.days.map((value, index) => (
+                  <span
+                    key={index}
+                    style={{
+                      height: Math.max(4, (value / peak) * 100) + '%',
+                      background: color
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </>
+      )}
     </BaseWidget>
   )
 }

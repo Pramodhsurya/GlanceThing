@@ -78,6 +78,7 @@ import {
 
 import { refreshStoredCalendar } from './lib/calendar.js'
 import { refreshStoredWeather } from './lib/weather.js'
+import { refreshAiUsage } from './lib/aiUsage.js'
 import { playbackManager } from './lib/playback/playback.js'
 import { applyPatch, getPatches } from './lib/patches.js'
 import { getLatestVersion } from './lib/update.js'
@@ -212,6 +213,17 @@ app.on('ready', async () => {
     setInterval(refreshCalendar, 5 * 60 * 1000)
   }
 
+  const refreshUsage = () =>
+    refreshAiUsage().catch(err =>
+      log(
+        `AI usage refresh failed: ${err.message}`,
+        'AI usage',
+        LogLevel.ERROR
+      )
+    )
+  refreshUsage()
+  setInterval(refreshUsage, 5 * 60 * 1000)
+
   await setupIpcHandlers()
   await setupTray()
 
@@ -288,7 +300,8 @@ enum IPCHandler {
   FindOpenPort = 'findOpenPort',
   IsPortOpen = 'isPortOpen',
   ImportCalendar = 'importCalendar',
-  RefreshWeather = 'refreshWeather'
+  RefreshWeather = 'refreshWeather',
+  RefreshAiUsage = 'refreshAiUsage'
 }
 
 async function setupIpcHandlers() {
@@ -357,6 +370,10 @@ async function setupIpcHandlers() {
       return refreshStoredWeather(place)
     }
   )
+
+  ipcMain.handle(IPCHandler.RefreshAiUsage, async () => {
+    return refreshAiUsage(true)
+  })
 
   ipcMain.handle(IPCHandler.GetStorageValue, (_event, key) => {
     return getStorageValue(key)

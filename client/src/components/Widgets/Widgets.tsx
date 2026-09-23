@@ -16,11 +16,13 @@ import {
   ActionsFace,
   CalendarFace,
   LayoutFace,
+  UsageFace,
   WeatherFace
 } from './Screen.tsx'
 import {
   fitTiles,
   type ActionItem,
+  type AiUsageInfo,
   type AppShortcut,
   type CalendarEvent,
   type CalendarInfo,
@@ -141,6 +143,7 @@ function TileView({
   actions,
   calendar,
   weather,
+  aiUsage,
   selectedKey,
   now
 }: {
@@ -148,10 +151,14 @@ function TileView({
   actions: ActionItem[]
   calendar?: CalendarInfo
   weather?: WeatherInfo
+  aiUsage?: AiUsageInfo
   selectedKey: string
   now: number
 }) {
   if (tile.kind === 'playback') return <Player />
+  if (tile.kind === 'usage') {
+    return <UsageFace usage={aiUsage} target={tile.provider} now={now} />
+  }
   if (tile.kind === 'calendar') {
     return <CalendarTile calendar={calendar} now={now} />
   }
@@ -428,6 +435,7 @@ const Widgets: React.FC = () => {
                 actions={actions}
                 calendar={config?.calendar}
                 weather={config?.weather}
+                aiUsage={config?.aiUsage}
                 selectedKey={selectedKey}
                 now={now}
               />

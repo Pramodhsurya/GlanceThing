@@ -8,6 +8,16 @@ export type TileKind =
   | 'actions'
   | 'calendar'
   | 'weather'
+  | 'usage'
+
+export type UsageTarget = 'all' | 'codex' | 'claude' | 'cursor'
+
+export const USAGE_NAMES: Record<UsageTarget, string> = {
+  all: 'AI usage',
+  codex: 'Codex',
+  claude: 'Claude',
+  cursor: 'Cursor'
+}
 
 export interface Tile {
   id: string
@@ -18,6 +28,36 @@ export interface Tile {
   h: number
   shortcutIds?: string[]
   actionIds?: string[]
+  provider?: UsageTarget
+}
+
+export interface UsageWindow {
+  label: string
+  left: number
+  resetsAt: string | null
+}
+
+export interface UsageProvider {
+  id: string
+  name: string
+  plan?: string
+  status?: 'ok' | 'stale' | 'off'
+  message?: string
+  windows?: UsageWindow[]
+  notes?: string[]
+  cost?: {
+    today: number
+    todayTokens: number
+    month: number
+    monthTokens: number
+    days: number[]
+  }
+  updatedAt?: string
+}
+
+export interface AiUsageInfo {
+  providers?: UsageProvider[]
+  updatedAt?: string
 }
 
 export interface ActionItem {
@@ -89,6 +129,7 @@ export interface ScreenConfig {
   actions: ActionItem[]
   calendar?: CalendarInfo
   weather?: WeatherInfo
+  aiUsage?: AiUsageInfo
   dialNavigation?: boolean
   dialMode?: 'pages' | 'items' | 'both'
 }
