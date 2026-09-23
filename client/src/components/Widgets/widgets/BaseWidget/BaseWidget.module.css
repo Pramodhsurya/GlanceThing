@@ -1,12 +1,11 @@
 .widget {
   flex: 1;
-  margin: 5px;
-  border-radius: 20px;
+  margin: 0;
+  border-radius: 0;
   background: #111;
   display: flex;
-  border: 2px solid transparent;
+  border: 1px solid #000;
   outline: none;
-  transition: 200ms ease;
 }
 
 .widget:focus-within {
@@ -15,4 +14,8 @@
 
 .widget > div {
   outline: none;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
 }

@@ -13,7 +13,9 @@ export default defineConfig({
     resolve: {
       alias: {
         '@': resolve('src/renderer/src')
-      }
+      },
+      // The layout preview imports the Car Thing's tiles from client/, which has its own React.
+      dedupe: ['react', 'react-dom']
     },
     plugins: [react()]
   }
