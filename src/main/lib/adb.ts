@@ -81,14 +81,32 @@ export async function getAdbExecutable() {
   return `"${adbPath}"`
 }
 
+const deviceSelectors = new Map<string, string>()
+
+function adbSelector(device: string) {
+  const known = deviceSelectors.get(device)
+  if (known) return known
+  if (!device || /[\s()]/.test(device)) return '-d'
+  return `-s "${device}"`
+}
+
 async function getDevices() {
   const adb = await getAdbExecutable()
-  const res = await execAsync(`${adb} devices`)
+  const res = await execAsync(`${adb} devices -l`)
 
-  const devices = res
-    .split('\n')
-    .filter(line => line.includes('\tdevice'))
-    .map(line => line.split('\t')[0])
+  const devices: string[] = []
+  for (const raw of res.split('\n')) {
+    const line = raw.trim()
+    const match = line.match(/^(.*?)\s+device(?:\s|$)/)
+    if (!match) continue
+    const serial = match[1].trim()
+    if (!serial || serial === 'List') continue
+    const transport = line.match(/transport_id:(\d+)/)?.[1]
+    if (/[\s()]/.test(serial))
+      deviceSelectors.set(serial, transport ? `-t ${transport}` : '-d')
+    else deviceSelectors.set(serial, `-s "${serial}"`)
+    devices.push(serial)
+  }
 
   return devices
 }
@@ -96,7 +114,7 @@ async function getDevices() {
 async function checkValidDevice(device: string) {
   const adb = await getAdbExecutable()
   const res = await execAsync(
-    `${adb} -s ${device} shell ls /usr/share/qt-superbird-app/webapp/`
+    `${adb} ${adbSelector(device)} shell ls /usr/share/qt-superbird-app/webapp/`
   )
 
   return !res.includes('No such file or directory')
@@ -127,6 +145,7 @@ export async function findCarThing() {
     log('CarThing no longer found', 'adb', LogLevel.WARN)
     carThingFound = false
   }
+  passwordPushedFor = null
 
   return null
 }
@@ -139,7 +158,7 @@ export async function restartChromium(device: string | null) {
 
   log('Restarting Chromium...', 'adb', LogLevel.DEBUG)
   await execAsync(
-    `${adb} -s ${device} shell "supervisorctl restart chromium"`
+    `${adb} ${adbSelector(device)} shell "supervisorctl restart chromium"`
   )
   log('Restarted Chromium!', 'adb', LogLevel.DEBUG)
 }
@@ -158,7 +177,7 @@ export async function setAutoBrightness(
     LogLevel.DEBUG
   )
   await execAsync(
-    `${adb} -s ${device} shell "supervisorctl ${enabled ? 'start' : 'stop'} backlight"`
+    `${adb} ${adbSelector(device)} shell "supervisorctl ${enabled ? 'start' : 'stop'} backlight"`
   )
 }
 
@@ -169,7 +188,7 @@ export async function getAutoBrightness(device: string | null) {
   const adb = await getAdbExecutable()
   log('Getting auto brightness...', 'adb', LogLevel.DEBUG)
   const res = await execAsync(
-    `${adb} -s ${device} shell "supervisorctl status backlight"`
+    `${adb} ${adbSelector(device)} shell "supervisorctl status backlight"`
   )
 
   return res.includes('RUNNING')
@@ -190,7 +209,7 @@ export async function getBrightness(device: string | null, parse = true) {
   const adb = await getAdbExecutable()
 
   const res = await execAsync(
-    `${adb} -s ${device} shell "cat /sys/devices/platform/backlight/backlight/aml-bl/brightness"`
+    `${adb} ${adbSelector(device)} shell "cat /sys/devices/platform/backlight/backlight/aml-bl/brightness"`
   )
 
   return parse ? parseBrightness(res) : parseInt(res)
@@ -208,7 +227,7 @@ export async function setBrightness(
   const formatted = formatBrightness(brightness)
 
   await execAsync(
-    `${adb} -s ${device} shell "echo ${formatted} > /sys/devices/platform/backlight/backlight/aml-bl/brightness"`
+    `${adb} ${adbSelector(device)} shell "echo ${formatted} > /sys/devices/platform/backlight/backlight/aml-bl/brightness"`
   )
 }
 
@@ -231,7 +250,7 @@ export async function setBrightnessSmooth(
     )
 
     await execAsync(
-      `${adb} -s ${device} shell "echo ${value} > /sys/devices/platform/backlight/backlight/aml-bl/brightness"`
+      `${adb} ${adbSelector(device)} shell "echo ${value} > /sys/devices/platform/backlight/backlight/aml-bl/brightness"`
     )
   }
 }
@@ -244,9 +263,12 @@ export async function restore(device: string | null, restart = true) {
 
   log('Restoring original app...', 'adb', LogLevel.DEBUG)
   await execAsync(
-    `${adb} -s ${device} shell "mountpoint /usr/share/qt-superbird-app/webapp/ > /dev/null && umount /usr/share/qt-superbird-app/webapp"`
+    `${adb} ${adbSelector(device)} shell "mountpoint /usr/share/qt-superbird-app/webapp/ > /dev/null && umount /usr/share/qt-superbird-app/webapp"`
   )
-  await execAsync(`${adb} -s ${device} shell "rm -rf /tmp/webapp"`)
+  await execAsync(
+    `${adb} ${adbSelector(device)} shell "rm -rf /tmp/webapp"`
+  )
+  passwordPushedFor = null
   log('Restored original app!', 'adb', LogLevel.DEBUG)
   if (restart) await restartChromium(device)
 }
@@ -258,7 +280,7 @@ export async function rebootCarThing(device: string | null) {
   const adb = await getAdbExecutable()
 
   log('Reboot...', 'adb', LogLevel.DEBUG)
-  await execAsync(`${adb} -s ${device} shell "reboot"`)
+  await execAsync(`${adb} ${adbSelector(device)} shell "reboot"`)
 }
 
 export async function installApp(device: string | null) {
@@ -274,15 +296,17 @@ export async function installApp(device: string | null) {
   const adb = await getAdbExecutable()
 
   log('Installing app...', 'adb')
-  await execAsync(`${adb} -s ${device} push "${appDir}" /tmp/webapp`)
   await execAsync(
-    `${adb} -s ${device} shell "echo ${WS_PASSWORD} > /tmp/webapp/ws-password"`
+    `${adb} ${adbSelector(device)} push "${appDir}" /tmp/webapp`
   )
   await execAsync(
-    `${adb} -s ${device} shell "touch /tmp/webapp/.glancething"`
+    `${adb} ${adbSelector(device)} shell "echo ${WS_PASSWORD} > /tmp/webapp/ws-password"`
   )
   await execAsync(
-    `${adb} -s ${device} shell "mount --bind /tmp/webapp /usr/share/qt-superbird-app/webapp"`
+    `${adb} ${adbSelector(device)} shell "touch /tmp/webapp/.glancething"`
+  )
+  await execAsync(
+    `${adb} ${adbSelector(device)} shell "mount --bind /tmp/webapp /usr/share/qt-superbird-app/webapp"`
   )
   await restartChromium(device)
   log('Installed app!', 'adb')
@@ -295,11 +319,13 @@ export async function checkInstalledApp(device: string | null) {
   const adb = await getAdbExecutable()
 
   const res = await execAsync(
-    `${adb} -s ${device} shell ls /usr/share/qt-superbird-app/webapp/.glancething`
+    `${adb} ${adbSelector(device)} shell "if test -f /usr/share/qt-superbird-app/webapp/.glancething; then echo yes; else echo no; fi"`
   )
 
-  return !res.includes('No such file or directory')
+  return res.includes('yes')
 }
+
+let passwordPushedFor: string | null = null
 
 export async function forwardSocketServer(device: string | null) {
   if (!device) device = await findCarThing()
@@ -309,7 +335,30 @@ export async function forwardSocketServer(device: string | null) {
   const info = serverManager.getServerInfo()
   if (!info.port) return
 
-  await execAsync(`${adb} -s ${device} reverse tcp:1337 tcp:${info.port}`)
+  const target = `${device}:${info.port}`
+  if (passwordPushedFor !== target) {
+    const passwordFile = path.join(
+      app.getPath('temp'),
+      `glancething-ws-password-${process.pid}`
+    )
+    try {
+      fs.writeFileSync(passwordFile, getSocketPassword(), { mode: 0o600 })
+      await execAsync(
+        `${adb} ${adbSelector(device)} push "${passwordFile}" /tmp/webapp/ws-password`,
+        8000
+      )
+      passwordPushedFor = target
+    } catch {
+      // retried on the next state check
+    } finally {
+      fs.rmSync(passwordFile, { force: true })
+    }
+  }
+
+  await execAsync(
+    `${adb} ${adbSelector(device)} reverse tcp:1337 tcp:${info.port}`,
+    8000
+  )
 
   log('Forwarded socket server!', 'adb', LogLevel.DEBUG)
 }

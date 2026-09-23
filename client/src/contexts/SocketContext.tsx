@@ -26,27 +26,38 @@ const SocketContextProvider = ({
   const [firstLoad, setFirstLoad] = useState(true)
 
   function connect() {
-    ws.current = new WebSocket('ws://localhost:1337')
+    const socket = new WebSocket('ws://localhost:1337')
+    ws.current = socket
+    const giveUp = window.setTimeout(() => {
+      if (socket.readyState !== WebSocket.OPEN) socket.close()
+    }, 4000)
 
-    ws.current.onopen = async () => {
-      const pass = await getSocketPassword()
-      if (pass)
-        ws.current?.send(
-          JSON.stringify({
-            type: 'auth',
-            data: pass
-          })
-        )
+    socket.onopen = async () => {
+      window.clearTimeout(giveUp)
+      try {
+        const pass = await getSocketPassword()
+        if (pass)
+          socket.send(
+            JSON.stringify({
+              type: 'auth',
+              data: pass
+            })
+          )
+      } catch {
+        socket.close()
+        return
+      }
       setReady(true)
-      setTimeout(() => {
+      window.setTimeout(() => {
         setFirstLoad(false)
       }, 500)
     }
 
-    ws.current.onclose = () => {
+    socket.onclose = () => {
+      window.clearTimeout(giveUp)
       setReady(false)
-      setTimeout(() => {
-        connect()
+      window.setTimeout(() => {
+        if (ws.current === socket) connect()
       }, 1000)
     }
   }
