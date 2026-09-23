@@ -12,9 +12,12 @@ export const isDev = () => getStorageValue('devMode') === true
 export const random = (len: number) =>
   crypto.randomBytes(len / 2).toString('hex')
 
-export async function execAsync(cmd: string): Promise<string> {
+export async function execAsync(
+  cmd: string,
+  timeout?: number
+): Promise<string> {
   return new Promise((resolve, reject) => {
-    exec(cmd, (error, stdout) => {
+    exec(cmd, timeout ? { timeout } : {}, (error, stdout) => {
       if (error) {
         reject(error)
       } else {
