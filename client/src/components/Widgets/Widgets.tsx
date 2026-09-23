@@ -7,6 +7,7 @@ import {
 } from 'react'
 
 import { SocketContext } from '@/contexts/SocketContext.tsx'
+import { SleepContext } from '@/contexts/SleepContext.tsx'
 
 import Player from './widgets/Player/Player.tsx'
 import { ActionsFace, LayoutFace } from './Screen.tsx'
@@ -22,7 +23,9 @@ import styles from './Widgets.module.css'
 
 const LayoutTile: React.FC<{
   shortcutIds: string[]
-}> = ({ shortcutIds }) => {
+  tileId: string
+  selectedKey: string
+}> = ({ shortcutIds, tileId, selectedKey }) => {
   const { ready, socket } = useContext(SocketContext)
   const [images, setImages] = useState<Record<string, string>>({})
 
@@ -57,6 +60,8 @@ const LayoutTile: React.FC<{
     <LayoutFace
       shortcutIds={shortcutIds}
       images={images}
+      tileId={tileId}
+      selectedKey={selectedKey}
       onOpen={id =>
         socket?.send(
           JSON.stringify({ type: 'apps', action: 'open', data: id })
@@ -68,7 +73,9 @@ const LayoutTile: React.FC<{
 
 const ActionsTile: React.FC<{
   actions: ActionItem[]
-}> = ({ actions }) => {
+  tileId: string
+  selectedKey: string
+}> = ({ actions, tileId, selectedKey }) => {
   const { socket } = useContext(SocketContext)
 
   function run(action: ActionItem) {
@@ -81,7 +88,14 @@ const ActionsTile: React.FC<{
     )
   }
 
-  return <ActionsFace actions={actions} onRun={run} />
+  return (
+    <ActionsFace
+      actions={actions}
+      tileId={tileId}
+      selectedKey={selectedKey}
+      onRun={run}
+    />
+  )
 }
 
 function isConfig(value: unknown): value is ScreenConfig {
@@ -92,10 +106,12 @@ function isConfig(value: unknown): value is ScreenConfig {
 
 function TileView({
   tile,
-  actions
+  actions,
+  selectedKey
 }: {
   tile: Tile
   actions: ActionItem[]
+  selectedKey: string
 }) {
   if (tile.kind === 'playback') return <Player />
   if (tile.kind === 'actions') {
@@ -105,9 +121,21 @@ function TileView({
           .map(id => actions.find(action => action.id === id))
           .filter(Boolean) as ActionItem[])
       : actions
-    return <ActionsTile actions={visible} />
+    return (
+      <ActionsTile
+        actions={visible}
+        tileId={tile.id}
+        selectedKey={selectedKey}
+      />
+    )
   }
-  return <LayoutTile shortcutIds={tile.shortcutIds || []} />
+  return (
+    <LayoutTile
+      shortcutIds={tile.shortcutIds || []}
+      tileId={tile.id}
+      selectedKey={selectedKey}
+    />
+  )
 }
 
 const Widgets: React.FC = () => {
@@ -116,7 +144,14 @@ const Widgets: React.FC = () => {
   const [config, setConfig] = useState<ScreenConfig | null>(null)
   const [apps, setApps] = useState<AppShortcut[] | null>(null)
   const [pageIndex, setPageIndex] = useState(0)
+  const [dialIndex, setDialIndex] = useState(0)
   const touchStart = useRef({ x: 0, y: 0 })
+  const dialRef = useRef({ index: 0, count: 0, pages: 1, mode: 'both' })
+  const dialEdge = useRef<'start' | 'end' | null>(null)
+  const dialStepAt = useRef(0)
+  const { sleepState } = useContext(SleepContext)
+  const sleepRef = useRef(sleepState)
+  sleepRef.current = sleepState
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
@@ -163,6 +198,130 @@ const Widgets: React.FC = () => {
   const rawTiles = pages[safeIndex]?.tiles
   const tiles = rawTiles ? fitTiles(rawTiles) : rawTiles
   const actions = config?.actions || []
+  const dialOn = config?.dialNavigation === true
+  const dialMode = config?.dialMode || 'both'
+  const dialItems: string[] = []
+  if (tiles && dialMode !== 'pages') {
+    for (let tileIndex = 0; tileIndex < tiles.length; tileIndex += 1) {
+      const tile = tiles[tileIndex]
+      if (tile.kind === 'layout') {
+        const ids = tile.shortcutIds || []
+        for (let i = 0; i < ids.length; i += 1) {
+          dialItems.push(tile.id + ':' + ids[i])
+        }
+      }
+      if (tile.kind === 'actions') {
+        const wanted = tile.actionIds
+        for (let i = 0; i < actions.length; i += 1) {
+          const id = actions[i].id
+          if (Array.isArray(wanted) && wanted.indexOf(id) < 0) continue
+          dialItems.push(tile.id + ':' + id)
+        }
+      }
+    }
+  }
+  const selectedKey =
+    dialOn && dialItems.length > 0
+      ? dialItems[Math.min(dialIndex, dialItems.length - 1)]
+      : ''
+  dialRef.current = {
+    index: Math.min(dialIndex, Math.max(dialItems.length - 1, 0)),
+    count: dialItems.length,
+    pages: pages.length,
+    mode: dialMode
+  }
+
+  useEffect(() => {
+    if (!dialOn || !dialEdge.current) return
+    setDialIndex(
+      dialEdge.current === 'end' ? Math.max(dialItems.length - 1, 0) : 0
+    )
+    dialEdge.current = null
+  }, [pageIndex, dialOn, dialItems.length])
+
+  useEffect(() => {
+    if (!dialOn) return
+    const active = document.activeElement as HTMLElement | null
+    if (active && active.blur) active.blur()
+
+    function move(direction: number) {
+      const now = Date.now()
+      if (now - dialStepAt.current < 40) return
+      dialStepAt.current = now
+      const state = dialRef.current
+      if (state.count === 0) {
+        if (state.pages < 2 || state.mode === 'items') return
+        dialEdge.current = direction > 0 ? 'start' : 'end'
+        setPageIndex(current =>
+          direction > 0
+            ? (current + 1) % state.pages
+            : (current - 1 + state.pages) % state.pages
+        )
+        return
+      }
+      const next = state.index + direction
+      if (next >= 0 && next < state.count) {
+        setDialIndex(next)
+        return
+      }
+      if (state.pages < 2 || state.mode === 'items') {
+        setDialIndex(direction > 0 ? 0 : state.count - 1)
+        return
+      }
+      dialEdge.current = direction > 0 ? 'start' : 'end'
+      setPageIndex(current =>
+        direction > 0
+          ? (current + 1) % state.pages
+          : (current - 1 + state.pages) % state.pages
+      )
+    }
+
+    function menuOpen() {
+      return !!document.querySelector('[class*="menu"][data-shown="true"]')
+    }
+
+    function onKey(event: KeyboardEvent) {
+      if (sleepRef.current !== 'off' || menuOpen()) return
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        event.preventDefault()
+        event.stopPropagation()
+        move(-1)
+      } else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        event.preventDefault()
+        event.stopPropagation()
+        move(1)
+      } else if (event.key === 'Enter') {
+        event.preventDefault()
+        event.stopPropagation()
+        const selected = document.querySelector(
+          '[data-dial-selected="true"]'
+        ) as HTMLElement | null
+        if (selected) selected.click()
+      }
+    }
+
+    function onWheel(event: WheelEvent) {
+      if (sleepRef.current !== 'off' || menuOpen()) return
+      const delta =
+        Math.abs(event.deltaX) >= Math.abs(event.deltaY)
+          ? event.deltaX
+          : event.deltaY
+      if (!delta) return
+      event.preventDefault()
+      event.stopPropagation()
+      move(delta > 0 ? 1 : -1)
+    }
+
+    document.addEventListener('keydown', onKey, true)
+    document.addEventListener('wheel', onWheel, {
+      capture: true,
+      passive: false
+    })
+    return () => {
+      document.removeEventListener('keydown', onKey, true)
+      document.removeEventListener('wheel', onWheel, true)
+    }
+  }, [dialOn])
 
   function onTouchStart(event: TouchEvent) {
     const touch = event.changedTouches[0]
@@ -199,7 +358,11 @@ const Widgets: React.FC = () => {
                 height: `${tile.h}%`
               }}
             >
-              <TileView tile={tile} actions={actions} />
+              <TileView
+                tile={tile}
+                actions={actions}
+                selectedKey={selectedKey}
+              />
             </div>
           ))}
         </div>
@@ -207,8 +370,14 @@ const Widgets: React.FC = () => {
         <>
           <Player />
           <div className={styles.column}>
-            <LayoutTile shortcutIds={(apps || []).map(app => app.id)} />
+            <LayoutTile
+              shortcutIds={(apps || []).map(app => app.id)}
+              tileId="default-layout"
+              selectedKey=""
+            />
             <ActionsTile
+              tileId="default-actions"
+              selectedKey=""
               actions={[
                 {
                   id: 'lock',

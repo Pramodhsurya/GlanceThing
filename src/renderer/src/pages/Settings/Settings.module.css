@@ -281,6 +281,49 @@
   border: 1px solid #555;
 }
 
+.choiceSetting {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.choiceSetting .description {
+  font-size: 14px;
+  color: #aaa;
+}
+
+.choiceSetting .choices {
+  display: flex;
+  flex-shrink: 0;
+  padding: 3px;
+  gap: 3px;
+  border-radius: 8px;
+  background: #222;
+  border: 1px solid #333;
+}
+
+.choiceSetting .choices button {
+  padding: 6px 12px;
+  font-size: 14px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #aaa;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 200ms ease;
+}
+
+.choiceSetting .choices button:hover {
+  color: #fff;
+}
+
+.choiceSetting .choices button[data-active='true'] {
+  background: #fff;
+  color: #000;
+}
+
 .sliderSetting {
   display: flex;
   flex-direction: column;

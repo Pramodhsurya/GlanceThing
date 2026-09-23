@@ -20,6 +20,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { join } from 'path'
 
 import {
+  getLayoutPayload,
   getPlaybackHandlerConfig,
   getStorageValue,
   loadStorage,
@@ -402,7 +403,7 @@ async function setupIpcHandlers() {
     await updateApps()
     serverManager.broadcast({
       type: 'layout',
-      data: getStorageValue('screenLayout')
+      data: getLayoutPayload()
     })
     await restartChromium(null)
   })

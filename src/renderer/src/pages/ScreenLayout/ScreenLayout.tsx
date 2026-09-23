@@ -872,6 +872,8 @@ const ScreenLayout: React.FC = () => {
         <LayoutFace
           shortcutIds={tile.shortcutIds}
           images={images}
+          tileId={tile.id}
+          selectedKey=""
           {...faceItem(tile, 'shortcutIds')}
         />
       )
@@ -881,7 +883,12 @@ const ScreenLayout: React.FC = () => {
         .map(id => config.actions.find(action => action.id === id))
         .filter((action): action is ActionItem => !!action)
       return (
-        <ActionsFace actions={visible} {...faceItem(tile, 'actionIds')} />
+        <ActionsFace
+          actions={visible}
+          tileId={tile.id}
+          selectedKey=""
+          {...faceItem(tile, 'actionIds')}
+        />
       )
     }
     return <PlayerFace />

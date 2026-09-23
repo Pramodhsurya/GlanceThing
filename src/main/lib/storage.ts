@@ -32,8 +32,14 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
   brightness: async value => {
     await setBrightnessSmooth(null, value as number)
   },
-  screenLayout: value => {
-    serverManager.broadcast({ type: 'layout', data: value })
+  screenLayout: () => {
+    serverManager.broadcast({ type: 'layout', data: getLayoutPayload() })
+  },
+  dialNavigation: () => {
+    serverManager.broadcast({ type: 'layout', data: getLayoutPayload() })
+  },
+  dialMode: () => {
+    serverManager.broadcast({ type: 'layout', data: getLayoutPayload() })
   },
   logLevel: async value => setLogLevel(value as LogLevel),
   port: async p => {
@@ -78,6 +84,22 @@ export function loadStorage() {
 function writeStorage(storage: Record<string, unknown>) {
   const storagePath = getStoragePath()
   fs.writeFileSync(storagePath, JSON.stringify(storage, null, 2), 'utf8')
+}
+
+export function getLayoutPayload() {
+  const layout = getStorageValue('screenLayout')
+  const dialNavigation = getStorageValue('dialNavigation') === true
+  const savedMode = getStorageValue('dialMode')
+  const dialMode =
+    savedMode === 'pages' || savedMode === 'items' ? savedMode : 'both'
+  if (!layout || typeof layout !== 'object' || Array.isArray(layout)) {
+    return { tiles: [], dialNavigation, dialMode }
+  }
+  return {
+    ...(layout as Record<string, unknown>),
+    dialNavigation,
+    dialMode
+  }
 }
 
 export function getStorageValue(key: string, secure = false) {

@@ -204,6 +204,36 @@ const SelectSetting: React.FC<{
   )
 }
 
+const ChoiceSetting: React.FC<{
+  label: string
+  description?: string
+  value: string
+  options: { value: string; label: string }[]
+  onChange: (value: string) => void
+}> = ({ label, description, value, options, onChange }) => {
+  return (
+    <div className={styles.choiceSetting}>
+      <div className={styles.text}>
+        <p className={styles.label}>{label}</p>
+        <p className={styles.description}>{description}</p>
+      </div>
+      <div className={styles.choices} role="radiogroup">
+        {options.map(option => (
+          <button
+            key={option.value}
+            role="radio"
+            aria-checked={option.value === value}
+            data-active={option.value === value}
+            onClick={() => onChange(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 const SliderSetting: React.FC<{
   label: string
   description?: string
@@ -325,6 +355,8 @@ const InputSubmitSetting: React.FC<{
 const GeneralTab: React.FC = () => {
   const navigate = useNavigate()
   const [loaded, setLoaded] = useState(false)
+  const [dialOn, setDialOn] = useState(false)
+  const [dialMode, setDialMode] = useState('both')
 
   const settings = useRef<{
     installAutomatically?: boolean
@@ -337,6 +369,11 @@ const GeneralTab: React.FC = () => {
           (await window.api.getStorageValue('installAutomatically')) ===
           true
       }
+      setDialOn(
+        (await window.api.getStorageValue('dialNavigation')) === true
+      )
+      const mode = await window.api.getStorageValue('dialMode')
+      setDialMode(mode === 'pages' || mode === 'items' ? mode : 'both')
       setLoaded(true)
     }
 
@@ -354,6 +391,37 @@ const GeneralTab: React.FC = () => {
             window.api.setStorageValue('installAutomatically', value)
           }
         />
+        <ToggleSetting
+          label="Dial navigation"
+          description="Use the Car Thing dial to move around the screen. Press the dial to open a shortcut or run an action."
+          value={dialOn}
+          onChange={value => {
+            setDialOn(value)
+            window.api.setStorageValue('dialNavigation', value)
+          }}
+        />
+        {dialOn && (
+          <ChoiceSetting
+            label="Dial controls"
+            description={
+              dialMode === 'pages'
+                ? 'Turning the dial flips between pages.'
+                : dialMode === 'items'
+                  ? 'Turning the dial moves between apps, shortcuts, and actions on the current page. Swipe to change pages.'
+                  : 'Turning the dial moves between apps, shortcuts, and actions, then on to the next page.'
+            }
+            value={dialMode}
+            options={[
+              { value: 'pages', label: 'Pages' },
+              { value: 'items', label: 'Apps & shortcuts' },
+              { value: 'both', label: 'Both' }
+            ]}
+            onChange={value => {
+              setDialMode(value)
+              window.api.setStorageValue('dialMode', value)
+            }}
+          />
+        )}
         <ButtonSetting
           label="Playback Setup"
           description="Run the playback setup again to change how playback is handled."

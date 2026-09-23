@@ -44,9 +44,19 @@ export const LayoutFace: React.FC<
   {
     shortcutIds: string[]
     images: Record<string, string>
+    tileId: string
+    selectedKey: string
     onOpen?: (id: string) => void
   } & ItemHooks
-> = ({ shortcutIds, images, onOpen, itemProps, itemExtra }) => {
+> = ({
+  shortcutIds,
+  images,
+  tileId,
+  selectedKey,
+  onOpen,
+  itemProps,
+  itemExtra
+}) => {
   const tileRef = useRef<HTMLDivElement>(null)
   const [columns, setColumns] = useState(Math.max(shortcutIds.length, 1))
 
@@ -86,6 +96,10 @@ export const LayoutFace: React.FC<
       {shortcutIds.map(id => (
         <Item
           key={id}
+          data-selected={selectedKey === tileId + ':' + id}
+          data-dial-selected={
+            selectedKey === tileId + ':' + id ? 'true' : 'false'
+          }
           onClick={onOpen ? () => onOpen(id) : undefined}
           {...mergeItem(styles.app, itemProps ? itemProps(id) : undefined)}
         >
@@ -102,9 +116,11 @@ export const LayoutFace: React.FC<
 export const ActionsFace: React.FC<
   {
     actions: ActionItem[]
+    tileId: string
+    selectedKey: string
     onRun?: (action: ActionItem) => void
   } & ItemHooks
-> = ({ actions, onRun, itemProps, itemExtra }) => {
+> = ({ actions, tileId, selectedKey, onRun, itemProps, itemExtra }) => {
   const Item = itemProps ? 'div' : 'button'
   return (
     <BaseWidget className={styles.actions}>
@@ -113,6 +129,10 @@ export const ActionsFace: React.FC<
           key={action.id}
           data-type={
             action.command === '__builtin:lock' ? 'lock' : undefined
+          }
+          data-selected={selectedKey === tileId + ':' + action.id}
+          data-dial-selected={
+            selectedKey === tileId + ':' + action.id ? 'true' : 'false'
           }
           onClick={onRun ? () => onRun(action) : undefined}
           {...mergeItem(
