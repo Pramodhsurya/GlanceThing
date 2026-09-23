@@ -69,10 +69,6 @@ const DEFAULT_CONFIG: ScreenConfig = {
 }
 
 function shortcutLabel(command: string) {
-  if (command.includes('open work')) return 'Work'
-  if (command.includes('open personal')) return 'Personal'
-  if (command.includes('Visual Studio Code')) return 'VS Code'
-  if (command.includes('Cursor')) return 'Cursor'
   const cleaned = command.replace(/^open\s+-a\s+/i, '').replace(/"/g, '')
   return cleaned.length > 18 ? `${cleaned.slice(0, 18)}…` : cleaned
 }
