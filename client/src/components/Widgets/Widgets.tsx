@@ -3,60 +3,22 @@ import { useContext, useEffect, useRef, useState } from 'react'
 import { SocketContext } from '@/contexts/SocketContext.tsx'
 
 import Player from './widgets/Player/Player.tsx'
-import BaseWidget from './widgets/BaseWidget/BaseWidget.tsx'
+import { ActionsFace, LayoutFace } from './Screen.tsx'
+import {
+  fitTiles,
+  type ActionItem,
+  type AppShortcut,
+  type ScreenConfig,
+  type Tile
+} from './screenModel.ts'
 
 import styles from './Widgets.module.css'
 
-type TileKind = 'layout' | 'playback' | 'actions'
-
-interface Tile {
-  id: string
-  kind: TileKind
-  x: number
-  y: number
-  w: number
-  h: number
-  shortcutIds?: string[]
-}
-
-interface ActionItem {
-  id: string
-  label: string
-  icon: string
-  command: string
-}
-
-interface ScreenConfig {
-  tiles: Tile[]
-  actions: ActionItem[]
-}
-
-interface AppShortcut {
-  id: string
-  path?: string
-}
-
-function isConfig(value: unknown): value is ScreenConfig {
-  if (!value || typeof value !== 'object' || Array.isArray(value))
-    return false
-  return Array.isArray((value as ScreenConfig).tiles)
-}
-
-const LayoutTile: React.FC<{ shortcutIds: string[] }> = ({
-  shortcutIds
-}) => {
+const LayoutTile: React.FC<{
+  shortcutIds: string[]
+}> = ({ shortcutIds }) => {
   const { ready, socket } = useContext(SocketContext)
   const [images, setImages] = useState<Record<string, string>>({})
-
-  function openApp(id: string) {
-    socket?.send(
-      JSON.stringify({
-        type: 'apps',
-        action: 'open',
-        data: id
-      })
-    )
-  }
 
   useEffect(() => {
     if (!ready || !socket || shortcutIds.length === 0) return
@@ -78,11 +40,7 @@ const LayoutTile: React.FC<{ shortcutIds: string[] }> = ({
     socket.addEventListener('message', listener)
     for (const id of shortcutIds) {
       socket.send(
-        JSON.stringify({
-          type: 'apps',
-          action: 'image',
-          data: id
-        })
+        JSON.stringify({ type: 'apps', action: 'image', data: id })
       )
     }
 
@@ -90,21 +48,21 @@ const LayoutTile: React.FC<{ shortcutIds: string[] }> = ({
   }, [ready, socket, shortcutIds])
 
   return (
-    <BaseWidget className={styles.layoutTile}>
-      {shortcutIds.map(id => (
-        <button
-          key={id}
-          className={styles.app}
-          onClick={() => openApp(id)}
-        >
-          {images[id] ? <img src={images[id]} alt="" /> : null}
-        </button>
-      ))}
-    </BaseWidget>
+    <LayoutFace
+      shortcutIds={shortcutIds}
+      images={images}
+      onOpen={id =>
+        socket?.send(
+          JSON.stringify({ type: 'apps', action: 'open', data: id })
+        )
+      }
+    />
   )
 }
 
-const ActionsTile: React.FC<{ actions: ActionItem[] }> = ({ actions }) => {
+const ActionsTile: React.FC<{
+  actions: ActionItem[]
+}> = ({ actions }) => {
   const { socket } = useContext(SocketContext)
 
   function run(action: ActionItem) {
@@ -113,31 +71,17 @@ const ActionsTile: React.FC<{ actions: ActionItem[] }> = ({ actions }) => {
       return
     }
     socket?.send(
-      JSON.stringify({
-        type: 'actions',
-        action: 'run',
-        data: action.id
-      })
+      JSON.stringify({ type: 'actions', action: 'run', data: action.id })
     )
   }
 
-  return (
-    <BaseWidget className={styles.actions}>
-      {actions.map(action => (
-        <button
-          key={action.id}
-          className={styles.action}
-          data-type={
-            action.command === '__builtin:lock' ? 'lock' : undefined
-          }
-          onClick={() => run(action)}
-        >
-          <span className="material-icons">{action.icon || 'bolt'}</span>
-          <p>{action.label}</p>
-        </button>
-      ))}
-    </BaseWidget>
-  )
+  return <ActionsFace actions={actions} onRun={run} />
+}
+
+function isConfig(value: unknown): value is ScreenConfig {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    return false
+  return Array.isArray((value as ScreenConfig).tiles)
 }
 
 function TileView({
@@ -148,7 +92,15 @@ function TileView({
   actions: ActionItem[]
 }) {
   if (tile.kind === 'playback') return <Player />
-  if (tile.kind === 'actions') return <ActionsTile actions={actions} />
+  if (tile.kind === 'actions') {
+    const ids = tile.actionIds
+    const visible = Array.isArray(ids)
+      ? (ids
+          .map(id => actions.find(action => action.id === id))
+          .filter(Boolean) as ActionItem[])
+      : actions
+    return <ActionsTile actions={visible} />
+  }
   return <LayoutTile shortcutIds={tile.shortcutIds || []} />
 }
 
@@ -195,7 +147,7 @@ const Widgets: React.FC = () => {
     return () => socket.removeEventListener('message', listener)
   }, [ready, socket])
 
-  const tiles = config?.tiles
+  const tiles = config?.tiles ? fitTiles(config.tiles) : config?.tiles
   const actions = config?.actions || []
 
   return (
@@ -213,16 +165,7 @@ const Widgets: React.FC = () => {
                 height: `${tile.h}%`
               }}
             >
-              <TileView
-                tile={
-                  tile.kind === 'layout' &&
-                  (tile.shortcutIds || []).length === 0 &&
-                  apps
-                    ? tile
-                    : tile
-                }
-                actions={actions}
-              />
+              <TileView tile={tile} actions={actions} />
             </div>
           ))}
         </div>
