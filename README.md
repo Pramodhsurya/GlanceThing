@@ -31,17 +31,17 @@ Your CarThing as a glanceable action pad!
 
 Build what the Car Thing shows from the **Layout** tab. Add frames for shortcuts, actions, playback and widgets, then drag and resize them on a preview that draws the real Car Thing screen, with the same icons, fonts and status bar. Changes save automatically and appear on the device straight away.
 
-| Desktop app                                                 | Car Thing                                                   |
-| ----------------------------------------------------------- | ----------------------------------------------------------- |
-| <img src=".github/assets/fork/s2-editor.png" width="400" /> | <img src=".github/assets/fork/s2-device.png" width="400" /> |
+| Desktop app                                                 | Car Thing                                                       |
+| ----------------------------------------------------------- | --------------------------------------------------------------- |
+| <img src=".github/assets/fork/s2-editor.png" width="400" /> | <img src=".github/assets/fork/s2-device.png?v=2" width="400" /> |
 
 ### Multiple pages
 
 Each page has its own frames. Swipe left and right on the Car Thing to switch pages, and the dots at the bottom show which page you're on. In the editor, drag page tabs to reorder them, or press × to remove a page.
 
-| Desktop app                                                       | Car Thing, page 2                                                 |
-| ----------------------------------------------------------------- | ----------------------------------------------------------------- |
-| <img src=".github/assets/fork/s4-editor-page2.png" width="400" /> | <img src=".github/assets/fork/s4-device-page2.png" width="400" /> |
+| Desktop app                                                       | Car Thing, page 2                                                     |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------- |
+| <img src=".github/assets/fork/s4-editor-page2.png" width="400" /> | <img src=".github/assets/fork/s4-device-page2.png?v=2" width="400" /> |
 
 ### Dial navigation
 
@@ -51,31 +51,31 @@ Turn the dial to move a highlight across the screen, and press it to open the sh
 - **Apps & shortcuts:** moves through the items on the current page.
 - **Both:** moves through the items, then continues onto the next page.
 
-| Settings                                                      | Car Thing                                                        |
-| ------------------------------------------------------------- | ---------------------------------------------------------------- |
-| <img src=".github/assets/fork/s5-settings.png" width="400" /> | <img src=".github/assets/fork/s5-device-dial.png" width="400" /> |
+| Settings                                                      | Car Thing                                                            |
+| ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| <img src=".github/assets/fork/s5-settings.png" width="400" /> | <img src=".github/assets/fork/s5-device-dial.png?v=2" width="400" /> |
 
 ### Sleep and wake actions
 
 Two preset actions next to **Lock**. **Sleep** puts the computer to sleep, and **Wake** wakes its display.
 
-<img src=".github/assets/fork/s3-device.png" width="400" />
+<img src=".github/assets/fork/s3-device.png?v=2" width="400" />
 
 ### Weather
 
 A weather frame with the current temperature, conditions, the day's high and low, and an hourly strip that includes sunrise and sunset. The layout adapts to the frame's size and shape.
 
-| Desktop app                                                         | Car Thing                                                   |
-| ------------------------------------------------------------------- | ----------------------------------------------------------- |
-| <img src=".github/assets/fork/s6-editor-weather.png" width="400" /> | <img src=".github/assets/fork/s6-device.png" width="400" /> |
+| Desktop app                                                         | Car Thing                                                       |
+| ------------------------------------------------------------------- | --------------------------------------------------------------- |
+| <img src=".github/assets/fork/s6-editor-weather.png" width="400" /> | <img src=".github/assets/fork/s6-device.png?v=2" width="400" /> |
 
 ### Calendar and meeting reminders (macOS)
 
 A calendar frame for today and tomorrow, read from **macOS Calendar**. It works with Exchange, Google, iCloud or any account added under System Settings → Internet Accounts. Online meetings get a **Join** button, and a reminder pops up on the Car Thing 15 minutes before each meeting with **Join**, **Snooze** and **Dismiss**.
 
-| Desktop app                                                          | Car Thing                                                            | Reminder                                                             |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| <img src=".github/assets/fork/s7-editor-calendar.png" width="300" /> | <img src=".github/assets/fork/s7-device-calendar.png" width="300" /> | <img src=".github/assets/fork/s7-device-reminder.png" width="300" /> |
+| Desktop app                                                          | Car Thing                                                                | Reminder                                                                 |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| <img src=".github/assets/fork/s7-editor-calendar.png" width="300" /> | <img src=".github/assets/fork/s7-device-calendar.png?v=2" width="300" /> | <img src=".github/assets/fork/s7-device-reminder.png?v=2" width="300" /> |
 
 _(The meetings in these screenshots are demo data.)_
 
@@ -85,13 +85,13 @@ See how much of your **Codex**, **Claude** and **Cursor** subscription limits is
 
 Usage is read with the sign-ins those apps already keep on your computer, so there's nothing new to sign in to. Requests are read-only, and it only refreshes while a usage frame is on the layout.
 
-| Overview                                                            | One frame per subscription                                        |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| <img src=".github/assets/fork/s8-usage-overview.png" width="400" /> | <img src=".github/assets/fork/s8-usage-halves.png" width="400" /> |
+| Overview                                                                | One frame per subscription                                            |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| <img src=".github/assets/fork/s8-usage-overview.png?v=2" width="400" /> | <img src=".github/assets/fork/s8-usage-halves.png?v=2" width="400" /> |
 
-| Full screen                                                     | Layout editor                                                     |
-| --------------------------------------------------------------- | ----------------------------------------------------------------- |
-| <img src=".github/assets/fork/s8-usage-full.png" width="400" /> | <img src=".github/assets/fork/s8-usage-editor.png" width="400" /> |
+| Full screen                                                         | Layout editor                                                     |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| <img src=".github/assets/fork/s8-usage-full.png?v=2" width="400" /> | <img src=".github/assets/fork/s8-usage-editor.png" width="400" /> |
 
 ### Photo album screensaver
 
@@ -150,7 +150,7 @@ cd dist && zip -r ../../glancething-client.zip . && cd ../..
 
 ### Client interface
 
-<img src=".github/assets/client.png" width="400" />
+<img src=".github/assets/client.png?v=2" width="400" />
 
 Here you will see your current Spotify player status, as well as your app shortcuts and custom actions. You can use the touch screen, but the interface can also be fully navigated using the physical buttons, which is preferred.
 
@@ -158,7 +158,7 @@ The buttons 1, 2 and 3 (from the left) will focus the Spotify, shortcuts and act
 
 Pressing the M button (right-most button) will bring up the system menu where you can choose to put your device to sleep, or restore your device to the original Spotify software.
 
-<img src=".github/assets/menu.png" width="400" />
+<img src=".github/assets/menu.png?v=2" width="400" />
 
 Using the dial will:
 
@@ -176,7 +176,7 @@ You can also use the album cover as a playback controller. Press once to play/pa
 
 Pressing the Back button (below the dial) reveals a fullscreen media player, which can be used with the same controls as the Spotify widgets, as well as extra tappable buttons like shuffle and repeat. Press the back button again or the arrow down icon to close.
 
-<img src=".github/assets/fullscreen.png" width="400" />
+<img src=".github/assets/fullscreen.png?v=2" width="400" />
 
 ### Desktop companion
 
