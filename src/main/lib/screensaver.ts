@@ -1,4 +1,4 @@
-import { app, dialog } from 'electron'
+import { app, dialog, nativeImage } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import crypto from 'crypto'
@@ -7,6 +7,9 @@ import { AuthenticatedWebSocket } from '../types/WebSocketServer.js'
 
 export const MAX_SCREENSAVER_PHOTOS = 10
 const MAX_SIZE_MB = 5
+const SCREEN_WIDTH = 800
+const SCREEN_HEIGHT = 480
+const JPEG_QUALITY = 85
 const ALLOWED_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp'])
 
 export type ScreensaverPhoto = {
@@ -114,6 +117,25 @@ export function updateScreensaverImage() {
   broadcast('update')
 }
 
+function resizeForScreen(imagePath: string): Buffer | null {
+  const image = nativeImage.createFromPath(imagePath)
+  if (image.isEmpty()) return null
+  const { width, height } = image.getSize()
+  const scale = Math.min(
+    1,
+    Math.max(SCREEN_WIDTH / width, SCREEN_HEIGHT / height)
+  )
+  const output =
+    scale < 1
+      ? image.resize({
+          width: Math.round(width * scale),
+          height: Math.round(height * scale),
+          quality: 'best'
+        })
+      : image
+  return output.toJPEG(JPEG_QUALITY)
+}
+
 export async function uploadScreensaverImage() {
   const current = listPhotoFiles()
   const remaining = MAX_SCREENSAVER_PHOTOS - current.length
@@ -143,18 +165,23 @@ export async function uploadScreensaverImage() {
 
   for (const imagePath of selected) {
     try {
-      const stats = fs.statSync(imagePath)
-      if (stats.size / (1024 * 1024) > MAX_SIZE_MB) {
-        lastError = `Skipped ${path.basename(imagePath)}: exceeds the 5MB limit.`
-        continue
-      }
       const ext = path.extname(imagePath).toLowerCase()
       if (!ALLOWED_EXT.has(ext)) {
         lastError = `Skipped ${path.basename(imagePath)}: unsupported format.`
         continue
       }
       const id = crypto.randomBytes(8).toString('hex')
-      fs.copyFileSync(imagePath, path.join(dir, `${id}${ext}`))
+      const resized = resizeForScreen(imagePath)
+      if (resized) {
+        fs.writeFileSync(path.join(dir, `${id}.jpg`), resized)
+      } else {
+        const stats = fs.statSync(imagePath)
+        if (stats.size / (1024 * 1024) > MAX_SIZE_MB) {
+          lastError = `Skipped ${path.basename(imagePath)}: could not be resized and exceeds the 5MB limit.`
+          continue
+        }
+        fs.copyFileSync(imagePath, path.join(dir, `${id}${ext}`))
+      }
       added++
     } catch {
       lastError = `Could not save ${path.basename(imagePath)}.`
