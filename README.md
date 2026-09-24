@@ -97,7 +97,11 @@ Usage is read with the sign-ins those apps already keep on your computer, so the
 
 ### Photo album screensaver
 
-Under **Settings → Client**, set **Sleep Method** to **Screensaver** and upload up to **10 photos**. When the Car Thing goes to sleep, the photos rotate every **30 seconds**, **1 minute** or **5 minutes**, which you pick with **Photo Rotation**. Remove photos one at a time or clear the whole album. With no photos, the default animated screensaver is shown.
+Under **Settings → Client**, set **Sleep Method** to **Screensaver** and upload up to **10 photos**. When the Car Thing goes to sleep, the photos rotate every **30 seconds**, **1 minute** or **5 minutes** (**Photo Rotation**). Turn on **Shuffle Photos** for random order, and **Show Clock** for the time and date over the photos. Each thumbnail has a fill/fit control so tall photos can sit inside the screen instead of being cropped. Remove photos one at a time or clear the whole album. With no photos, the default animated screensaver is shown.
+
+| Settings → Client                                                              | Car Thing screensaver                                                      |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| <img src=".github/assets/fork/app-screensaver-settings.png?v=1" width="400" /> | <img src=".github/assets/fork/s9-screensaver-album.png?v=1" width="400" /> |
 
 ### Desktop app changes
 
@@ -114,13 +118,11 @@ Under **Settings → Client**, set **Sleep Method** to **Screensaver** and uploa
 - **Preview:** drag and resize frames directly on the preview, and remove a frame with ×. Page tabs above the preview add, reorder and remove pages.
 - **Saving:** changes are saved to the Car Thing automatically. **Refresh Car Thing** reloads the device, and **Reset** goes back to the default layout.
 - **Settings → General:** new **Dial navigation** and **Dial controls** options.
-- **Settings → Client:** **Photo Rotation** and the photo album, with thumbnails, per-photo remove and clear all.
+- **Settings → Client:** **Photo Rotation**, shuffle, clock, and the photo album, with thumbnails, per-photo fill/fit and remove, and clear all.
 
-| Settings → General                                                     | Settings → Client                                                     |
-| ---------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| <img src=".github/assets/fork/app-settings-general.png" width="400" /> | <img src=".github/assets/fork/app-settings-client.png" width="400" /> |
-
-_(The album thumbnail is a placeholder.)_
+| Settings → General                                                     | Settings → Client                                                         |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| <img src=".github/assets/fork/app-settings-general.png" width="400" /> | <img src=".github/assets/fork/app-settings-client.png?v=2" width="400" /> |
 
 ### Reliability
 
