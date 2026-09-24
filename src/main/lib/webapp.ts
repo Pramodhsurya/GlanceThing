@@ -25,6 +25,15 @@ export async function getWebAppDir() {
     return localClient
   }
 
+  const bundledClient = path.join(process.resourcesPath, 'client')
+  if (
+    app.isPackaged &&
+    fs.existsSync(path.join(bundledClient, 'index.html'))
+  ) {
+    log('Using bundled client webapp', 'Client Webapp')
+    return bundledClient
+  }
+
   if (isDev() && hasCustomWebApp()) {
     log('Using custom client webapp', 'Client Webapp')
     return path.join(app.getPath('userData'), 'customClient')
