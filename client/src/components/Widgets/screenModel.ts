@@ -12,12 +12,53 @@ export type TileKind =
 
 export type UsageTarget = 'all' | 'codex' | 'claude' | 'cursor'
 
+/** Overview layouts from the redesign. `auto` picks by tile size. */
+export type UsageStyle =
+  | 'auto'
+  | 'cards'
+  | 'tinted'
+  | 'list'
+  | 'rings'
+  | 'mini'
+
 export const USAGE_NAMES: Record<UsageTarget, string> = {
   all: 'AI usage',
   codex: 'Codex',
   claude: 'Claude',
   cursor: 'Cursor'
 }
+
+export const USAGE_STYLES: {
+  id: UsageStyle
+  label: string
+  detail: string
+}[] = [
+  {
+    id: 'cards',
+    label: 'Cards + dial',
+    detail: 'Full screen — dial for the lowest limit'
+  },
+  {
+    id: 'tinted',
+    label: 'Tinted cards',
+    detail: 'Full screen — brand-tinted panels'
+  },
+  {
+    id: 'list',
+    label: 'List rows',
+    detail: 'Half screen — compact bars'
+  },
+  {
+    id: 'rings',
+    label: 'Rings',
+    detail: 'Wide strip — one ring per subscription'
+  },
+  {
+    id: 'mini',
+    label: 'Compact',
+    detail: 'Quarter — one bar per subscription'
+  }
+]
 
 export interface Tile {
   id: string
@@ -29,6 +70,7 @@ export interface Tile {
   shortcutIds?: string[]
   actionIds?: string[]
   provider?: UsageTarget
+  usageStyle?: UsageStyle
 }
 
 export interface UsageWindow {

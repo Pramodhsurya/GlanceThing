@@ -13,9 +13,11 @@ import {
 } from '../../../../../client/src/components/Widgets/Screen'
 import {
   USAGE_NAMES,
+  USAGE_STYLES,
   screenStyles,
   type AiUsageInfo,
   type CalendarInfo as ScreenCalendar,
+  type UsageStyle,
   type UsageTarget,
   type WeatherInfo as ScreenWeather
 } from '../../../../../client/src/components/Widgets/screenModel'
@@ -43,6 +45,7 @@ interface Tile {
   shortcutIds: string[]
   actionIds: string[]
   provider?: UsageTarget
+  usageStyle?: UsageStyle
 }
 
 interface ActionItem {
@@ -949,27 +952,49 @@ const ScreenLayout: React.FC = () => {
     kind: TileKind,
     x: number,
     y: number,
-    provider: UsageTarget = 'all'
+    provider: UsageTarget = 'all',
+    usageStyle?: UsageStyle
   ) {
-    const w = kind === 'layout' ? 42 : 46
+    const styleSize =
+      kind === 'usage' && provider === 'all'
+        ? usageStyle === 'list'
+          ? { w: 48, h: 88, x: 75, y: 50 }
+          : usageStyle === 'rings'
+            ? { w: 92, h: 42, x: 50, y: 28 }
+            : usageStyle === 'mini'
+              ? { w: 46, h: 42, x: 26, y: 28 }
+              : { w: 92, h: 88, x: 50, y: 50 }
+        : kind === 'usage'
+          ? { w: 48, h: 88, x, y }
+          : null
+    const w =
+      styleSize?.w ?? (kind === 'layout' ? 42 : kind === 'usage' ? 46 : 46)
     const h =
-      kind === 'layout'
+      styleSize?.h ??
+      (kind === 'layout'
         ? 48
         : kind === 'weather'
           ? 54
           : kind === 'usage'
             ? 60
-            : 50
+            : 50)
+    const placeX = styleSize?.x ?? x
+    const placeY = styleSize?.y ?? y
     const tile: Tile = {
       id: crypto.randomUUID(),
       kind,
-      x: clamp(x - w / 2, 0, 100 - w),
-      y: clamp(y - h / 2, 0, 100 - h),
+      x: clamp(placeX - w / 2, 0, 100 - w),
+      y: clamp(placeY - h / 2, 0, 100 - h),
       w,
       h,
       shortcutIds: [],
       actionIds: [],
-      ...(kind === 'usage' ? { provider } : {})
+      ...(kind === 'usage'
+        ? {
+            provider,
+            ...(provider === 'all' && usageStyle ? { usageStyle } : {})
+          }
+        : {})
     }
     if (kind === 'usage' && !aiUsage) updateUsage()
     if (kind !== 'layout') {
@@ -1247,6 +1272,7 @@ const ScreenLayout: React.FC = () => {
         <UsageFace
           usage={aiUsage || undefined}
           target={tile.provider}
+          usageStyle={tile.usageStyle}
           now={clock}
         />
       )
@@ -1832,19 +1858,46 @@ const ScreenLayout: React.FC = () => {
             onToggle={() => toggleSection('usage')}
           >
             <p className={styles.hint}>
-              Add an overview of every subscription, or one frame per
-              subscription.
+              Pick an overview layout, or one frame per subscription. Each
+              overview style fits a different tile size.
             </p>
             <div className={styles.list}>
-              {USAGE_TARGETS.map(target => {
-                const provider = usageProviders.find(
-                  item => item.id === target
+              {USAGE_STYLES.map(item => {
+                const onPage = pageTiles.some(
+                  tile =>
+                    tile.kind === 'usage' &&
+                    (tile.provider || 'all') === 'all' &&
+                    (tile.usageStyle || 'cards') === item.id
                 )
-                const windows = provider?.windows || []
-                const detail =
-                  target === 'all'
-                    ? 'Every subscription at a glance'
-                    : windows.length > 0
+                return (
+                  <div key={item.id} className={styles.usageItem}>
+                    <div className={styles.usageText}>
+                      <strong>{item.label}</strong>
+                      <span>{item.detail}</span>
+                    </div>
+                    <button
+                      className={styles.add}
+                      disabled={onPage}
+                      onClick={() =>
+                        addFrame('usage', 50, 50, 'all', item.id)
+                      }
+                    >
+                      {onPage ? 'Added' : 'Add'}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+            <p className={styles.hint}>Single subscription</p>
+            <div className={styles.list}>
+              {USAGE_TARGETS.filter(target => target !== 'all').map(
+                target => {
+                  const provider = usageProviders.find(
+                    item => item.id === target
+                  )
+                  const windows = provider?.windows || []
+                  const detail =
+                    windows.length > 0
                       ? windows
                           .slice(0, 2)
                           .map(
@@ -1853,30 +1906,29 @@ const ScreenLayout: React.FC = () => {
                           )
                           .join(' · ')
                       : provider?.message || 'Not loaded yet'
-                const onPage = usageOnPage(target)
-                return (
-                  <div key={target} className={styles.usageItem}>
-                    <div className={styles.usageText}>
-                      <strong>
-                        {target === 'all'
-                          ? 'Overview'
-                          : USAGE_NAMES[target]}
-                        {provider?.plan ? (
-                          <small> {provider.plan}</small>
-                        ) : null}
-                      </strong>
-                      <span>{detail}</span>
+                  const onPage = usageOnPage(target)
+                  return (
+                    <div key={target} className={styles.usageItem}>
+                      <div className={styles.usageText}>
+                        <strong>
+                          {USAGE_NAMES[target]}
+                          {provider?.plan ? (
+                            <small> {provider.plan}</small>
+                          ) : null}
+                        </strong>
+                        <span>{detail}</span>
+                      </div>
+                      <button
+                        className={styles.add}
+                        disabled={onPage}
+                        onClick={() => addFrame('usage', 75, 50, target)}
+                      >
+                        {onPage ? 'Added' : 'Add'}
+                      </button>
                     </div>
-                    <button
-                      className={styles.add}
-                      disabled={onPage}
-                      onClick={() => addFrame('usage', 75, 50, target)}
-                    >
-                      {onPage ? 'Added' : 'Add'}
-                    </button>
-                  </div>
-                )
-              })}
+                  )
+                }
+              )}
             </div>
             <button
               className={styles.primary}
@@ -2110,7 +2162,12 @@ const ScreenLayout: React.FC = () => {
                       <span className={styles.frameOutline} />
                       <span className={styles.frameBadge}>
                         {tile.kind === 'usage'
-                          ? USAGE_NAMES[tile.provider || 'all']
+                          ? tile.provider && tile.provider !== 'all'
+                            ? USAGE_NAMES[tile.provider]
+                            : USAGE_STYLES.find(
+                                item =>
+                                  item.id === (tile.usageStyle || 'cards')
+                              )?.label || 'AI usage'
                           : KIND_LABELS[tile.kind]}
                       </span>
                       {tile.kind === 'layout' &&

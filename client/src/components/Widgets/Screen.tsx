@@ -15,6 +15,7 @@ import {
   type CalendarEvent,
   type CalendarInfo,
   type UsageProvider,
+  type UsageStyle,
   type UsageTarget,
   type UsageWindow,
   type WeatherInfo
@@ -615,91 +616,284 @@ export const WeatherFace: React.FC<{ weather?: WeatherInfo }> = ({
     </BaseWidget>
   )
 }
-
 const USAGE_COLORS: Record<string, string> = {
   codex: '#00f59b',
   claude: '#ff7b2e',
   cursor: '#4f9dff'
 }
 
-function resetText(iso: string | null, now: number) {
-  if (!iso) return ''
-  const ms = Date.parse(iso) - now
-  if (Number.isNaN(ms)) return ''
-  if (ms <= 0) return 'Resetting now'
-  const minutes = Math.floor(ms / 60000)
-  const days = Math.floor(minutes / 1440)
-  const hours = Math.floor((minutes % 1440) / 60)
-  if (days > 0) return 'Resets in ' + days + 'd ' + hours + 'h'
-  if (hours > 0) return 'Resets in ' + hours + 'h ' + (minutes % 60) + 'm'
-  return 'Resets in ' + Math.max(1, minutes) + 'm'
+const RED = '#ff4d5e'
+const AMBER = '#ffc043'
+
+type UsageTier = 'full' | 'tall' | 'wide' | 'quarter'
+
+type LimitMetric = {
+  label: string
+  left: number
+  pct: string
+  numColor: string
+  fill: string
+  glow: string
+  width: string
+  track: string
+  low: boolean
+  reset: string
+  resetsAt: string | null
+}
+
+function money(value: number) {
+  return (
+    '$' + (value >= 100 ? Math.round(value).toString() : value.toFixed(2))
+  )
 }
 
 function tokenText(value: number) {
   if (value >= 1e9) return (value / 1e9).toFixed(1) + 'B'
   if (value >= 1e6) return Math.round(value / 1e6) + 'M'
   if (value >= 1e3) return Math.round(value / 1e3) + 'K'
-  return String(Math.round(value))
+  return '0'
 }
 
-function money(value: number) {
-  return '$' + (value >= 100 ? value.toFixed(0) : value.toFixed(2))
+function rgba(hex: string, alpha: number) {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')'
 }
 
-const UsageBar: React.FC<{ left: number; color: string }> = ({
-  left,
-  color
-}) => (
-  <div className={styles.usageTrack}>
-    <span
-      style={{
-        width: Math.max(0, Math.min(100, left)) + '%',
-        background: left < 15 ? '#ff3b5c' : color,
-        boxShadow: '0 0 0.5em ' + (left < 15 ? '#ff3b5c' : color)
-      }}
-    />
-  </div>
-)
+function resetDuration(iso: string | null, now: number) {
+  if (!iso) return null
+  const ms = Date.parse(iso) - now
+  if (Number.isNaN(ms) || ms <= 0) return null
+  const minutes = Math.floor(ms / 60000)
+  const days = Math.floor(minutes / 1440)
+  const hours = Math.floor((minutes % 1440) / 60)
+  const mins = minutes % 60
+  if (days > 0) return days + 'd ' + hours + 'h'
+  if (hours > 0) return hours + 'h ' + mins + 'm'
+  return Math.max(1, mins) + 'm'
+}
 
-function overviewWindows(windows: UsageWindow[]) {
-  if (windows.length <= 2) return windows
-  const rest = windows.slice(1)
-  let lowest = rest[0]
-  for (let i = 1; i < rest.length; i += 1) {
-    if (rest[i].left < lowest.left) lowest = rest[i]
+function resetText(iso: string | null, now: number) {
+  if (!iso) return 'No scheduled reset'
+  const duration = resetDuration(iso, now)
+  return duration ? 'Resets in ' + duration : 'Resetting now'
+}
+
+function updatedAgo(iso: string | undefined, now: number) {
+  if (!iso) return 'Updated recently'
+  const ms = now - Date.parse(iso)
+  if (Number.isNaN(ms) || ms < 60000) return 'Updated just now'
+  const minutes = Math.floor(ms / 60000)
+  if (minutes < 60) return 'Updated ' + minutes + 'm ago'
+  const hours = Math.floor(minutes / 60)
+  return 'Updated ' + hours + 'h ago'
+}
+
+function metricFor(
+  window: UsageWindow,
+  brand: string,
+  now: number
+): LimitMetric {
+  const left = Math.max(0, Math.min(100, Number(window.left) || 0))
+  const low = left < 15
+  const mid = !low && left < 30
+  const fill = low ? RED : brand
+  return {
+    label: window.label,
+    left,
+    pct: String(Math.round(left)),
+    numColor: low ? RED : mid ? AMBER : '#fff',
+    fill,
+    glow: left > 0 ? '0 0 0.7em ' + rgba(fill, 0.5) : 'none',
+    width: left + '%',
+    track: low ? 'rgba(255,77,94,0.16)' : 'rgba(255,255,255,0.08)',
+    low,
+    reset: resetText(window.resetsAt, now),
+    resetsAt: window.resetsAt
   }
-  return [windows[0], lowest]
 }
 
-function usageLines(target: UsageTarget, providers: UsageProvider[]) {
-  if (target === 'all') {
-    const spend = providers.filter(provider => provider.cost).length
-    return 1.6 + providers.length * 2.3 + spend * 0.9
+function overviewLimits(
+  windows: UsageWindow[],
+  brand: string,
+  now: number
+) {
+  if (windows.length === 0) return [] as LimitMetric[]
+  const metrics = windows.map(window => metricFor(window, brand, now))
+  if (metrics.length <= 2) return metrics
+  let lowest = metrics[1]
+  for (let i = 2; i < metrics.length; i += 1) {
+    if (metrics[i].left < lowest.left) lowest = metrics[i]
   }
-  const provider = providers[0]
-  if (!provider) return 4
+  return [metrics[0], lowest]
+}
+
+function lowestMetric(metrics: LimitMetric[]) {
+  if (metrics.length === 0) return null
+  let lowest = metrics[0]
+  for (let i = 1; i < metrics.length; i += 1) {
+    if (metrics[i].left < lowest.left) lowest = metrics[i]
+  }
+  return lowest
+}
+
+function usageTier(width: number, height: number): UsageTier {
+  if (!width || !height) return 'full'
+  const ratio = width / height
+  if (width >= 560 && height >= 300) return 'full'
+  if (height >= 300 && ratio < 1.35) return 'tall'
+  if (width >= 560 && height < 300) return 'wide'
+  return 'quarter'
+}
+
+function overviewLayout(
+  style: UsageStyle | undefined,
+  tier: UsageTier
+): 'cards' | 'tinted' | 'list' | 'rings' | 'mini' {
+  if (style && style !== 'auto') return style
+  if (tier === 'tall') return 'list'
+  if (tier === 'wide') return 'rings'
+  if (tier === 'quarter') return 'mini'
+  return 'cards'
+}
+
+function UsageRing({
+  pct,
+  label,
+  stroke,
+  numColor,
+  size,
+  strokeWidth,
+  centerLabel
+}: {
+  pct: string
+  label?: string
+  stroke: string
+  numColor: string
+  size: string
+  strokeWidth: string
+  centerLabel?: boolean
+}) {
+  const left = Math.max(0, Math.min(100, Number(pct) || 0))
+  const dash = (263.9 * left) / 100
+  const glow =
+    left > 0
+      ? 'drop-shadow(0 0 0.35em ' + rgba(stroke, 0.55) + ')'
+      : 'none'
   return (
-    2 +
-    (provider.windows || []).length * 2.6 +
-    (provider.notes || []).length * 1.2 +
-    (provider.message ? 1.2 : 0) +
-    (provider.cost ? 3.2 : 0)
+    <div
+      className={styles.usageRing}
+      style={{ width: size, height: size }}
+    >
+      <svg className={styles.usageRingSvg}>
+        <circle
+          cx="50%"
+          cy="50%"
+          r="42%"
+          style={{
+            fill: 'none',
+            stroke: 'rgba(255,255,255,0.08)',
+            strokeWidth
+          }}
+        />
+      </svg>
+      <svg
+        className={styles.usageRingSvg}
+        style={{ transform: 'rotate(-90deg)', filter: glow }}
+      >
+        <circle
+          cx="50%"
+          cy="50%"
+          r="42%"
+          style={{
+            fill: 'none',
+            stroke,
+            strokeWidth,
+            strokeLinecap: 'round',
+            strokeDasharray: dash.toFixed(1) + '% 300%'
+          }}
+        />
+      </svg>
+      <div className={styles.usageRingCenter}>
+        <span style={{ color: numColor }}>{pct}%</span>
+        {centerLabel && label ? <small>{label} left</small> : null}
+      </div>
+    </div>
+  )
+}
+
+function UsageBarFill({
+  width,
+  fill,
+  glow,
+  track,
+  height
+}: {
+  width: string
+  fill: string
+  glow?: string
+  track: string
+  height: string
+}) {
+  return (
+    <div
+      className={styles.usageBar}
+      style={{ height, background: track, borderRadius: '999px' }}
+    >
+      <span
+        style={{
+          width,
+          background: fill,
+          boxShadow: glow || 'none',
+          borderRadius: '999px'
+        }}
+      />
+    </div>
+  )
+}
+
+function SpendChart({
+  days,
+  color,
+  tall
+}: {
+  days: number[]
+  color: string
+  tall?: boolean
+}) {
+  const peak = Math.max(1, ...days)
+  return (
+    <div
+      className={styles.usageChart}
+      data-tall={tall ? 'true' : 'false'}
+      data-empty={days.some(value => value > 0) ? 'false' : 'true'}
+    >
+      {days.map((value, index) => (
+        <span
+          key={index}
+          style={{
+            height: Math.max(5, Math.round((value / peak) * 100)) + '%',
+            background: color,
+            opacity: index === days.length - 1 ? 1 : value ? 0.5 : 0.22
+          }}
+        />
+      ))}
+    </div>
   )
 }
 
 export const UsageFace: React.FC<{
   usage?: AiUsageInfo
   target?: UsageTarget
+  usageStyle?: UsageStyle
   now: number
-}> = ({ usage, target = 'all', now }) => {
+}> = ({ usage, target = 'all', usageStyle = 'auto', now }) => {
   const all = usage?.providers || []
   const providers =
     target === 'all' ? all : all.filter(provider => provider.id === target)
   const boxRef = useRef<HTMLDivElement>(null)
   const [box, setBox] = useState({ w: 0, h: 0 })
-  const [fontPx, setFontPx] = useState(16)
-  const [hidden, setHidden] = useState(0)
-  const lines = usageLines(target, providers)
 
   useEffect(() => {
     const node = boxRef.current
@@ -718,158 +912,634 @@ export const UsageFace: React.FC<{
     return () => observer.disconnect()
   }, [])
 
-  useEffect(() => {
-    if (!box.w || !box.h) return
-    const guess = Math.min(
-      box.h / lines,
-      box.w / (target === 'all' ? 19 : 13)
-    )
-    setHidden(0)
-    setFontPx(Math.max(10, Math.min(30, Math.floor(guess))))
-  }, [box, lines, target])
-
-  useEffect(() => {
-    const node = boxRef.current
-    if (!node || !box.w) return
-    const overflow =
-      node.scrollHeight > node.clientHeight + 1 ||
-      node.scrollWidth > node.clientWidth + 1
-    if (!overflow) return
-    if (fontPx > 10) setFontPx(Math.max(10, Math.floor(fontPx * 0.93)))
-    else if (hidden < 1) setHidden(hidden + 1)
-  }, [box, fontPx, hidden, usage, target])
-
+  const tier = usageTier(box.w, box.h)
+  const layout = overviewLayout(usageStyle, tier)
+  const base =
+    tier === 'full' ? 16 : tier === 'tall' ? 14 : tier === 'wide' ? 12 : 11
+  const loading = !usage
   const provider = target === 'all' ? null : providers[0]
-  const color = USAGE_COLORS[target] || '#9fb4ff'
-  const cost = provider?.cost
-  const peak = Math.max(1, ...(cost?.days || []))
+  const brand = USAGE_COLORS[target] || '#9fb4ff'
+
+  if (target !== 'all') {
+    return (
+      <ProviderUsage
+        boxRef={boxRef}
+        base={base}
+        tier={tier}
+        provider={provider || undefined}
+        brand={brand}
+        name={USAGE_NAMES[target]}
+        loading={loading}
+        now={now}
+      />
+    )
+  }
+
+  const anyStale = providers.some(item => item.status === 'stale')
+  const staleIso = providers.find(item => item.updatedAt)?.updatedAt
+  const headRight =
+    layout === 'cards' || layout === 'tinted' || layout === 'rings'
+      ? 'lowest limit'
+      : '% left'
 
   return (
     <BaseWidget
       ref={boxRef}
       className={styles.usage}
-      data-hidden={hidden}
-      style={{ fontSize: fontPx + 'px' }}
+      data-layout={layout}
+      data-tier={tier}
+      style={{ fontSize: base + 'px' }}
     >
-      {target === 'all' ? (
-        <>
-          <p className={styles.usageTitle}>
-            AI usage<span>% left</span>
-          </p>
-          {providers.length === 0 ? (
-            <p className={styles.usageMuted}>Loading usage…</p>
-          ) : (
-            providers.map(item => {
-              const windows = overviewWindows(item.windows || [])
-              const tint = USAGE_COLORS[item.id] || '#9fb4ff'
-              return (
-                <div
-                  key={item.id}
-                  className={styles.usageRow}
-                  data-status={item.status || 'ok'}
-                >
-                  <div className={styles.usageRowTop}>
-                    <div className={styles.usageName}>
-                      <strong style={{ color: tint }}>{item.name}</strong>
-                      {item.plan ? <small>{item.plan}</small> : null}
-                    </div>
-                    {windows.length === 0 ? (
-                      <p className={styles.usageMuted}>
-                        {item.message || 'Not connected'}
-                      </p>
-                    ) : (
-                      windows.map(window => (
-                        <div
-                          key={window.label}
-                          className={styles.usageMini}
-                        >
-                          <div className={styles.usageLine}>
-                            <span>{window.label}</span>
-                            <b>{Math.round(window.left)}%</b>
-                          </div>
-                          <UsageBar left={window.left} color={tint} />
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  {item.cost ? (
-                    <p className={styles.usageRowCost}>
-                      <span>
-                        Today <b>{money(item.cost.today)}</b> ·{' '}
-                        {tokenText(item.cost.todayTokens)} tokens
-                      </span>
-                      <span>
-                        30 days <b>{money(item.cost.month)}</b> ·{' '}
-                        {tokenText(item.cost.monthTokens)} tokens
-                      </span>
-                    </p>
-                  ) : null}
-                </div>
-              )
-            })
-          )}
-        </>
-      ) : (
-        <>
-          <div className={styles.usageHead}>
-            <strong style={{ color }}>{USAGE_NAMES[target]}</strong>
-            {provider?.plan ? <small>{provider.plan}</small> : null}
+      <div className={styles.usageHeadRow}>
+        <span className={styles.usageTitle}>AI usage</span>
+        {anyStale ? (
+          <span className={styles.usageChipStale}>
+            {updatedAgo(staleIso, now)}
+          </span>
+        ) : loading ? (
+          <span className={styles.usageMutedHead}>Loading usage…</span>
+        ) : (
+          <span className={styles.usageMutedHead}>{headRight}</span>
+        )}
+      </div>
+      <div
+        className={styles.usageBody}
+        style={{ opacity: anyStale ? 0.5 : 1 }}
+      >
+        {loading ? (
+          <OverviewLoading layout={layout} />
+        ) : providers.length === 0 ? (
+          <p className={styles.usageMuted}>No subscriptions found</p>
+        ) : layout === 'cards' || layout === 'tinted' ? (
+          <OverviewCards
+            providers={providers}
+            tinted={layout === 'tinted'}
+            now={now}
+          />
+        ) : layout === 'list' ? (
+          <OverviewList providers={providers} now={now} />
+        ) : layout === 'rings' ? (
+          <OverviewRings providers={providers} now={now} />
+        ) : (
+          <OverviewMini providers={providers} now={now} />
+        )}
+      </div>
+    </BaseWidget>
+  )
+}
+
+function OverviewLoading({
+  layout
+}: {
+  layout: 'cards' | 'tinted' | 'list' | 'rings' | 'mini'
+}) {
+  if (layout === 'cards' || layout === 'tinted') {
+    return (
+      <div className={styles.usageCards}>
+        {[0, 1, 2].map(i => (
+          <div key={i} className={styles.usageCard}>
+            <div
+              className={styles.usageSkeleton}
+              style={{ width: '40%' }}
+            />
+            <div className={styles.usageSkeletonRing} />
+            <div className={styles.usageSkeleton} />
           </div>
-          {!provider ? (
-            <p className={styles.usageMuted}>Loading usage…</p>
-          ) : null}
-          {provider?.message ? (
-            <p className={styles.usageMuted}>{provider.message}</p>
-          ) : null}
-          {(provider?.windows || []).map(window => (
-            <div key={window.label} className={styles.usageWindow}>
-              <div className={styles.usageLine}>
-                <span>{window.label}</span>
-                <b>{Math.round(window.left)}% left</b>
+        ))}
+      </div>
+    )
+  }
+  return (
+    <div className={styles.usageList}>
+      {[0, 1, 2].map(i => (
+        <div key={i} className={styles.usageListRow}>
+          <div className={styles.usageSkeleton} style={{ width: '30%' }} />
+          <div className={styles.usageSkeleton} style={{ flex: 1 }} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function OverviewCards({
+  providers,
+  tinted,
+  now
+}: {
+  providers: UsageProvider[]
+  tinted: boolean
+  now: number
+}) {
+  return (
+    <div className={styles.usageCards}>
+      {providers.map(item => {
+        const brand = USAGE_COLORS[item.id] || '#9fb4ff'
+        const off =
+          item.status === 'off' || (item.windows || []).length === 0
+        const metrics = overviewLimits(item.windows || [], brand, now)
+        const lead = lowestMetric(metrics)
+        const others = metrics.filter(metric => metric !== lead)
+        const low = !!lead && lead.low
+        const cost = item.cost
+        const border = low
+          ? 'rgba(255,77,94,0.55)'
+          : tinted
+            ? rgba(brand, 0.28)
+            : 'rgba(255,255,255,0.08)'
+        const tint = tinted
+          ? 'linear-gradient(180deg,' +
+            rgba(brand, 0.2) +
+            ',' +
+            rgba(brand, 0.08) +
+            ')'
+          : 'rgba(255,255,255,0.02)'
+        return (
+          <div
+            key={item.id}
+            className={styles.usageCard}
+            style={{ borderColor: border, background: tint }}
+          >
+            <div className={styles.usageCardTop}>
+              <div className={styles.usageNameLine}>
+                <strong style={{ color: brand }}>{item.name}</strong>
+                {item.plan ? <small>{item.plan}</small> : null}
               </div>
-              <UsageBar left={window.left} color={color} />
-              <p className={styles.usageReset}>
-                {resetText(window.resetsAt, now)}
-              </p>
+              {low ? (
+                <span className={styles.usageLowPill}>LOW</span>
+              ) : null}
             </div>
-          ))}
-          {(provider?.notes || []).map(note => (
-            <p key={note} className={styles.usageNote}>
-              {note}
-            </p>
-          ))}
-          {cost ? (
-            <div className={styles.usageCost}>
-              <div className={styles.usageSpend}>
-                <span>Today</span>
-                <b>{money(cost.today)}</b>
-                <small>{tokenText(cost.todayTokens)} tokens</small>
+            {off ? (
+              <div className={styles.usageOffBox}>
+                <div>Not connected</div>
+                <small>
+                  {item.message ||
+                    'Sign in to ' + item.name + ' to see usage'}
+                </small>
               </div>
-              <div className={styles.usageSpend}>
-                <span>30 days</span>
-                <b>{money(cost.month)}</b>
-                <small>{tokenText(cost.monthTokens)} tokens</small>
-              </div>
-              <div
-                className={styles.usageChart}
-                data-empty={
-                  cost.days.some(value => value > 0) ? 'false' : 'true'
-                }
-              >
-                {cost.days.map((value, index) => (
-                  <span
-                    key={index}
-                    style={{
-                      height: Math.max(4, (value / peak) * 100) + '%',
-                      background: color
-                    }}
+            ) : lead ? (
+              <>
+                <div className={styles.usageDialWrap}>
+                  <UsageRing
+                    pct={lead.pct}
+                    label={lead.label}
+                    stroke={lead.fill}
+                    numColor={lead.numColor}
+                    size="6.75em"
+                    strokeWidth="9%"
+                    centerLabel
                   />
+                </div>
+                {others.map(metric => (
+                  <div key={metric.label} className={styles.usageSideBar}>
+                    <span>{metric.label}</span>
+                    <UsageBarFill
+                      width={metric.width}
+                      fill={metric.fill}
+                      track={metric.track}
+                      height="0.4375em"
+                    />
+                    <b style={{ color: metric.numColor }}>{metric.pct}%</b>
+                  </div>
+                ))}
+                {cost ? (
+                  <div className={styles.usageCardSpend}>
+                    <div>
+                      <span>Today</span>
+                      <b>{money(cost.today)}</b>
+                      <small>{tokenText(cost.todayTokens)} tokens</small>
+                    </div>
+                    <div>
+                      <span>30 days</span>
+                      <b>{money(cost.month)}</b>
+                      <small>{tokenText(cost.monthTokens)} tokens</small>
+                    </div>
+                    <SpendChart days={cost.days || []} color={brand} />
+                  </div>
+                ) : null}
+              </>
+            ) : null}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function OverviewList({
+  providers,
+  now
+}: {
+  providers: UsageProvider[]
+  now: number
+}) {
+  return (
+    <div className={styles.usageList}>
+      {providers.map((item, index) => {
+        const brand = USAGE_COLORS[item.id] || '#9fb4ff'
+        const off =
+          item.status === 'off' || (item.windows || []).length === 0
+        const metrics = overviewLimits(item.windows || [], brand, now)
+        const low = metrics.some(metric => metric.low)
+        return (
+          <div
+            key={item.id}
+            className={styles.usageListRow}
+            data-first={index === 0 ? 'true' : 'false'}
+            style={{
+              background: low
+                ? 'linear-gradient(90deg,rgba(255,77,94,0.14),rgba(255,77,94,0) 70%)'
+                : 'transparent'
+            }}
+          >
+            <div className={styles.usageListName}>
+              <strong style={{ color: brand }}>{item.name}</strong>
+              <div className={styles.usageNameLine}>
+                {item.plan ? <small>{item.plan}</small> : null}
+                {low ? (
+                  <span className={styles.usageLowPill}>LOW</span>
+                ) : null}
+              </div>
+              {!off && item.cost ? (
+                <div className={styles.usageListToday}>
+                  Today <b>{money(item.cost.today)}</b>
+                </div>
+              ) : null}
+            </div>
+            {off ? (
+              <div className={styles.usageMuted}>
+                {item.message ||
+                  'Sign in to ' + item.name + ' to see usage'}
+              </div>
+            ) : (
+              <div className={styles.usageListBars}>
+                {metrics.map(metric => (
+                  <div key={metric.label} className={styles.usageSideBar}>
+                    <span>{metric.label}</span>
+                    <UsageBarFill
+                      width={metric.width}
+                      fill={metric.fill}
+                      glow={metric.glow}
+                      track={metric.track}
+                      height="0.5em"
+                    />
+                    <b style={{ color: metric.numColor }}>{metric.pct}%</b>
+                  </div>
                 ))}
               </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function OverviewRings({
+  providers,
+  now
+}: {
+  providers: UsageProvider[]
+  now: number
+}) {
+  return (
+    <div className={styles.usageRings}>
+      {providers.map(item => {
+        const brand = USAGE_COLORS[item.id] || '#9fb4ff'
+        const off =
+          item.status === 'off' || (item.windows || []).length === 0
+        const metrics = overviewLimits(item.windows || [], brand, now)
+        const lead = lowestMetric(metrics)
+        const low = !!lead && lead.low
+        return (
+          <div key={item.id} className={styles.usageRingRow}>
+            {off || !lead ? (
+              <div className={styles.usageRingEmpty} />
+            ) : (
+              <UsageRing
+                pct={lead.pct}
+                stroke={lead.fill}
+                numColor={lead.numColor}
+                size="5.75em"
+                strokeWidth="10%"
+              />
+            )}
+            <div className={styles.usageRingMeta}>
+              <strong style={{ color: brand }}>{item.name}</strong>
+              <div>
+                {item.plan || ''}
+                {item.plan && lead ? ' · ' : ''}
+                {off ? 'Not connected' : lead ? lead.label : 'Loading…'}
+              </div>
+              {!off && lead ? <small>{lead.reset}</small> : null}
+              {low ? (
+                <div className={styles.usageLowText}>LOW LIMIT</div>
+              ) : null}
             </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function OverviewMini({
+  providers,
+  now
+}: {
+  providers: UsageProvider[]
+  now: number
+}) {
+  return (
+    <div className={styles.usageList}>
+      {providers.map((item, index) => {
+        const brand = USAGE_COLORS[item.id] || '#9fb4ff'
+        const off =
+          item.status === 'off' || (item.windows || []).length === 0
+        const lead = lowestMetric(
+          overviewLimits(item.windows || [], brand, now)
+        )
+        const low = !!lead && lead.low
+        return (
+          <div
+            key={item.id}
+            className={styles.usageMiniRow}
+            data-first={index === 0 ? 'true' : 'false'}
+            style={{
+              background: low
+                ? 'linear-gradient(90deg,rgba(255,77,94,0.14),rgba(255,77,94,0) 70%)'
+                : 'transparent'
+            }}
+          >
+            <strong style={{ color: brand }}>{item.name}</strong>
+            {off || !lead ? (
+              <span className={styles.usageMuted}>
+                Sign in to see usage
+              </span>
+            ) : (
+              <>
+                <UsageBarFill
+                  width={lead.width}
+                  fill={lead.fill}
+                  glow={lead.glow}
+                  track={lead.track}
+                  height="0.5em"
+                />
+                <b style={{ color: lead.numColor }}>{lead.pct}%</b>
+              </>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function ProviderUsage({
+  boxRef,
+  base,
+  tier,
+  provider,
+  brand,
+  name,
+  loading,
+  now
+}: {
+  boxRef: React.RefObject<HTMLDivElement | null>
+  base: number
+  tier: UsageTier
+  provider?: UsageProvider
+  brand: string
+  name: string
+  loading: boolean
+  now: number
+}) {
+  const off =
+    !!provider &&
+    (provider.status === 'off' || (provider.windows || []).length === 0)
+  const stale = provider?.status === 'stale'
+  const ok = !!provider && !loading && !off
+  const metrics = (provider?.windows || []).map(window =>
+    metricFor(window, brand, now)
+  )
+  const primary = lowestMetric(metrics)
+  const others = metrics.filter(metric => metric !== primary)
+  const lowOne = ok ? metrics.find(metric => metric.low) : undefined
+  const row = tier === 'full' || tier === 'wide'
+  const showChips = tier === 'full' || tier === 'tall'
+  const showFooter = tier === 'full' || tier === 'tall'
+  const showChart =
+    tier === 'full' || (tier === 'tall' && others.length <= 1)
+  const showReset = tier !== 'quarter'
+  const headerSpend = tier === 'wide'
+  const nameSize =
+    tier === 'full'
+      ? '2.25em'
+      : tier === 'tall'
+        ? '2em'
+        : tier === 'wide'
+          ? '1.75em'
+          : '1.625em'
+  const pSize =
+    tier === 'full'
+      ? '4.5em'
+      : tier === 'tall'
+        ? '3.75em'
+        : tier === 'wide'
+          ? '3.5em'
+          : '3em'
+  const pUnit =
+    tier === 'full'
+      ? '2em'
+      : tier === 'tall'
+        ? '1.6em'
+        : tier === 'wide'
+          ? '1.5em'
+          : '1.4em'
+  const pBar =
+    tier === 'full'
+      ? '0.75em'
+      : tier === 'quarter'
+        ? '0.5625em'
+        : '0.625em'
+  const next = (provider?.windows || [])
+    .map(window => window.resetsAt)
+    .filter(Boolean)
+    .sort()[0]
+  const chips: string[] = []
+  if (
+    next &&
+    (provider?.windows || []).every(window => window.left >= 100)
+  ) {
+    const duration = resetDuration(next as string, now)
+    if (duration) chips.push('Next reset ' + duration)
+  }
+  ;(provider?.notes || []).forEach(note => chips.push(note))
+  const cost = provider?.cost
+
+  return (
+    <BaseWidget
+      ref={boxRef}
+      className={styles.usage}
+      data-layout="detail"
+      data-tier={tier}
+      data-low={lowOne ? 'true' : 'false'}
+      style={{
+        fontSize: base + 'px',
+        borderColor: lowOne ? 'rgba(255,77,94,0.5)' : 'transparent'
+      }}
+    >
+      <div className={styles.usageHeadRow}>
+        <div className={styles.usageNameLine}>
+          <strong style={{ color: brand, fontSize: nameSize }}>
+            {name}
+          </strong>
+          {lowOne && !stale ? (
+            <span className={styles.usageLowBadge}>
+              LOW {lowOne.label.toUpperCase()}
+            </span>
           ) : null}
-        </>
-      )}
+          {stale ? (
+            <span className={styles.usageChipStale}>
+              {updatedAgo(provider?.updatedAt, now)}
+            </span>
+          ) : null}
+        </div>
+        {headerSpend && ok && cost ? (
+          <span className={styles.usageHeaderSpend}>
+            Today <b>{money(cost.today)}</b>
+            {' · 30 days '}
+            <b>{money(cost.month)}</b>
+          </span>
+        ) : provider?.plan ? (
+          <span className={styles.usagePlan}>{provider.plan}</span>
+        ) : null}
+      </div>
+      <div
+        className={styles.usageBody}
+        style={{ opacity: stale ? 0.5 : 1 }}
+      >
+        {loading ? (
+          <div className={styles.usageDetailLoading}>
+            <div
+              className={styles.usageSkeleton}
+              style={{ width: '30%' }}
+            />
+            <div
+              className={styles.usageSkeleton}
+              style={{ width: '22%', height: '2.5em', marginTop: '0.5em' }}
+            />
+            <div
+              className={styles.usageSkeleton}
+              style={{ height: '0.625em', marginTop: '0.7em' }}
+            />
+            <p className={styles.usageMuted}>Loading usage…</p>
+          </div>
+        ) : off ? (
+          <div className={styles.usageOffBox}>
+            <div>
+              {provider?.message || 'Sign in to ' + name + ' to see usage'}
+            </div>
+            <small>Usage is unavailable until {name} is connected.</small>
+          </div>
+        ) : primary ? (
+          <>
+            {showChips && chips.length > 0 ? (
+              <div className={styles.usageChips}>
+                {chips.map(chip => (
+                  <span
+                    key={chip}
+                    style={{
+                      color: brand,
+                      background: rgba(brand, 0.12),
+                      borderColor: rgba(brand, 0.3)
+                    }}
+                  >
+                    {chip}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            <div
+              className={styles.usageDetailCols}
+              data-row={row ? 'true' : 'false'}
+            >
+              <div className={styles.usageLead}>
+                <span className={styles.usageLeadLabel}>
+                  {primary.label} left
+                </span>
+                <div className={styles.usageLeadPct}>
+                  <span
+                    style={{ fontSize: pSize, color: primary.numColor }}
+                  >
+                    {primary.pct}
+                  </span>
+                  <span
+                    style={{ fontSize: pUnit, color: primary.numColor }}
+                  >
+                    %
+                  </span>
+                </div>
+                <UsageBarFill
+                  width={primary.width}
+                  fill={primary.fill}
+                  glow={primary.glow}
+                  track={primary.track}
+                  height={pBar}
+                />
+                {showReset ? (
+                  <div className={styles.usageReset}>{primary.reset}</div>
+                ) : null}
+              </div>
+              {others.length > 0 ? (
+                <div
+                  className={styles.usageOthers}
+                  data-row={row ? 'true' : 'false'}
+                >
+                  {others.map(metric => (
+                    <div key={metric.label} className={styles.usageOther}>
+                      <div className={styles.usageLine}>
+                        <span>{metric.label}</span>
+                        <b style={{ color: metric.numColor }}>
+                          {metric.pct}%
+                        </b>
+                      </div>
+                      <UsageBarFill
+                        width={metric.width}
+                        fill={metric.fill}
+                        glow={metric.glow}
+                        track={metric.track}
+                        height="0.5em"
+                      />
+                      {showReset ? (
+                        <div className={styles.usageResetSmall}>
+                          {metric.reset}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            {showFooter && cost ? (
+              <div className={styles.usageCost}>
+                <div className={styles.usageSpend}>
+                  <span>Today</span>
+                  <b>{money(cost.today)}</b>
+                  <small>{tokenText(cost.todayTokens)} tokens</small>
+                </div>
+                <div className={styles.usageSpend}>
+                  <span>30 days</span>
+                  <b>{money(cost.month)}</b>
+                  <small>{tokenText(cost.monthTokens)} tokens</small>
+                </div>
+                {showChart ? (
+                  <SpendChart days={cost.days || []} color={brand} tall />
+                ) : null}
+              </div>
+            ) : null}
+          </>
+        ) : null}
+      </div>
     </BaseWidget>
   )
 }

@@ -157,7 +157,14 @@ function TileView({
 }) {
   if (tile.kind === 'playback') return <Player />
   if (tile.kind === 'usage') {
-    return <UsageFace usage={aiUsage} target={tile.provider} now={now} />
+    return (
+      <UsageFace
+        usage={aiUsage}
+        target={tile.provider}
+        usageStyle={tile.usageStyle}
+        now={now}
+      />
+    )
   }
   if (tile.kind === 'calendar') {
     return <CalendarTile calendar={calendar} now={now} />

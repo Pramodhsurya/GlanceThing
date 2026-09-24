@@ -434,193 +434,267 @@
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  padding: 0.7em 0.9em;
+  padding: 0.85em 1.25em 1em;
   overflow: hidden;
   color: #fff;
   line-height: 1.15;
+  border-radius: 14px;
+  border: 1px solid transparent;
   background: linear-gradient(180deg, #16171d 0%, #22242e 100%);
 }
 
-.usage > * {
+.usage[data-layout='detail'] {
+  padding: 0.9em 1.375em 1em;
+}
+
+.usageHeadRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.55em;
+  margin-bottom: 0.65em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   flex-shrink: 0;
 }
 
 .usageTitle {
-  margin: 0 0 0.35em;
-  font-size: 0.8em;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #9a9a9a;
-}
-
-.usageTitle span {
-  float: right;
-  font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.usageRow {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex: 1;
-  min-height: 0;
-  max-height: 4.4em;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.usageRowTop {
-  display: flex;
-  align-items: center;
-}
-
-.usageRowCost {
-  display: flex;
-  justify-content: space-between;
-  margin: 0.3em 0 0 8em;
+  margin: 0;
   font-size: 0.75em;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8a8a8a;
+}
+
+.usageMutedHead,
+.usagePlan {
+  font-size: 0.75em;
+  color: #8a8a8a;
+}
+
+.usagePlan {
+  font-size: 1.125em;
   color: #9a9a9a;
+}
+
+.usageHeaderSpend {
+  font-size: 0.9375em;
+  color: #8a8a8a;
   white-space: nowrap;
 }
 
-.usageRowCost span + span {
-  margin-left: 1em;
-}
-
-.usageRowCost b {
+.usageHeaderSpend b {
   color: #fff;
 }
 
-.usageChart[data-empty='true'] {
-  visibility: hidden;
-}
-
-.usageRow[data-status='stale'] {
-  opacity: 0.6;
-}
-
-.usageName {
+.usageBody {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  width: 5.2em;
-  flex-shrink: 0;
-  white-space: nowrap;
 }
 
-.usageName strong,
-.usageHead strong {
-  font-weight: 700;
-}
-
-.usageName small,
-.usageHead small {
-  font-size: 0.75em;
+.usageMuted {
+  margin: 0;
+  font-size: 0.875em;
   color: #9a9a9a;
 }
 
-.usageMini {
-  flex: 1;
-  min-width: 0;
-  margin-left: 0.8em;
+.usageChipStale {
+  font-size: 0.6875em;
+  font-weight: 700;
+  color: #ffc043;
+  background: rgba(255, 192, 67, 0.14);
+  border: 1px solid rgba(255, 192, 67, 0.35);
+  border-radius: 1em;
+  padding: 0.15em 0.7em;
+  white-space: nowrap;
 }
 
-.usageLine {
+.usageLowPill,
+.usageLowBadge {
+  font-size: 0.625em;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #ff4d5e;
+  background: rgba(255, 77, 94, 0.18);
+  border-radius: 0.35em;
+  padding: 0.1em 0.45em;
+  white-space: nowrap;
+}
+
+.usageLowBadge {
+  font-size: 0.75em;
+  border-radius: 0.4em;
+  padding: 0.2em 0.6em;
+  margin-left: 0.9em;
+  background: rgba(255, 77, 94, 0.16);
+}
+
+.usageLowText {
+  font-size: 0.6875em;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #ff4d5e;
+  margin-top: 0.2em;
+}
+
+.usageNameLine {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.usageNameLine strong {
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.usageNameLine small {
+  font-size: 0.8125em;
+  color: #9a9a9a;
+  margin-left: 0.45em;
+}
+
+.usageCards {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  margin-left: -0.75em;
+}
+
+.usageCard {
+  flex: 1;
+  min-width: 0;
+  margin-left: 0.75em;
+  box-sizing: border-box;
+  border-radius: 1.125em;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.8em 1em 0.85em;
+  display: flex;
+  flex-direction: column;
+}
+
+.usageCardTop {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  white-space: nowrap;
-  font-size: 0.8em;
-  color: #c8c8c8;
 }
 
-.usageLine b {
-  margin-left: 0.5em;
-  color: #fff;
+.usageDialWrap {
+  display: flex;
+  justify-content: center;
+  margin: 0.7em 0 0.6em;
 }
 
-.usageTrack {
+.usageRing {
   position: relative;
-  height: 0.42em;
-  margin-top: 0.25em;
-  border-radius: 0.21em;
-  background: rgba(255, 255, 255, 0.08);
+  flex: none;
 }
 
-.usageTrack span {
+.usageRingSvg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.usageRingCenter {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.usageRingCenter span {
+  font-size: 1.625em;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.usageRingCenter small {
+  font-size: 0.6875em;
+  color: #9a9a9a;
+  margin-top: 0.25em;
+}
+
+.usageRingEmpty {
+  width: 5.75em;
+  height: 5.75em;
+  flex: none;
+  border-radius: 50%;
+  box-sizing: border-box;
+  border: 0.575em dashed rgba(255, 255, 255, 0.1);
+}
+
+.usageSideBar {
+  display: flex;
+  align-items: center;
+  margin-top: 0.35em;
+}
+
+.usageSideBar span {
+  font-size: 0.8125em;
+  color: #c8c8c8;
+  width: 4.6em;
+  flex: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.usageSideBar b {
+  font-size: 0.8125em;
+  font-weight: 700;
+  width: 3.2em;
+  flex: none;
+  text-align: right;
+}
+
+.usageBar {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.usageBar span {
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
-  border-radius: 0.21em;
 }
 
-.usageMuted {
-  flex: 1;
-  margin: 0 0 0 0.8em;
-  font-size: 0.8em;
-  color: #8a8a8a;
-}
-
-.usageHead {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 0.3em;
-  font-size: 1.15em;
-  white-space: nowrap;
-}
-
-.usageHead + .usageMuted {
-  margin: 0 0 0.4em;
-}
-
-.usageWindow {
-  margin-bottom: 0.45em;
-}
-
-.usageWindow .usageLine {
-  font-size: 0.9em;
-}
-
-.usageReset {
-  margin: 0.2em 0 0;
-  font-size: 0.72em;
-  color: #8a8a8a;
-  white-space: nowrap;
-}
-
-.usageNote {
-  margin: 0 0 0.25em;
-  font-size: 0.78em;
-  color: #c8c8c8;
-  white-space: nowrap;
-}
-
-.usageCost {
+.usageCardSpend {
   display: flex;
   align-items: flex-end;
-  margin-top: auto;
-  padding-top: 0.4em;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding-top: 0.6em;
+  margin-top: auto;
 }
 
-.usageSpend {
-  display: flex;
-  flex-direction: column;
+.usageCardSpend > div {
   margin-right: 1em;
-  white-space: nowrap;
 }
 
-.usageSpend span,
-.usageSpend small {
-  font-size: 0.7em;
+.usageCardSpend span,
+.usageCardSpend small {
+  font-size: 0.6875em;
   color: #9a9a9a;
+  display: block;
 }
 
-.usageSpend b {
-  font-size: 1.1em;
+.usageCardSpend b {
+  font-size: 1.1875em;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .usageChart {
@@ -628,19 +702,323 @@
   align-items: flex-end;
   flex: 1;
   min-width: 3em;
-  height: 2.2em;
+  height: 2.25em;
+  margin-left: 0.75em;
+}
+
+.usageChart[data-tall='true'] {
+  height: 3.5em;
+  margin-left: 2em;
+}
+
+.usageChart[data-empty='true'] {
+  visibility: hidden;
 }
 
 .usageChart span {
   flex: 1;
-  margin-left: 2px;
-  border-radius: 2px 2px 0 0;
-  opacity: 0.85;
+  margin-left: 0.125em;
+  border-radius: 0.1em 0.1em 0 0;
 }
 
-.usage[data-hidden='1'] .usageChart,
-.usage[data-hidden='1'] .usageReset {
-  display: none;
+.usageChart[data-tall='true'] span {
+  margin-left: 0.25em;
+  border-radius: 0.15em 0.15em 0 0;
+}
+
+.usageList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.usageListRow,
+.usageMiniRow {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-height: 0;
+  margin: 0 -1.25em;
+  padding: 0 1.25em;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.usageListRow[data-first='true'],
+.usageMiniRow[data-first='true'] {
+  border-top: none;
+}
+
+.usageListName {
+  width: 6.75em;
+  flex: none;
+}
+
+.usageListName strong {
+  font-size: 1.375em;
+  font-weight: 700;
+  line-height: 1.15;
+  display: block;
+}
+
+.usageListToday {
+  font-size: 0.75em;
+  color: #8a8a8a;
+  margin-top: 0.2em;
+}
+
+.usageListToday b {
+  color: #fff;
+  font-weight: 600;
+}
+
+.usageListBars {
+  flex: 1;
+  min-width: 0;
+}
+
+.usageListBars .usageSideBar b {
+  font-size: 1em;
+  width: 3.1em;
+}
+
+.usageMiniRow strong {
+  font-size: 1.125em;
+  font-weight: 700;
+  width: 4.6em;
+  flex: none;
+}
+
+.usageMiniRow b {
+  font-size: 1.25em;
+  font-weight: 700;
+  width: 3.3em;
+  flex: none;
+  text-align: right;
+}
+
+.usageMiniRow .usageBar {
+  margin: 0 0.6em;
+}
+
+.usageRings {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-height: 0;
+}
+
+.usageRingRow {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.usageRingMeta {
+  margin-left: 0.9em;
+  min-width: 0;
+}
+
+.usageRingMeta strong {
+  font-size: 1.375em;
+  font-weight: 700;
+  line-height: 1.15;
+  display: block;
+}
+
+.usageRingMeta div {
+  font-size: 0.875em;
+  color: #9a9a9a;
+}
+
+.usageRingMeta small {
+  display: block;
+  font-size: 0.8125em;
+  color: #8a8a8a;
+  margin-top: 0.15em;
+}
+
+.usageOffBox {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+  border-radius: 0.875em;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.9em 1em;
+  margin-top: 0.4em;
+}
+
+.usageOffBox div {
+  font-size: 0.95em;
+  font-weight: 600;
+  color: #e6e6e6;
+}
+
+.usageOffBox small {
+  font-size: 0.75em;
+  color: #9a9a9a;
+  margin-top: 0.2em;
+}
+
+.usageSkeleton {
+  height: 0.5em;
+  border-radius: 0.25em;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.usageSkeletonRing {
+  width: 5.75em;
+  height: 5.75em;
+  border-radius: 50%;
+  box-sizing: border-box;
+  border: 0.6em solid rgba(255, 255, 255, 0.06);
+  margin: 1em auto;
+}
+
+.usageChips {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 0.2em;
+  margin-bottom: 0.3em;
+}
+
+.usageChips span {
+  font-size: 0.75em;
+  font-weight: 700;
+  border: 1px solid;
+  border-radius: 1em;
+  padding: 0.2em 0.8em;
+  margin-right: 0.6em;
+  margin-bottom: 0.4em;
+  white-space: nowrap;
+}
+
+.usageDetailCols {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.5em;
+}
+
+.usageDetailCols[data-row='true'] {
+  flex-direction: row;
+}
+
+.usageLead {
+  flex: 1.35;
+  min-width: 0;
+}
+
+.usageLeadLabel {
+  font-size: 0.875em;
+  color: #9a9a9a;
+}
+
+.usageLeadPct {
+  display: flex;
+  align-items: baseline;
+  line-height: 1;
+  margin: 0.1em 0 0.45em;
+}
+
+.usageLeadPct span {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.usageReset {
+  font-size: 0.875em;
+  color: #8a8a8a;
+  margin-top: 0.45em;
+}
+
+.usageResetSmall {
+  font-size: 0.75em;
+  color: #8a8a8a;
+  margin-top: 0.35em;
+}
+
+.usageOthers {
+  flex: 1;
+  min-width: 0;
+  margin-top: 1em;
+}
+
+.usageOthers[data-row='true'] {
+  margin-top: 0;
+  margin-left: 1.75em;
+  padding-left: 1.75em;
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.usageOther + .usageOther {
+  margin-top: 0.8em;
+}
+
+.usageLine {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.3em;
+  white-space: nowrap;
+}
+
+.usageLine span {
+  font-size: 0.875em;
+  color: #c8c8c8;
+}
+
+.usageLine b {
+  font-size: 1.25em;
+  font-weight: 700;
+}
+
+.usageCost {
+  display: flex;
+  align-items: flex-end;
+  margin-top: auto;
+  padding-top: 0.75em;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.usageSpend {
+  display: flex;
+  flex-direction: column;
+  margin-right: 1.5em;
+  padding-right: 1.5em;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  white-space: nowrap;
+}
+
+.usageSpend:last-of-type {
+  border-right: none;
+  padding-right: 0;
+}
+
+.usageSpend span,
+.usageSpend small {
+  font-size: 0.8125em;
+  color: #9a9a9a;
+}
+
+.usageSpend b {
+  font-size: 1.75em;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.usageDetailLoading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.usageDetailLoading .usageMuted {
+  margin-top: 1.1em;
 }
 
 .layoutTile .app img {
