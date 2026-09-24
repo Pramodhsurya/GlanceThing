@@ -99,6 +99,8 @@ Under **Settings → Client**, set **Sleep Method** to **Screensaver** and uploa
 
 ### Desktop app changes
 
+<img src=".github/assets/fork/app-layout.png" width="600" />
+
 - **Home and Layout tabs:** the titlebar now has a **Layout** tab next to **Home**. It opens the layout editor, where everything shown on the Car Thing is set up.
 - **Layout editor sections:** the left side has collapsible sections, and the app remembers which ones you left open.
   - **Add to screen:** click a frame type, or drag it onto the preview.
@@ -111,6 +113,12 @@ Under **Settings → Client**, set **Sleep Method** to **Screensaver** and uploa
 - **Saving:** changes are saved to the Car Thing automatically. **Refresh Car Thing** reloads the device, and **Reset** goes back to the default layout.
 - **Settings → General:** new **Dial navigation** and **Dial controls** options.
 - **Settings → Client:** **Photo Rotation** and the photo album, with thumbnails, per-photo remove and clear all.
+
+| Settings → General                                                     | Settings → Client                                                     |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| <img src=".github/assets/fork/app-settings-general.png" width="400" /> | <img src=".github/assets/fork/app-settings-client.png" width="400" /> |
+
+_(The album thumbnail is a placeholder.)_
 
 ### Reliability
 
