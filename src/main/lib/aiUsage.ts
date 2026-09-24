@@ -1,4 +1,4 @@
-import { net } from 'electron'
+import { session } from 'electron'
 import { execFile } from 'child_process'
 import fs from 'fs'
 import os from 'os'
@@ -63,13 +63,20 @@ function run(file: string, args: string[]) {
   })
 }
 
+// The default session encrypts its cookie store with the Keychain key, and it
+// stays broken if startup had to wait on a Keychain prompt. These requests send
+// no cookies, so an in-memory session avoids that.
+function usageFetch(url: string, init: RequestInit) {
+  return session.fromPartition('ai-usage').fetch(url, init)
+}
+
 // Chromium's network stack trusts the macOS keychain, which TLS-inspecting
 // proxies rely on; Node's bundled CA list does not.
 async function getJson(url: string, headers: Record<string, string>) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 15000)
   try {
-    const res = await net.fetch(url, {
+    const res = await usageFetch(url, {
       headers,
       signal: controller.signal,
       credentials: 'omit'
@@ -667,7 +674,7 @@ async function cursorSpend(
   start: number,
   end: number
 ) {
-  const res = await net.fetch(
+  const res = await usageFetch(
     'https://cursor.com/api/dashboard/get-aggregated-usage-events',
     {
       method: 'POST',
