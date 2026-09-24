@@ -97,6 +97,21 @@ Usage is read with the sign-ins those apps already keep on your computer, so the
 
 Under **Settings → Client**, set **Sleep Method** to **Screensaver** and upload up to **10 photos**. When the Car Thing goes to sleep, the photos rotate every **30 seconds**, **1 minute** or **5 minutes**, which you pick with **Photo Rotation**. Remove photos one at a time or clear the whole album. With no photos, the default animated screensaver is shown.
 
+### Desktop app changes
+
+- **Home and Layout tabs:** the titlebar now has a **Layout** tab next to **Home**. It opens the layout editor, where everything shown on the Car Thing is set up.
+- **Layout editor sections:** the left side has collapsible sections, and the app remembers which ones you left open.
+  - **Add to screen:** click a frame type, or drag it onto the preview.
+  - **Shortcuts:** manage app shortcuts.
+  - **Actions:** add your own actions with an icon, label and command, next to the Lock, Sleep and Wake presets.
+  - **Calendar:** import events from macOS Calendar.
+  - **Weather:** set the location and units, and refresh.
+  - **AI usage:** add an overview frame or one frame per subscription, and refresh.
+- **Preview:** drag and resize frames directly on the preview, and remove a frame with ×. Page tabs above the preview add, reorder and remove pages.
+- **Saving:** changes are saved to the Car Thing automatically. **Refresh Car Thing** reloads the device, and **Reset** goes back to the default layout.
+- **Settings → General:** new **Dial navigation** and **Dial controls** options.
+- **Settings → Client:** **Photo Rotation** and the photo album, with thumbnails, per-photo remove and clear all.
+
 ### Reliability
 
 The desktop app handles unplugging, sleep and multiple adb devices better, and the client reconnects to the socket without looping.
