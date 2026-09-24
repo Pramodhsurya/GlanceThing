@@ -1,4 +1,5 @@
 import { app, safeStorage } from 'electron'
+import { spawn } from 'child_process'
 import path from 'path'
 import fs from 'fs'
 
@@ -116,6 +117,38 @@ export function getLayoutPayload() {
   }
 }
 
+let keychainChecked = false
+
+// macOS asks again for Keychain access whenever the app's signature changes,
+// and blocks the main thread until the user answers. The notice runs in a
+// separate process: a modal dialog here breaks Chromium's network startup.
+function prepareKeychainAccess() {
+  if (keychainChecked) return
+  keychainChecked = true
+  if (process.platform !== 'darwin' || !app.isPackaged) return
+
+  const buildId = `${app.getVersion()}-${fs.statSync(process.execPath).mtimeMs}`
+  if (storage['keychainBuildId'] === buildId) return
+
+  if (storage['socketPassword'] !== undefined) {
+    log(
+      'Waiting for macOS Keychain access. Click "Always Allow" if prompted.',
+      'Storage'
+    )
+    spawn(
+      'osascript',
+      [
+        '-e',
+        'display dialog "GlanceThing was updated, so macOS is asking for permission to read its saved settings (GlanceThing Safe Storage). Enter your password and click Always Allow so it won’t ask again until the next update." with title "GlanceThing" buttons {"OK"} default button "OK" with icon note giving up after 120'
+      ],
+      { detached: true, stdio: 'ignore' }
+    ).unref()
+  }
+
+  storage['keychainBuildId'] = buildId
+  writeStorage(storage)
+}
+
 export function getStorageValue(key: string, secure = false) {
   log(`Getting value for key: ${key}`, 'Storage', LogLevel.DEBUG)
   const value = storage[key]
@@ -123,6 +156,7 @@ export function getStorageValue(key: string, secure = false) {
   if (value === undefined) return null
 
   if (secure) {
+    prepareKeychainAccess()
     if (!safeStorage.isEncryptionAvailable()) {
       log(
         'Encryption is not available, returning value as is.',
@@ -144,6 +178,7 @@ export function setStorageValue(
 ) {
   log(`Setting value for key: ${key}`, 'Storage', LogLevel.DEBUG)
   if (secure) {
+    prepareKeychainAccess()
     if (!safeStorage.isEncryptionAvailable()) {
       log(
         'WARNING: Encryption is not available, storing value as is.',
