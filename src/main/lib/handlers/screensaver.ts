@@ -24,7 +24,10 @@ export const actions: HandlerAction[] = [
   {
     action: 'getAlbum',
     handle: async ws => {
-      const photos = listScreensaverPhotos().map(p => ({ id: p.id }))
+      const photos = listScreensaverPhotos().map(p => ({
+        id: p.id,
+        fit: p.fit
+      }))
       ws.send(
         JSON.stringify({
           type: 'screensaver',

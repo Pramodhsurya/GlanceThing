@@ -74,6 +74,8 @@ import {
   uploadScreensaverImage,
   removeScreensaverImage,
   removeScreensaverPhoto,
+  setScreensaverPhotoFit,
+  ScreensaverPhotoFit,
   listScreensaverPhotos,
   getScreensaverPhotoDataUrl,
   hasCustomScreensaverImage
@@ -297,6 +299,7 @@ enum IPCHandler {
   UploadScreensaverImage = 'uploadScreensaverImage',
   RemoveScreensaverImage = 'removeScreensaverImage',
   RemoveScreensaverPhoto = 'removeScreensaverPhoto',
+  SetScreensaverPhotoFit = 'setScreensaverPhotoFit',
   ListScreensaverPhotos = 'listScreensaverPhotos',
   GetScreensaverPhotoPreview = 'getScreensaverPhotoPreview',
   HasCustomScreensaverImage = 'hasCustomScreensaverImage',
@@ -573,6 +576,13 @@ async function setupIpcHandlers() {
     IPCHandler.RemoveScreensaverPhoto,
     async (_e, id: string) => {
       return removeScreensaverPhoto(id)
+    }
+  )
+
+  ipcMain.handle(
+    IPCHandler.SetScreensaverPhotoFit,
+    async (_e, id: string, fit: ScreensaverPhotoFit) => {
+      return setScreensaverPhotoFit(id, fit === 'fit' ? 'fit' : 'fill')
     }
   )
 
