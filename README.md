@@ -81,17 +81,19 @@ _(The meetings in these screenshots are demo data.)_
 
 ### AI usage
 
-See how much of your **Codex**, **Claude** and **Cursor** subscription limits is left, when each limit resets, and how many tokens you used and what they cost today and over the last 30 days. Add one overview frame, or a frame per subscription.
+See how much of your **Codex**, **Claude** and **Cursor** subscription limits is left, when each limit resets, and how many tokens you used and what they cost today and over the last 30 days.
+
+In the Layout tab, pick an overview style — **Cards + dial**, **Tinted cards**, **List rows**, **Rings** or **Compact** — or add one detail frame per subscription. The lowest limit leads in every layout; bars turn amber under 30% and red under 15%.
 
 Usage is read with the sign-ins those apps already keep on your computer, so there's nothing new to sign in to. Requests are read-only, and it only refreshes while a usage frame is on the layout.
 
-| Overview                                                                | One frame per subscription                                            |
+| Cards + dial overview                                                   | Two detail frames                                                     |
 | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| <img src=".github/assets/fork/s8-usage-overview.png?v=2" width="400" /> | <img src=".github/assets/fork/s8-usage-halves.png?v=2" width="400" /> |
+| <img src=".github/assets/fork/s8-usage-overview.png?v=3" width="400" /> | <img src=".github/assets/fork/s8-usage-halves.png?v=3" width="400" /> |
 
-| Full screen                                                         | Layout editor                                                     |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| <img src=".github/assets/fork/s8-usage-full.png?v=2" width="400" /> | <img src=".github/assets/fork/s8-usage-editor.png" width="400" /> |
+| Single subscription (full)                                          | Layout editor — pick a style                                          |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| <img src=".github/assets/fork/s8-usage-full.png?v=3" width="400" /> | <img src=".github/assets/fork/s8-usage-editor.png?v=3" width="400" /> |
 
 ### Photo album screensaver
 
@@ -108,7 +110,7 @@ Under **Settings → Client**, set **Sleep Method** to **Screensaver** and uploa
   - **Actions:** add your own actions with an icon, label and command, next to the Lock, Sleep and Wake presets.
   - **Calendar:** import events from macOS Calendar.
   - **Weather:** set the location and units, and refresh.
-  - **AI usage:** add an overview frame or one frame per subscription, and refresh.
+  - **AI usage:** pick an overview style (cards, tinted, list, rings or compact) or one frame per subscription, and refresh.
 - **Preview:** drag and resize frames directly on the preview, and remove a frame with ×. Page tabs above the preview add, reorder and remove pages.
 - **Saving:** changes are saved to the Car Thing automatically. **Refresh Car Thing** reloads the device, and **Reset** goes back to the default layout.
 - **Settings → General:** new **Dial navigation** and **Dial controls** options.
