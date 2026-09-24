@@ -11,14 +11,15 @@
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
+    "build:client": "npm --prefix client install --no-audit --no-fund && npm --prefix client run build",
     "postinstall": "electron-builder install-app-deps",
-    "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "npm run build && electron-builder --win",
-    "build:mac": "npm run build && electron-builder --mac",
-    "build:linux": "npm run build && electron-builder --linux",
-    "build:win:nightly": "npm run build && electron-builder --win --config electron-builder.nightly.yml",
-    "build:mac:nightly": "npm run build && electron-builder --mac --config electron-builder.nightly.yml",
-    "build:linux:nightly": "npm run build && electron-builder --linux --config electron-builder.nightly.yml"
+    "build:unpack": "npm run build:client && npm run build && electron-builder --dir",
+    "build:win": "npm run build:client && npm run build && electron-builder --win",
+    "build:mac": "npm run build:client && npm run build && electron-builder --mac",
+    "build:linux": "npm run build:client && npm run build && electron-builder --linux",
+    "build:win:nightly": "npm run build:client && npm run build && electron-builder --win --config electron-builder.nightly.yml",
+    "build:mac:nightly": "npm run build:client && npm run build && electron-builder --mac --config electron-builder.nightly.yml",
+    "build:linux:nightly": "npm run build:client && npm run build && electron-builder --linux --config electron-builder.nightly.yml"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
