@@ -460,6 +460,59 @@
   color: #ff6b6b;
 }
 
+.screensaverSettings .actions button:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.albumGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.albumThumb {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #1a1a1a;
+}
+
+.albumThumb img,
+.albumThumbEmpty {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.albumThumbEmpty {
+  background: #222;
+}
+
+.albumThumb button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  cursor: pointer;
+}
+
+.albumThumb button .material-icons {
+  font-size: 14px;
+}
+
 .patches .status {
   display: flex;
   align-items: center;

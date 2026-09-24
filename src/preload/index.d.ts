@@ -64,8 +64,13 @@ declare global {
         success: boolean
         error?: string
         message?: string
+        added?: number
+        count?: number
       }>
       removeScreensaverImage: () => Promise<boolean>
+      removeScreensaverPhoto: (id: string) => Promise<boolean>
+      listScreensaverPhotos: () => Promise<{ id: string; name: string }[]>
+      getScreensaverPhotoPreview: (id: string) => Promise<string | null>
       hasCustomScreensaverImage: () => Promise<boolean>
       openDevTools: () => void
       getChannel: () => Promise<'stable' | 'nightly'>

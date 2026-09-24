@@ -73,6 +73,9 @@ import {
 import {
   uploadScreensaverImage,
   removeScreensaverImage,
+  removeScreensaverPhoto,
+  listScreensaverPhotos,
+  getScreensaverPhotoDataUrl,
   hasCustomScreensaverImage
 } from './lib/screensaver.js'
 
@@ -293,6 +296,9 @@ enum IPCHandler {
   DownloadLogs = 'downloadLogs',
   UploadScreensaverImage = 'uploadScreensaverImage',
   RemoveScreensaverImage = 'removeScreensaverImage',
+  RemoveScreensaverPhoto = 'removeScreensaverPhoto',
+  ListScreensaverPhotos = 'listScreensaverPhotos',
+  GetScreensaverPhotoPreview = 'getScreensaverPhotoPreview',
   HasCustomScreensaverImage = 'hasCustomScreensaverImage',
   OpenDevTools = 'openDevTools',
   GetChannel = 'getChannel',
@@ -562,6 +568,24 @@ async function setupIpcHandlers() {
   ipcMain.handle(IPCHandler.RemoveScreensaverImage, async () => {
     return removeScreensaverImage()
   })
+
+  ipcMain.handle(
+    IPCHandler.RemoveScreensaverPhoto,
+    async (_e, id: string) => {
+      return removeScreensaverPhoto(id)
+    }
+  )
+
+  ipcMain.handle(IPCHandler.ListScreensaverPhotos, async () => {
+    return listScreensaverPhotos()
+  })
+
+  ipcMain.handle(
+    IPCHandler.GetScreensaverPhotoPreview,
+    async (_e, id: string) => {
+      return getScreensaverPhotoDataUrl(id)
+    }
+  )
 
   ipcMain.handle(IPCHandler.HasCustomScreensaverImage, async () => {
     return hasCustomScreensaverImage()

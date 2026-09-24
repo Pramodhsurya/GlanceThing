@@ -1,48 +1,58 @@
-import fs from 'fs'
-import path from 'path'
-import { app } from 'electron'
 import {
   HandlerAction,
   HandlerFunction
 } from '../../types/WebSocketHandler.js'
 import { getStorageValue } from '../storage.js'
+import {
+  getScreensaverPhotoDataUrl,
+  listScreensaverPhotos
+} from '../screensaver.js'
 
 export const name = 'screensaver'
 
 export const hasActions = true
 
-function getScreensaverImagePath() {
-  const userData = app.getPath('userData')
-  const imageFolder = path.join(userData, 'screensaver')
-  const target = path.join(imageFolder, 'image.png')
+const ALLOWED_ROTATE_MS = [30000, 60000, 300000]
 
-  if (!fs.existsSync(target)) return null
-
-  return target
-}
-
-function getScreensaverImage() {
-  const imagePath = getScreensaverImagePath()
-
-  if (!imagePath) return null
-
-  return fs.readFileSync(imagePath)
+function getRotateMs() {
+  const value = Number(getStorageValue('screensaverRotateMs'))
+  if (ALLOWED_ROTATE_MS.indexOf(value) !== -1) return value
+  return 30000
 }
 
 export const actions: HandlerAction[] = [
   {
-    action: 'getImage',
+    action: 'getAlbum',
     handle: async ws => {
-      const res = getScreensaverImage()
-      if (!res || !res.length) return
+      const photos = listScreensaverPhotos().map(p => ({ id: p.id }))
+      ws.send(
+        JSON.stringify({
+          type: 'screensaver',
+          action: 'album',
+          data: { photos, rotateMs: getRotateMs() }
+        })
+      )
+    }
+  },
+  {
+    action: 'getImage',
+    handle: async (ws, data) => {
+      const photos = listScreensaverPhotos()
+      if (photos.length === 0) return
+
+      const id =
+        data && typeof data === 'object' && 'id' in data
+          ? String((data as { id: string }).id)
+          : photos[0].id
+
+      const image = getScreensaverPhotoDataUrl(id)
+      if (!image) return
 
       ws.send(
         JSON.stringify({
           type: 'screensaver',
           action: 'image',
-          data: {
-            image: `data:image/png;base64,${Buffer.from(res).toString('base64')}`
-          }
+          data: { id, image }
         })
       )
     }

@@ -44,6 +44,9 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
   aiUsage: () => {
     serverManager.broadcast({ type: 'layout', data: getLayoutPayload() })
   },
+  screensaverRotateMs: () => {
+    serverManager.broadcast({ type: 'screensaver', action: 'update' })
+  },
   logLevel: async value => setLogLevel(value as LogLevel),
   port: async p => {
     const newPort = p as number | null

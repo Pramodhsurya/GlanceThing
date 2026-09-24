@@ -434,7 +434,9 @@ const GeneralTab: React.FC = () => {
 
 const ClientTab: React.FC = () => {
   const [loaded, setLoaded] = useState(false)
-  const [hasCustomImage, setHasCustomImage] = useState(false)
+  const [photos, setPhotos] = useState<
+    { id: string; name: string; preview: string | null }[]
+  >([])
   const [screensaverStatus, setScreensaverStatus] = useState<{
     message: string
     status: 'error' | 'success'
@@ -449,12 +451,24 @@ const ClientTab: React.FC = () => {
 
   const [autoBrightness, setAutoBrightness] = useState(false)
   const [sleepMethod, setSleepMethod] = useState('sleep')
+  const [rotateMs, setRotateMs] = useState('30000')
   const [patches, setPatches] = useState<
     | { name: string; description: string; installed: boolean }[]
     | false
     | null
   >(null)
   const [isDev, setIsDev] = useState(false)
+
+  async function loadPhotos() {
+    const list = await window.api.listScreensaverPhotos()
+    const withPreviews = await Promise.all(
+      list.map(async photo => ({
+        ...photo,
+        preview: await window.api.getScreensaverPhotoPreview(photo.id)
+      }))
+    )
+    setPhotos(withPreviews)
+  }
 
   useEffect(() => {
     async function loadSettings() {
@@ -474,8 +488,17 @@ const ClientTab: React.FC = () => {
       setAutoBrightness(settings.current.autoBrightness ?? false)
       setSleepMethod(settings.current.sleepMethod ?? 'sleep')
 
-      const hasImage = await window.api.hasCustomScreensaverImage()
-      setHasCustomImage(hasImage)
+      const savedRotate = await window.api.getStorageValue(
+        'screensaverRotateMs'
+      )
+      const rotateValue = String(savedRotate || '30000')
+      setRotateMs(
+        ['30000', '60000', '300000'].includes(rotateValue)
+          ? rotateValue
+          : '30000'
+      )
+
+      await loadPhotos().catch(() => setPhotos([]))
 
       setLoaded(true)
     }
@@ -577,16 +600,40 @@ const ClientTab: React.FC = () => {
 
         {sleepMethod === 'screensaver' && (
           <div className={styles.screensaverSettings}>
+            <SelectSetting
+              label="Photo Rotation"
+              description="How long each photo stays on screen"
+              value={rotateMs}
+              options={[
+                { value: '30000', label: '30 seconds' },
+                { value: '60000', label: '1 minute' },
+                { value: '300000', label: '5 minutes' }
+              ]}
+              onChange={value => {
+                const next = String(value)
+                setRotateMs(next)
+                window.api.setStorageValue(
+                  'screensaverRotateMs',
+                  Number(next)
+                )
+              }}
+            />
             <div className={styles.header}>
               <div className={styles.text}>
-                <p className={styles.label}>Custom Screensaver Image</p>
+                <p className={styles.label}>Photo Album Screensaver</p>
                 <p className={styles.description}>
-                  Upload a custom image to use as your screensaver
-                  background
+                  Upload up to 10 photos. They rotate on the Car Thing. (
+                  {photos.length}/10)
                 </p>
               </div>
               <div className={styles.actions}>
                 <button
+                  disabled={photos.length >= 10}
+                  title={
+                    photos.length >= 10
+                      ? 'Album is full (10 max)'
+                      : 'Upload photos'
+                  }
                   onClick={async () => {
                     setScreensaverStatus(null)
 
@@ -594,15 +641,14 @@ const ClientTab: React.FC = () => {
                       await window.api.uploadScreensaverImage()
 
                     if (result && result.success) {
-                      setHasCustomImage(true)
+                      await loadPhotos()
                       setScreensaverStatus({
-                        message: 'Image uploaded successfully!',
+                        message: result.message || 'Photos uploaded.',
                         status: 'success'
                       })
-                    } else {
+                    } else if (result && result.message) {
                       setScreensaverStatus({
-                        message:
-                          result.message || 'Failed to upload image',
+                        message: result.message,
                         status: 'error'
                       })
                     }
@@ -610,9 +656,10 @@ const ClientTab: React.FC = () => {
                 >
                   <span className="material-icons">upload</span>
                 </button>
-                {hasCustomImage && (
+                {photos.length > 0 && (
                   <button
                     data-type="danger"
+                    title="Remove all photos"
                     onClick={async () => {
                       setScreensaverStatus(null)
 
@@ -620,14 +667,14 @@ const ClientTab: React.FC = () => {
                         await window.api.removeScreensaverImage()
 
                       if (success) {
-                        setHasCustomImage(false)
+                        setPhotos([])
                         setScreensaverStatus({
-                          message: 'Image removed successfully!',
+                          message: 'All photos removed.',
                           status: 'success'
                         })
                       } else {
                         setScreensaverStatus({
-                          message: 'Failed to remove image',
+                          message: 'Failed to remove photos',
                           status: 'error'
                         })
                       }
@@ -638,6 +685,37 @@ const ClientTab: React.FC = () => {
                 )}
               </div>
             </div>
+            {photos.length > 0 && (
+              <div className={styles.albumGrid}>
+                {photos.map(photo => (
+                  <div key={photo.id} className={styles.albumThumb}>
+                    {photo.preview ? (
+                      <img src={photo.preview} alt="" />
+                    ) : (
+                      <div className={styles.albumThumbEmpty} />
+                    )}
+                    <button
+                      type="button"
+                      title="Remove photo"
+                      onClick={async () => {
+                        const ok = await window.api.removeScreensaverPhoto(
+                          photo.id
+                        )
+                        if (ok) {
+                          await loadPhotos()
+                          setScreensaverStatus({
+                            message: 'Photo removed.',
+                            status: 'success'
+                          })
+                        }
+                      }}
+                    >
+                      <span className="material-icons">close</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             {screensaverStatus && (
               <div
                 className={styles.status}

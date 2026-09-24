@@ -1,4 +1,10 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react'
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState
+} from 'react'
 
 import { SleepState } from '@/contexts/SleepContext.tsx'
 import { SocketContext } from '@/contexts/SocketContext.tsx'
@@ -9,17 +15,21 @@ interface ScreensaverProps {
   type: SleepState
 }
 
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
+const DEFAULT_ROTATE_MS = 30000
 
 const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
   const { ready, socket } = useContext(SocketContext)
   const [loaded, setLoaded] = useState(false)
-  const [customImage, setCustomImage] = useState<string | null>(null)
+  const [photoIds, setPhotoIds] = useState<string[]>([])
+  const [images, setImages] = useState<Record<string, string>>({})
+  const [index, setIndex] = useState(0)
+  const [rotateMs, setRotateMs] = useState(DEFAULT_ROTATE_MS)
+  const indexRef = useRef(0)
 
   const validateImage = useCallback(
     (imageUrl: string): Promise<boolean> => {
       return new Promise(resolve => {
-        if (!imageUrl || !imageUrl.startsWith('data:image/')) {
+        if (!imageUrl || imageUrl.indexOf('data:image/') !== 0) {
           resolve(false)
           return
         }
@@ -33,36 +43,31 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
     []
   )
 
-  useEffect(() => {
-    const loadCachedImage = async () => {
-      try {
-        const cachedImage = localStorage.getItem('cachedScreensaverImage')
-        if (cachedImage) {
-          const isValid = await validateImage(cachedImage)
-          if (isValid) {
-            setCustomImage(cachedImage)
-          } else {
-            localStorage.removeItem('cachedScreensaverImage')
-          }
-        }
-      } catch {
-        localStorage.removeItem('cachedScreensaverImage')
-      }
-    }
-
-    loadCachedImage()
-  }, [validateImage])
-
-  const requestImage = useCallback(() => {
+  const requestAlbum = useCallback(() => {
     if (socket && socket.readyState === 1) {
       socket.send(
         JSON.stringify({
           type: 'screensaver',
-          action: 'getImage'
+          action: 'getAlbum'
         })
       )
     }
   }, [socket])
+
+  const requestImage = useCallback(
+    (id: string) => {
+      if (socket && socket.readyState === 1) {
+        socket.send(
+          JSON.stringify({
+            type: 'screensaver',
+            action: 'getImage',
+            data: { id }
+          })
+        )
+      }
+    },
+    [socket]
+  )
 
   useEffect(() => {
     if (!ready || !socket) return
@@ -72,41 +77,67 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
       if (data.type !== 'screensaver') return
 
       switch (data.action) {
-        case 'image':
-          validateImage(data.data.image).then(isValid => {
-            if (isValid) {
-              setCustomImage(data.data.image)
-              if (
-                data.data.image &&
-                data.data.image.length < MAX_IMAGE_SIZE
-              ) {
-                localStorage.setItem(
-                  'cachedScreensaverImage',
-                  data.data.image
-                )
-              }
+        case 'album': {
+          const photos = (data.data && data.data.photos) || []
+          const ids: string[] = []
+          for (let i = 0; i < photos.length; i++) {
+            if (photos[i] && photos[i].id) ids.push(String(photos[i].id))
+          }
+          const nextRotate = Number(data.data && data.data.rotateMs)
+          if (
+            nextRotate === 30000 ||
+            nextRotate === 60000 ||
+            nextRotate === 300000
+          ) {
+            setRotateMs(nextRotate)
+          } else {
+            setRotateMs(DEFAULT_ROTATE_MS)
+          }
+          setPhotoIds(ids)
+          setIndex(0)
+          indexRef.current = 0
+          if (ids.length === 0) {
+            setImages({})
+          } else {
+            for (let i = 0; i < ids.length; i++) {
+              requestImage(ids[i])
             }
-          })
+          }
+          break
+        }
+
+        case 'image':
+          if (data.data && data.data.id && data.data.image) {
+            validateImage(data.data.image).then(isValid => {
+              if (!isValid) return
+              setImages(prev => {
+                const next = Object.assign({}, prev)
+                next[data.data.id] = data.data.image
+                return next
+              })
+            })
+          }
           break
 
         case 'update':
-          requestImage()
+          requestAlbum()
           break
 
         case 'removed':
-          setCustomImage(null)
-          localStorage.removeItem('cachedScreensaverImage')
+          setPhotoIds([])
+          setImages({})
+          setIndex(0)
+          indexRef.current = 0
           break
       }
     }
 
     socket.addEventListener('message', listener)
-
-    requestImage()
+    requestAlbum()
 
     const retryInterval = setInterval(() => {
-      if (!customImage && socket.readyState === 1) {
-        requestImage()
+      if (socket.readyState === 1 && photoIds.length === 0) {
+        requestAlbum()
       }
     }, 5000)
 
@@ -114,17 +145,40 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
       socket.removeEventListener('message', listener)
       clearInterval(retryInterval)
     }
-  }, [ready, socket, customImage, requestImage, validateImage])
+  }, [
+    ready,
+    socket,
+    photoIds.length,
+    requestAlbum,
+    requestImage,
+    validateImage
+  ])
 
   useEffect(() => {
     if (type === 'screensaver') {
       setLoaded(true)
     } else {
-      setTimeout(() => {
+      const t = setTimeout(() => {
         setLoaded(false)
       }, 500)
+      return () => clearTimeout(t)
     }
   }, [type])
+
+  useEffect(() => {
+    if (type !== 'screensaver' || photoIds.length < 2) return
+
+    const timer = setInterval(() => {
+      const next = (indexRef.current + 1) % photoIds.length
+      indexRef.current = next
+      setIndex(next)
+    }, rotateMs)
+
+    return () => clearInterval(timer)
+  }, [type, photoIds, rotateMs])
+
+  const currentId = photoIds[index]
+  const customImage = currentId ? images[currentId] : null
 
   return (
     <div className={styles.screensaver} data-active={type !== 'off'}>
@@ -132,9 +186,10 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
         <>
           {customImage ? (
             <div
+              key={currentId + '-' + index}
               className={styles.customImage}
-              style={{ backgroundImage: `url(${customImage})` }}
-            ></div>
+              style={{ backgroundImage: 'url(' + customImage + ')' }}
+            />
           ) : (
             <>
               <div className={styles.circle1}></div>
