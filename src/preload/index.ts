@@ -44,6 +44,7 @@ enum IPCHandler {
   UploadScreensaverImage = 'uploadScreensaverImage',
   RemoveScreensaverImage = 'removeScreensaverImage',
   RemoveScreensaverPhoto = 'removeScreensaverPhoto',
+  SetScreensaverPhotoFit = 'setScreensaverPhotoFit',
   ListScreensaverPhotos = 'listScreensaverPhotos',
   GetScreensaverPhotoPreview = 'getScreensaverPhotoPreview',
   HasCustomScreensaverImage = 'hasCustomScreensaverImage',
@@ -134,6 +135,8 @@ const api = {
     ipcRenderer.invoke(IPCHandler.RemoveScreensaverImage),
   removeScreensaverPhoto: (id: string) =>
     ipcRenderer.invoke(IPCHandler.RemoveScreensaverPhoto, id),
+  setScreensaverPhotoFit: (id: string, fit: 'fill' | 'fit') =>
+    ipcRenderer.invoke(IPCHandler.SetScreensaverPhotoFit, id, fit),
   openDevTools: () => ipcRenderer.invoke(IPCHandler.OpenDevTools),
   getChannel: () => ipcRenderer.invoke(IPCHandler.GetChannel),
   checkUpdate: () => ipcRenderer.invoke(IPCHandler.CheckUpdate),

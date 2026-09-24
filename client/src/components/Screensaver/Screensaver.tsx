@@ -25,6 +25,7 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
   const [index, setIndex] = useState(0)
   const [rotateMs, setRotateMs] = useState(DEFAULT_ROTATE_MS)
   const [shuffle, setShuffle] = useState(false)
+  const [fitIds, setFitIds] = useState<Record<string, boolean>>({})
   const indexRef = useRef(0)
 
   const validateImage = useCallback(
@@ -81,9 +82,15 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
         case 'album': {
           const photos = (data.data && data.data.photos) || []
           const ids: string[] = []
+          const nextFits: Record<string, boolean> = {}
           for (let i = 0; i < photos.length; i++) {
-            if (photos[i] && photos[i].id) ids.push(String(photos[i].id))
+            if (photos[i] && photos[i].id) {
+              const id = String(photos[i].id)
+              ids.push(id)
+              nextFits[id] = photos[i].fit === 'fit'
+            }
           }
+          setFitIds(nextFits)
           const nextRotate = Number(data.data && data.data.rotateMs)
           if (
             nextRotate === 30000 ||
@@ -194,7 +201,11 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
             <div
               key={currentId + '-' + index}
               className={styles.customImage}
-              style={{ backgroundImage: 'url(' + customImage + ')' }}
+              style={{
+                backgroundImage: 'url(' + customImage + ')',
+                backgroundSize: fitIds[currentId] ? 'contain' : 'cover',
+                backgroundRepeat: 'no-repeat'
+              }}
             />
           ) : (
             <>

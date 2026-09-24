@@ -435,7 +435,12 @@ const GeneralTab: React.FC = () => {
 const ClientTab: React.FC = () => {
   const [loaded, setLoaded] = useState(false)
   const [photos, setPhotos] = useState<
-    { id: string; name: string; preview: string | null }[]
+    {
+      id: string
+      name: string
+      fit: 'fill' | 'fit'
+      preview: string | null
+    }[]
   >([])
   const [screensaverStatus, setScreensaverStatus] = useState<{
     message: string
@@ -701,12 +706,43 @@ const ClientTab: React.FC = () => {
             {photos.length > 0 && (
               <div className={styles.albumGrid}>
                 {photos.map(photo => (
-                  <div key={photo.id} className={styles.albumThumb}>
+                  <div
+                    key={photo.id}
+                    className={styles.albumThumb}
+                    data-fit={photo.fit}
+                  >
                     {photo.preview ? (
                       <img src={photo.preview} alt="" />
                     ) : (
                       <div className={styles.albumThumbEmpty} />
                     )}
+                    <button
+                      type="button"
+                      className={styles.fitButton}
+                      title={
+                        photo.fit === 'fit'
+                          ? 'Showing the whole photo. Click to fill the screen.'
+                          : 'Filling the screen. Click to show the whole photo.'
+                      }
+                      onClick={async () => {
+                        const fit = photo.fit === 'fit' ? 'fill' : 'fit'
+                        const ok = await window.api.setScreensaverPhotoFit(
+                          photo.id,
+                          fit
+                        )
+                        if (ok) {
+                          setPhotos(current =>
+                            current.map(p =>
+                              p.id === photo.id ? { ...p, fit } : p
+                            )
+                          )
+                        }
+                      }}
+                    >
+                      <span className="material-icons">
+                        {photo.fit === 'fit' ? 'fit_screen' : 'crop'}
+                      </span>
+                    </button>
                     <button
                       type="button"
                       title="Remove photo"

@@ -3,6 +3,7 @@ import path from 'path'
 import fs from 'fs'
 import crypto from 'crypto'
 import { serverManager } from './server.js'
+import { getStorageValue, setStorageValue } from './storage.js'
 import { AuthenticatedWebSocket } from '../types/WebSocketServer.js'
 
 export const MAX_SCREENSAVER_PHOTOS = 10
@@ -12,9 +13,32 @@ const SCREEN_HEIGHT = 480
 const JPEG_QUALITY = 85
 const ALLOWED_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp'])
 
+export type ScreensaverPhotoFit = 'fill' | 'fit'
+
 export type ScreensaverPhoto = {
   id: string
   name: string
+  fit: ScreensaverPhotoFit
+}
+
+function getPhotoFits(): Record<string, ScreensaverPhotoFit> {
+  const value = getStorageValue('screensaverPhotoFit')
+  return value && typeof value === 'object'
+    ? (value as Record<string, ScreensaverPhotoFit>)
+    : {}
+}
+
+export function setScreensaverPhotoFit(
+  id: string,
+  fit: ScreensaverPhotoFit
+) {
+  if (!listPhotoFiles().some(p => p.id === id)) return false
+  const fits = getPhotoFits()
+  if (fit === 'fit') fits[id] = 'fit'
+  else delete fits[id]
+  setStorageValue('screensaverPhotoFit', fits)
+  updateScreensaverImage()
+  return true
 }
 
 function albumDir() {
@@ -72,7 +96,12 @@ function listPhotoFiles(): {
 }
 
 export function listScreensaverPhotos(): ScreensaverPhoto[] {
-  return listPhotoFiles().map(({ id, name }) => ({ id, name }))
+  const fits = getPhotoFits()
+  return listPhotoFiles().map(({ id, name }) => ({
+    id,
+    name,
+    fit: fits[id] === 'fit' ? 'fit' : 'fill'
+  }))
 }
 
 export function getScreensaverPhotoPath(id: string): string | null {
@@ -220,6 +249,11 @@ export function removeScreensaverPhoto(id: string) {
   const photo = listPhotoFiles().find(p => p.id === id)
   if (!photo) return false
   fs.unlinkSync(photo.filePath)
+  const fits = getPhotoFits()
+  if (fits[id]) {
+    delete fits[id]
+    setStorageValue('screensaverPhotoFit', fits)
+  }
   if (listPhotoFiles().length === 0) {
     broadcast('removed')
   } else {
@@ -239,6 +273,7 @@ export function removeScreensaverImage() {
   }
   const legacy = legacyImagePath()
   if (fs.existsSync(legacy)) fs.unlinkSync(legacy)
+  setStorageValue('screensaverPhotoFit', {})
   broadcast('removed')
   return true
 }

@@ -492,6 +492,11 @@
   background: #222;
 }
 
+.albumThumb[data-fit='fit'] img {
+  object-fit: contain;
+  background: #000;
+}
+
 .albumThumb button {
   position: absolute;
   top: 4px;
@@ -511,6 +516,13 @@
 
 .albumThumb button .material-icons {
   font-size: 14px;
+}
+
+.albumThumb .fitButton {
+  top: auto;
+  right: auto;
+  bottom: 4px;
+  left: 4px;
 }
 
 .patches .status {

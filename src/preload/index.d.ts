@@ -69,7 +69,13 @@ declare global {
       }>
       removeScreensaverImage: () => Promise<boolean>
       removeScreensaverPhoto: (id: string) => Promise<boolean>
-      listScreensaverPhotos: () => Promise<{ id: string; name: string }[]>
+      setScreensaverPhotoFit: (
+        id: string,
+        fit: 'fill' | 'fit'
+      ) => Promise<boolean>
+      listScreensaverPhotos: () => Promise<
+        { id: string; name: string; fit: 'fill' | 'fit' }[]
+      >
       getScreensaverPhotoPreview: (id: string) => Promise<string | null>
       hasCustomScreensaverImage: () => Promise<boolean>
       openDevTools: () => void
