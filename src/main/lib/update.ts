@@ -1,8 +1,10 @@
 import axios from 'axios'
 
+export const GITHUB_REPO = 'Pramodhsurya/GlanceThing'
+
 export async function getLatestVersion() {
   const res = await axios.get(
-    'https://api.github.com/repos/BluDood/GlanceThing/releases/latest',
+    `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`,
     {
       validateStatus: () => true
     }
