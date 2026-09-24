@@ -452,6 +452,7 @@ const ClientTab: React.FC = () => {
   const [autoBrightness, setAutoBrightness] = useState(false)
   const [sleepMethod, setSleepMethod] = useState('sleep')
   const [rotateMs, setRotateMs] = useState('30000')
+  const [shuffle, setShuffle] = useState(false)
   const [patches, setPatches] = useState<
     | { name: string; description: string; installed: boolean }[]
     | false
@@ -496,6 +497,9 @@ const ClientTab: React.FC = () => {
         ['30000', '60000', '300000'].includes(rotateValue)
           ? rotateValue
           : '30000'
+      )
+      setShuffle(
+        (await window.api.getStorageValue('screensaverShuffle')) === true
       )
 
       await loadPhotos().catch(() => setPhotos([]))
@@ -616,6 +620,15 @@ const ClientTab: React.FC = () => {
                   'screensaverRotateMs',
                   Number(next)
                 )
+              }}
+            />
+            <ToggleSetting
+              label="Shuffle Photos"
+              description="Show album photos in random order"
+              value={shuffle}
+              onChange={value => {
+                setShuffle(value)
+                window.api.setStorageValue('screensaverShuffle', value)
               }}
             />
             <div className={styles.header}>

@@ -47,6 +47,9 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
   screensaverRotateMs: () => {
     serverManager.broadcast({ type: 'screensaver', action: 'update' })
   },
+  screensaverShuffle: () => {
+    serverManager.broadcast({ type: 'screensaver', action: 'update' })
+  },
   logLevel: async value => setLogLevel(value as LogLevel),
   port: async p => {
     const newPort = p as number | null
