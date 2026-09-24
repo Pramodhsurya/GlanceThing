@@ -43,6 +43,9 @@ enum IPCHandler {
   DownloadLogs = 'downloadLogs',
   UploadScreensaverImage = 'uploadScreensaverImage',
   RemoveScreensaverImage = 'removeScreensaverImage',
+  RemoveScreensaverPhoto = 'removeScreensaverPhoto',
+  ListScreensaverPhotos = 'listScreensaverPhotos',
+  GetScreensaverPhotoPreview = 'getScreensaverPhotoPreview',
   HasCustomScreensaverImage = 'hasCustomScreensaverImage',
   OpenDevTools = 'openDevTools',
   GetChannel = 'getChannel',
@@ -121,10 +124,16 @@ const api = {
   downloadLogs: () => ipcRenderer.invoke(IPCHandler.DownloadLogs),
   hasCustomScreensaverImage: () =>
     ipcRenderer.invoke(IPCHandler.HasCustomScreensaverImage),
+  listScreensaverPhotos: () =>
+    ipcRenderer.invoke(IPCHandler.ListScreensaverPhotos),
+  getScreensaverPhotoPreview: (id: string) =>
+    ipcRenderer.invoke(IPCHandler.GetScreensaverPhotoPreview, id),
   uploadScreensaverImage: () =>
     ipcRenderer.invoke(IPCHandler.UploadScreensaverImage),
   removeScreensaverImage: () =>
     ipcRenderer.invoke(IPCHandler.RemoveScreensaverImage),
+  removeScreensaverPhoto: (id: string) =>
+    ipcRenderer.invoke(IPCHandler.RemoveScreensaverPhoto, id),
   openDevTools: () => ipcRenderer.invoke(IPCHandler.OpenDevTools),
   getChannel: () => ipcRenderer.invoke(IPCHandler.GetChannel),
   checkUpdate: () => ipcRenderer.invoke(IPCHandler.CheckUpdate),
