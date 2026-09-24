@@ -10,6 +10,7 @@ import {
   log,
   LogLevel
 } from './utils.js'
+import { GITHUB_REPO } from './update.js'
 
 export async function getWebAppDir() {
   const customClient = path.join(app.getPath('userData'), 'customClient')
@@ -46,7 +47,7 @@ export async function getWebAppDir() {
   if (fs.existsSync(extractPath))
     fs.rmSync(extractPath, { recursive: true })
 
-  const url = `https://github.com/BluDood/GlanceThing/releases/download/v${version}/glancething-client-v${version}.zip`
+  const url = `https://github.com/${GITHUB_REPO}/releases/download/v${version}/glancething-client-v${version}.zip`
 
   const res = await axios.get(url, {
     responseType: 'stream',
