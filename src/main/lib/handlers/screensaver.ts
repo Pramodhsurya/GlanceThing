@@ -29,7 +29,11 @@ export const actions: HandlerAction[] = [
         JSON.stringify({
           type: 'screensaver',
           action: 'album',
-          data: { photos, rotateMs: getRotateMs() }
+          data: {
+            photos,
+            rotateMs: getRotateMs(),
+            shuffle: getStorageValue('screensaverShuffle') === true
+          }
         })
       )
     }

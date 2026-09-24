@@ -24,6 +24,7 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
   const [images, setImages] = useState<Record<string, string>>({})
   const [index, setIndex] = useState(0)
   const [rotateMs, setRotateMs] = useState(DEFAULT_ROTATE_MS)
+  const [shuffle, setShuffle] = useState(false)
   const indexRef = useRef(0)
 
   const validateImage = useCallback(
@@ -93,6 +94,7 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
           } else {
             setRotateMs(DEFAULT_ROTATE_MS)
           }
+          setShuffle(Boolean(data.data && data.data.shuffle))
           setPhotoIds(ids)
           setIndex(0)
           indexRef.current = 0
@@ -169,13 +171,17 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
     if (type !== 'screensaver' || photoIds.length < 2) return
 
     const timer = setInterval(() => {
-      const next = (indexRef.current + 1) % photoIds.length
+      let next = (indexRef.current + 1) % photoIds.length
+      if (shuffle) {
+        next = Math.floor(Math.random() * (photoIds.length - 1))
+        if (next >= indexRef.current) next++
+      }
       indexRef.current = next
       setIndex(next)
     }, rotateMs)
 
     return () => clearInterval(timer)
-  }, [type, photoIds, rotateMs])
+  }, [type, photoIds, rotateMs, shuffle])
 
   const currentId = photoIds[index]
   const customImage = currentId ? images[currentId] : null
