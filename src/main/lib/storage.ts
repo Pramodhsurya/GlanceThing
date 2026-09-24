@@ -50,6 +50,9 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
   screensaverShuffle: () => {
     serverManager.broadcast({ type: 'screensaver', action: 'update' })
   },
+  screensaverClock: () => {
+    serverManager.broadcast({ type: 'screensaver', action: 'update' })
+  },
   logLevel: async value => setLogLevel(value as LogLevel),
   port: async p => {
     const newPort = p as number | null

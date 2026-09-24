@@ -26,6 +26,11 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
   const [rotateMs, setRotateMs] = useState(DEFAULT_ROTATE_MS)
   const [shuffle, setShuffle] = useState(false)
   const [fitIds, setFitIds] = useState<Record<string, boolean>>({})
+  const [showClock, setShowClock] = useState(false)
+  const [clock, setClock] = useState<{
+    time: string
+    date: string
+  } | null>(null)
   const indexRef = useRef(0)
 
   const validateImage = useCallback(
@@ -76,6 +81,10 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
 
     const listener = (e: MessageEvent) => {
       const data = JSON.parse(e.data)
+      if (data.type === 'time' && data.data && data.data.time) {
+        setClock({ time: data.data.time, date: data.data.date || '' })
+        return
+      }
       if (data.type !== 'screensaver') return
 
       switch (data.action) {
@@ -102,6 +111,7 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
             setRotateMs(DEFAULT_ROTATE_MS)
           }
           setShuffle(Boolean(data.data && data.data.shuffle))
+          setShowClock(Boolean(data.data && data.data.clock))
           setPhotoIds(ids)
           setIndex(0)
           indexRef.current = 0
@@ -143,6 +153,7 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
 
     socket.addEventListener('message', listener)
     requestAlbum()
+    socket.send(JSON.stringify({ type: 'time' }))
 
     const retryInterval = setInterval(() => {
       if (socket.readyState === 1 && photoIds.length === 0) {
@@ -213,6 +224,12 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
               <div className={styles.circle2}></div>
               <div className={styles.circle3}></div>
             </>
+          )}
+          {showClock && clock && (
+            <div className={styles.clock}>
+              <span className={styles.clockTime}>{clock.time}</span>
+              <span className={styles.clockDate}>{clock.date}</span>
+            </div>
           )}
         </>
       )}

@@ -35,7 +35,8 @@ export const actions: HandlerAction[] = [
           data: {
             photos,
             rotateMs: getRotateMs(),
-            shuffle: getStorageValue('screensaverShuffle') === true
+            shuffle: getStorageValue('screensaverShuffle') === true,
+            clock: getStorageValue('screensaverClock') === true
           }
         })
       )

@@ -458,6 +458,7 @@ const ClientTab: React.FC = () => {
   const [sleepMethod, setSleepMethod] = useState('sleep')
   const [rotateMs, setRotateMs] = useState('30000')
   const [shuffle, setShuffle] = useState(false)
+  const [showClock, setShowClock] = useState(false)
   const [patches, setPatches] = useState<
     | { name: string; description: string; installed: boolean }[]
     | false
@@ -505,6 +506,9 @@ const ClientTab: React.FC = () => {
       )
       setShuffle(
         (await window.api.getStorageValue('screensaverShuffle')) === true
+      )
+      setShowClock(
+        (await window.api.getStorageValue('screensaverClock')) === true
       )
 
       await loadPhotos().catch(() => setPhotos([]))
@@ -634,6 +638,15 @@ const ClientTab: React.FC = () => {
               onChange={value => {
                 setShuffle(value)
                 window.api.setStorageValue('screensaverShuffle', value)
+              }}
+            />
+            <ToggleSetting
+              label="Show Clock"
+              description="Show the time and date on the screensaver"
+              value={showClock}
+              onChange={value => {
+                setShowClock(value)
+                window.api.setStorageValue('screensaverClock', value)
               }}
             />
             <div className={styles.header}>
