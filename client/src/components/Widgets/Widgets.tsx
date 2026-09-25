@@ -266,6 +266,15 @@ function OpenAppWrap({
   return (
     <div
       className={styles.openApp}
+      data-open-app={appId}
+      style={{
+        display: 'block',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0
+      }}
       onClick={canOpen ? () => openApp(appId) : undefined}
     >
       {children}

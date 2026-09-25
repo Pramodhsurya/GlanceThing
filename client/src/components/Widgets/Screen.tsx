@@ -515,10 +515,23 @@ export const WeatherFace: React.FC<{ weather?: WeatherInfo }> = ({
       )
     }
     measure()
-    if (typeof ResizeObserver === 'undefined') return
+    const later = window.setTimeout(measure, 50)
+    const again = window.setTimeout(measure, 250)
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure)
+      return () => {
+        window.clearTimeout(later)
+        window.clearTimeout(again)
+        window.removeEventListener('resize', measure)
+      }
+    }
     const observer = new ResizeObserver(measure)
     observer.observe(node)
-    return () => observer.disconnect()
+    return () => {
+      window.clearTimeout(later)
+      window.clearTimeout(again)
+      observer.disconnect()
+    }
   }, [])
 
   useEffect(() => {
@@ -531,7 +544,7 @@ export const WeatherFace: React.FC<{ weather?: WeatherInfo }> = ({
 
   useEffect(() => {
     const node = boxRef.current
-    if (!node || !box.w) return
+    if (!node || !box.w || !box.h) return
     let overflow =
       node.scrollHeight > node.clientHeight + 1 ||
       node.scrollWidth > node.clientWidth + 1
