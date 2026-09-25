@@ -208,6 +208,9 @@ inspired them are credited in the README; no code was copied from them.
   timer was taken from that repo.
 - GlanceThing-Apps README Credits (and the apps table) link each app to its
   original repo.
+- README screenshots for the Apps tab, the Car Thing tray, and each built-in
+  tray app (Music, Pomodoro, Resource Usage, Recording Notes, GitHub, Console
+  Logs, Link), also used in GlanceThing-Apps.
 
 ### Known limitations
 

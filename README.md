@@ -64,6 +64,24 @@ On the desktop **Apps** tab you can pause or run those apps, and add more the sa
 
 Official apps live in [GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceThing-Apps). To **build** an app, or to see the exact files and `manifest.json` fields GlanceThing reads, see [APPS.md](APPS.md).
 
+| Desktop Apps tab                                                          | Car Thing tray                                                     |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| <img src=".github/assets/fork/s10-apps-desktop.png?v=1" width="400" />    | <img src=".github/assets/fork/s10-tray.png?v=1" width="400" />     |
+
+| Music                                                              | Pomodoro                                                              |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| <img src=".github/assets/fork/s10-music.png?v=1" width="400" />    | <img src=".github/assets/fork/s10-pomodoro.png?v=1" width="400" />    |
+
+| Resource Usage                                                     | Recording Notes                                                       |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| <img src=".github/assets/fork/s10-system.png?v=1" width="400" />   | <img src=".github/assets/fork/s10-recorder.png?v=1" width="400" />    |
+
+| GitHub                                                             | Console Logs                                                          |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| <img src=".github/assets/fork/s10-github.png?v=1" width="400" />   | <img src=".github/assets/fork/s10-logs.png?v=1" width="400" />        |
+
+<img src=".github/assets/fork/s10-link.png?v=1" width="400" />
+
 ### Sleep and wake actions
 
 Two preset actions next to **Lock**. **Sleep** puts the computer to sleep, and **Wake** wakes its display.
@@ -116,7 +134,7 @@ Under **Settings → Client**, set **Sleep Method** to **Screensaver** and uploa
 
 <img src=".github/assets/fork/app-layout.png" width="600" />
 
-- **Home and Layout tabs:** the titlebar now has a **Layout** tab next to **Home**. It opens the layout editor, where everything shown on the Car Thing is set up.
+- **Home, Layout and Apps tabs:** the titlebar has **Layout** and **Apps** next to **Home**. Layout opens the editor. Apps lists built-in and community apps.
 - **Layout editor sections:** the left side has collapsible sections, and the app remembers which ones you left open.
   - **Add to screen:** click a frame type, or drag it onto the preview.
   - **Shortcuts:** manage app shortcuts.
