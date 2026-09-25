@@ -210,7 +210,8 @@ inspired them are credited in the README; no code was copied from them.
   original repo.
 - README screenshots for the Apps tab, the Car Thing tray, and each built-in
   tray app (Music, Pomodoro, Resource Usage, Recording Notes, GitHub, Console
-  Logs, Link), also used in GlanceThing-Apps.
+  Logs, Link), also used in GlanceThing-Apps. The Link shot sits in the same
+  table layout as the other app shots.
 
 ### Known limitations
 

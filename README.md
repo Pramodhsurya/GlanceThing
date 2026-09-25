@@ -80,7 +80,9 @@ Official apps live in [GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceT
 | ------------------------------------------------------------------ | --------------------------------------------------------------------- |
 | <img src=".github/assets/fork/s10-github.png?v=1" width="400" />   | <img src=".github/assets/fork/s10-logs.png?v=1" width="400" />        |
 
-<img src=".github/assets/fork/s10-link.png?v=1" width="400" />
+| Link                                                               | &nbsp;                                                                |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| <img src=".github/assets/fork/s10-link.png?v=1" width="400" />     | &nbsp;                                                                |
 
 ### Sleep and wake actions
 
