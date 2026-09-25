@@ -890,7 +890,13 @@ export const UsageFace: React.FC<{
   usageStyle?: UsageStyle
   compact?: boolean
   now: number
-}> = ({ usage, target = 'all', usageStyle = 'auto', compact = false, now }) => {
+}> = ({
+  usage,
+  target = 'all',
+  usageStyle = 'auto',
+  compact = false,
+  now
+}) => {
   const all = usage?.providers || []
   const providers =
     target === 'all' ? all : all.filter(provider => provider.id === target)
