@@ -271,9 +271,8 @@ inspired them are credited in the README; no code was copied from them.
   Console Logs, Link, Mic), also used in GlanceThing-Apps. Each app has one
   representative shot; Mic is not split into picker, toggle, and settings rows.
 - TODO.md: remaining work is turning weather, calendar, AI usage and the
-  other home features into apps that also offer layout widgets; widgets from
-  the existing tray apps; and, if possible, the Car Thing mic as a system
-  input device. The Mic auto-open toggle is done.
+  other home features into apps that also offer layout widgets, and widgets
+  from the existing tray apps.
 
 ### Known limitations
 

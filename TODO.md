@@ -21,15 +21,7 @@ Cover at least:
 - AI usage
 - The other current home features that are not already tray apps (for example photo album / screensaver), so they follow the same “app + widgets” model
 
-## 2. Car Thing as a real microphone device (if possible)
-
-Expose the Car Thing’s microphone as its **own input device** on the computer.
-
-When you are in a Teams (or similar) meeting and you open the list of microphones, the Car Thing should show up as an option you can switch to — the same way a headset or the built-in Mac mic does.
-
-This is “if possible”: it depends on presenting the Car Thing capture as a system audio device on macOS / Windows.
-
-## 3. Widgets for the existing tray apps
+## 2. Widgets for the existing tray apps
 
 The apps that already live in the swipe-down tray should also **ship widgets**, so they can be added to the home pages in the Layout tab — not only opened as a fullscreen app.
 
