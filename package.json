@@ -5,6 +5,7 @@
   "description": "Desktop application for GlanceThing",
   "main": "./out/main/index.js",
   "author": "BluDood",
+  "license": "MIT",
   "homepage": "https://github.com/Pramodhsurya/GlanceThing",
   "scripts": {
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",

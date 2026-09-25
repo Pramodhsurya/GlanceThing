@@ -304,3 +304,7 @@ The project also mainly utilizes the following technologies:
 
 - React + Vite
 - axios
+
+## License
+
+[MIT](LICENSE). This fork keeps the original GlanceThing license from [BluDood](https://github.com/BluDood). Copyright (c) 2026 BluDood and Pramodhsurya.
