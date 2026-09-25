@@ -242,9 +242,8 @@ inspired them are credited in the README; no code was copied from them.
 ### Documentation
 
 - README: first-run order is Home (Car Thing check / install) then **Next**
-  for the app picker, not a picker overlay on launch. Mic **Pop up when
-  in use** is documented with Car Thing shots plus desktop Apps settings
-  and Settings → Client screenshots.
+  for the app picker, not a picker overlay on launch. Mic is one app in
+  the screenshot table; **Pop up when in use** is described in the text.
 - README: a Credits table mapping each built-in app to the DeskThing app that
   inspired it, and a credit for mediaremote-adapter.
 - CONTRIBUTING: rules for crediting code, assets or ideas taken from other
@@ -255,11 +254,9 @@ inspired them are credited in the README; no code was copied from them.
   with Music, Pomodoro, Resource Usage, Recording Notes, GitHub, Console Logs,
   Link and an `exampleapp` template. The desktop Store lists that repo
   automatically.
-- AGENTS.md: update this changelog on every project change. When a feature
-  or app is implemented, also update the README and add screenshots. When
-  a TODO.md item is finished, remove it from the list. When a feature is
-  complete, build and install the packaged GlanceThing (`npm run
-  install:local`) as the only app on the machine, then verify that build.
+- Agent notes stay on this machine only (`AGENTS.md` and `.cursor/` are not
+  in the repo). Changelog, README, screenshot, TODO, and packaged-app rules
+  still apply locally.
 - Pomodoro credits [grahamplace/pomodoro-thing](https://github.com/grahamplace/pomodoro-thing)
   in the app UI, Apps details, README, and GlanceThing-Apps, because the
   timer was taken from that repo.
@@ -269,8 +266,8 @@ inspired them are credited in the README; no code was copied from them.
   apps to install. The Store uses Install / Uninstall for every app.
 - README screenshots for the Apps tab, the Store, the Car Thing tray, and each
   built-in tray app (Music, Pomodoro, Resource Usage, Recording Notes, GitHub,
-  Console Logs, Link, Mic), also used in GlanceThing-Apps. Link and Mic sit in
-  the same two-column table as the other app shots; Mic also has a picker shot.
+  Console Logs, Link, Mic), also used in GlanceThing-Apps. Each app has one
+  representative shot; Mic is not split into picker, toggle, and settings rows.
 - TODO.md: remaining work is turning weather, calendar, AI usage and the
   other home features into apps that also offer layout widgets; widgets from
   the existing tray apps; and, if possible, the Car Thing mic as a system

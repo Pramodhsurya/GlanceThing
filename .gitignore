@@ -1,3 +1,7 @@
+# Local only — never commit
+AGENTS.md
+.cursor/
+
 node_modules
 dist
 out

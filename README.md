@@ -86,17 +86,9 @@ Official apps live in [GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceT
 | ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | <img src=".github/assets/fork/s10-logs.png?v=1" width="400" />             | <img src=".github/assets/fork/s10-link.png?v=1" width="400" />      |
 
-| Mic                                                                       | Mic — pop up off                                                   |
+| Mic                                                                       | &nbsp;                                                             |
 | ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| <img src=".github/assets/fork/s10-mic.png?v=2" width="400" />              | <img src=".github/assets/fork/s10-mic-auto.png?v=1" width="400" />  |
-
-| Mic — pick microphones                                                    | Apps → Mic settings                                                |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| <img src=".github/assets/fork/s10-mic-list.png?v=1" width="400" />         | <img src=".github/assets/fork/s10-mic-desktop-settings.png?v=1" width="400" /> |
-
-| Settings → Client                                                         | &nbsp;                                                             |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| <img src=".github/assets/fork/s10-mic-desktop-client.png?v=1" width="400" /> | &nbsp;                                                             |
+| <img src=".github/assets/fork/s10-mic.png?v=2" width="400" />              | &nbsp;                                                             |
 
 ### Sleep and wake actions
 
