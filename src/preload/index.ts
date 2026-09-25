@@ -62,6 +62,8 @@ enum IPCHandler {
   GetGitHubTokenSource = 'getGitHubTokenSource',
   CommunityCatalog = 'communityCatalog',
   CommunityList = 'communityList',
+  CommunityRefreshStore = 'communityRefreshStore',
+  CommunityPreviewIssues = 'communityPreviewIssues',
   CommunityAddRepo = 'communityAddRepo',
   CommunityDownload = 'communityDownload',
   CommunityPickZip = 'communityPickZip',
@@ -169,6 +171,10 @@ const api = {
     ipcRenderer.invoke(IPCHandler.GetGitHubTokenSource),
   communityCatalog: () => ipcRenderer.invoke(IPCHandler.CommunityCatalog),
   communityList: () => ipcRenderer.invoke(IPCHandler.CommunityList),
+  communityRefreshStore: () =>
+    ipcRenderer.invoke(IPCHandler.CommunityRefreshStore),
+  communityPreviewIssues: (id: string) =>
+    ipcRenderer.invoke(IPCHandler.CommunityPreviewIssues, id),
   communityAddRepo: (url: string) =>
     ipcRenderer.invoke(IPCHandler.CommunityAddRepo, url),
   communityDownload: (id: string) =>

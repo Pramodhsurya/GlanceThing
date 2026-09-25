@@ -1,5 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { isOfficialAppId } from '@/lib/officialApps.js'
+import { saveInstalledApps } from '@/components/ChooseApps/ChooseApps.js'
+import Switch from '@/components/Switch/Switch.js'
+
 import styles from './Apps.module.css'
 
 const BUILTIN: {
@@ -85,7 +89,7 @@ const BUILTIN: {
     icon: 'mic',
     color: '#22c55e',
     description:
-      'Pick which mics to control. Tap to mute or unmute. Opens when a mic is in use.',
+      'Pick which mics to control. Tap to mute or unmute. Optional pop-up when a mic is in use.',
     author: 'GlanceThing',
     version: '1.0.0'
   }
@@ -108,8 +112,10 @@ function parseRepoUrl(value: string) {
   processed = processed.replace(/^git@github\.com:/, 'https://github.com/')
   if (/^[^/]+\/[^/]+$/.test(processed)) {
     processed = `https://api.github.com/repos/${processed}`
-  }
-  if (processed.includes('github.com')) {
+  } else if (
+    processed.includes('github.com') &&
+    !processed.includes('api.github.com/repos')
+  ) {
     processed = processed.replace('github.com', 'api.github.com/repos')
     processed = processed.replace(/\.git$/, '')
     processed = processed.replace(/\/$/, '')
@@ -122,9 +128,10 @@ function parseRepoUrl(value: string) {
 
 const Apps: React.FC = () => {
   const [hidden, setHidden] = useState<string[] | null>(null)
+  const [installed, setInstalled] = useState<string[] | null>(null)
   const [catalog, setCatalog] = useState<CommunityCatalogItem[]>([])
   const [community, setCommunity] = useState<CommunityInstalledApp[]>([])
-  const [page, setPage] = useState<'installed' | 'downloads'>('installed')
+  const [page, setPage] = useState<'installed' | 'store'>('installed')
   const [addOpen, setAddOpen] = useState(false)
   const [details, setDetails] = useState<
     | { kind: 'builtin'; id: string }
@@ -132,22 +139,46 @@ const Apps: React.FC = () => {
     | null
   >(null)
   const [staged, setStaged] = useState<StagedCommunityApp | null>(null)
+  const [pendingInstall, setPendingInstall] = useState<{
+    item: CommunityCatalogItem
+    issues: CommunityIssue[]
+  } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [storeError, setStoreError] = useState<string | null>(null)
+  const [storeLoading, setStoreLoading] = useState(false)
 
   const refresh = useCallback(async () => {
-    const [hiddenValue, catalogValue, communityValue] = await Promise.all([
-      window.api.getStorageValue('hiddenApps'),
-      window.api.communityCatalog(),
-      window.api.communityList()
-    ])
+    const [hiddenValue, installedValue, catalogValue, communityValue] =
+      await Promise.all([
+        window.api.getStorageValue('hiddenApps'),
+        window.api.getStorageValue('installedApps'),
+        window.api.communityCatalog(),
+        window.api.communityList()
+      ])
     setHidden(Array.isArray(hiddenValue) ? (hiddenValue as string[]) : [])
+    setInstalled(
+      Array.isArray(installedValue) ? (installedValue as string[]) : []
+    )
     setCatalog(catalogValue)
     setCommunity(communityValue)
   }, [])
 
+  const loadStore = useCallback(async () => {
+    setStoreLoading(true)
+    setStoreError(null)
+    try {
+      setCatalog(await window.api.communityRefreshStore())
+    } catch (err) {
+      setStoreError(ipcError(err))
+    } finally {
+      setStoreLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     refresh()
-  }, [refresh])
+    loadStore()
+  }, [refresh, loadStore])
 
   function setBuiltinRunning(id: string, running: boolean) {
     if (!hidden) return
@@ -156,9 +187,28 @@ const Apps: React.FC = () => {
     window.api.setStorageValue('hiddenApps', next)
   }
 
+  async function installOfficial(id: string) {
+    const current = installed || []
+    if (current.includes(id)) return
+    await saveInstalledApps([...current, id])
+    await refresh()
+  }
+
+  async function uninstallOfficial(id: string) {
+    const current = installed || []
+    await saveInstalledApps(current.filter(item => item !== id))
+    if (details?.kind === 'builtin' && details.id === id) setDetails(null)
+    await refresh()
+  }
+
+  const installedOfficial = BUILTIN.filter(app =>
+    (installed || []).includes(app.id)
+  )
+
   const runningCount =
-    (hidden ? BUILTIN.filter(a => !hidden.includes(a.id)).length : 0) +
-    community.filter(a => a.enabled).length
+    (hidden
+      ? installedOfficial.filter(a => !hidden.includes(a.id)).length
+      : 0) + community.filter(a => a.enabled).length
 
   return (
     <div className={styles.page}>
@@ -175,19 +225,19 @@ const Apps: React.FC = () => {
         <button
           type="button"
           className={styles.sideBtn}
-          data-active={page === 'downloads'}
-          onClick={() => setPage('downloads')}
+          data-active={page === 'store'}
+          onClick={() => setPage('store')}
         >
-          <span className="material-icons">download</span>
-          Download
+          <span className="material-icons">storefront</span>
+          Store
         </button>
         <button
           type="button"
           className={styles.sideBtn}
           onClick={() => setAddOpen(true)}
         >
-          <span className="material-icons">add</span>
-          Add App
+          <span className="material-icons">link</span>
+          From Git
         </button>
       </aside>
 
@@ -263,7 +313,7 @@ const Apps: React.FC = () => {
                   </div>
                 </div>
               ))}
-              {BUILTIN.map(app => {
+              {installedOfficial.map(app => {
                 const running = !hidden.includes(app.id)
                 return (
                   <div key={app.id} className={styles.row}>
@@ -326,6 +376,12 @@ const Apps: React.FC = () => {
                   </div>
                 )
               })}
+              {!community.length && !installedOfficial.length ? (
+                <p className={styles.empty}>
+                  No apps installed yet. Open the Store and install the
+                  ones you want.
+                </p>
+              ) : null}
               <p className={styles.count}>
                 {runningCount} running on the Car Thing
               </p>
@@ -334,53 +390,31 @@ const Apps: React.FC = () => {
             <p className={styles.empty}>Loading…</p>
           )
         ) : (
-          <div className={styles.grid}>
-            {catalog.map(item => (
-              <div key={item.id} className={styles.releaseCard}>
-                <div className={styles.releaseIcon}>
-                  <span className="material-icons">extension</span>
-                </div>
-                <h3>{item.label}</h3>
-                <p>Version {item.version}</p>
-                <p>{item.downloads.toLocaleString()} downloads</p>
-                <p>Made By {item.author}</p>
-                <button
-                  type="button"
-                  className={styles.downloadBtn}
-                  onClick={async () => {
-                    setError(null)
-                    try {
-                      setStaged(
-                        await window.api.communityDownload(item.id)
-                      )
-                    } catch (err) {
-                      setError(ipcError(err))
-                    }
-                  }}
-                >
-                  Download Latest
-                  <span className="material-icons">download</span>
-                </button>
-                <button
-                  type="button"
-                  className={styles.ghost}
-                  onClick={() =>
-                    window.api.communityRemoveRepo(item.id).then(refresh)
-                  }
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              className={styles.addCard}
-              onClick={() => setAddOpen(true)}
-            >
-              <span className="material-icons">add</span>
-              <span className={styles.addLabel}>Add</span>
-            </button>
-          </div>
+          <StorePage
+            catalog={catalog}
+            community={community}
+            installed={installed || []}
+            loading={storeLoading}
+            error={storeError}
+            onRefresh={loadStore}
+            onFromGit={() => setAddOpen(true)}
+            onInstallOfficial={id => installOfficial(id)}
+            onUninstallOfficial={id => uninstallOfficial(id)}
+            onInstall={async item => {
+              setError(null)
+              try {
+                setPendingInstall({
+                  item,
+                  issues: await window.api.communityPreviewIssues(item.id)
+                })
+              } catch (err) {
+                setError(ipcError(err))
+              }
+            }}
+            onRemove={id =>
+              window.api.communityRemoveRepo(id).then(refresh)
+            }
+          />
         )}
       </main>
 
@@ -389,7 +423,7 @@ const Apps: React.FC = () => {
           onClose={() => setAddOpen(false)}
           onAdded={async () => {
             await refresh()
-            setPage('downloads')
+            setPage('store')
           }}
           onStaged={value => {
             setStaged(value)
@@ -398,12 +432,46 @@ const Apps: React.FC = () => {
           onError={setError}
         />
       ) : null}
+      {pendingInstall ? (
+        <InstallDisclaimer
+          title={`Install ${pendingInstall.item.label}`}
+          author={pendingInstall.item.author}
+          issues={pendingInstall.issues}
+          confirmLabel="Initialize App"
+          busyLabel="Downloading…"
+          onClose={() => setPendingInstall(null)}
+          onError={setError}
+          onConfirm={async () => {
+            const stagedApp = await window.api.communityDownload(
+              pendingInstall.item.id
+            )
+            const extra = stagedApp.issues.filter(
+              issue =>
+                !pendingInstall.issues.some(known => known.id === issue.id)
+            )
+            if (extra.length) {
+              setPendingInstall(null)
+              setStaged(stagedApp)
+              return
+            }
+            await window.api.communityConfirm()
+            setPendingInstall(null)
+            await refresh()
+            setPage('installed')
+          }}
+        />
+      ) : null}
       {staged ? (
-        <SuccessNotification
-          staged={staged}
+        <InstallDisclaimer
+          title={`Successfully Downloaded ${staged.manifest.label} v${staged.manifest.version}`}
+          author={staged.manifest.author}
+          issues={staged.issues}
+          confirmLabel="Initialize App"
+          busyLabel="Installing…"
           onClose={() => setStaged(null)}
           onError={setError}
-          onInstalled={async () => {
+          onConfirm={async () => {
+            await window.api.communityConfirm()
             setStaged(null)
             await refresh()
             setPage('installed')
@@ -437,6 +505,7 @@ const Apps: React.FC = () => {
           running={hidden ? !hidden.includes(details.id) : true}
           onClose={() => setDetails(null)}
           onToggle={running => setBuiltinRunning(details.id, running)}
+          onUninstall={() => uninstallOfficial(details.id)}
         />
       ) : null}
       {details?.kind === 'community' ? (
@@ -513,17 +582,11 @@ const AddRepoOverlay: React.FC<{
   return (
     <div className={styles.scrim} onClick={onClose}>
       <div className={styles.overlay} onClick={e => e.stopPropagation()}>
-        <h2>Add Repository</h2>
+        <h2>Install from Git URL</h2>
         <label>GitHub Repository</label>
         <p className={styles.hint}>
-          Official apps:{' '}
-          <button
-            type="button"
-            className={styles.linkish}
-            onClick={() => setRepoUrl('Pramodhsurya/GlanceThing-Apps')}
-          >
-            Pramodhsurya/GlanceThing-Apps
-          </button>
+          Official apps are already in the Store. Paste{' '}
+          <code>owner/repo</code> or a GitHub URL for another repository.
         </p>
         <input
           type="text"
@@ -579,23 +642,224 @@ const AddRepoOverlay: React.FC<{
   )
 }
 
-const SuccessNotification: React.FC<{
-  staged: StagedCommunityApp
+const StorePage: React.FC<{
+  catalog: CommunityCatalogItem[]
+  community: CommunityInstalledApp[]
+  installed: string[]
+  loading: boolean
+  error: string | null
+  onRefresh: () => Promise<void>
+  onFromGit: () => void
+  onInstallOfficial: (id: string) => Promise<void>
+  onUninstallOfficial: (id: string) => Promise<void>
+  onInstall: (item: CommunityCatalogItem) => Promise<void>
+  onRemove: (id: string) => void
+}> = ({
+  catalog,
+  community,
+  installed,
+  loading,
+  error,
+  onRefresh,
+  onFromGit,
+  onInstallOfficial,
+  onUninstallOfficial,
+  onInstall,
+  onRemove
+}) => {
+  const official = catalog.filter(
+    item =>
+      item.official ||
+      (item.owner?.toLowerCase() === 'pramodhsurya' &&
+        item.repo?.toLowerCase() === 'glancething-apps')
+  )
+  const fromGit = catalog.filter(item => !official.includes(item))
+
+  return (
+    <div className={styles.store}>
+      <div className={styles.storeHead}>
+        <h1>Store</h1>
+        <p className={styles.storeLead}>
+          Install what you want. Uninstall removes it from the Car Thing.
+          Nothing is preinstalled.
+        </p>
+      </div>
+      {error ? <p className={styles.storeError}>{error}</p> : null}
+      <div className={styles.storeToolbar}>
+        <h2>Official</h2>
+        <button
+          type="button"
+          className={styles.ghost}
+          disabled={loading}
+          onClick={() => onRefresh()}
+        >
+          {loading ? 'Refreshing…' : 'Refresh'}
+        </button>
+      </div>
+      <div className={styles.grid}>
+        {official.map(item => (
+          <StoreCard
+            key={item.id}
+            item={item}
+            community={community}
+            installedOfficial={installed}
+            onInstallOfficial={onInstallOfficial}
+            onUninstallOfficial={onUninstallOfficial}
+            onInstall={onInstall}
+          />
+        ))}
+        {!official.length && !loading ? (
+          <p className={styles.empty}>
+            The official store did not return any apps.
+          </p>
+        ) : null}
+      </div>
+      <div className={styles.storeToolbar}>
+        <h2>From Git</h2>
+      </div>
+      <div className={styles.grid}>
+        {fromGit.map(item => (
+          <StoreCard
+            key={item.id}
+            item={item}
+            community={community}
+            installedOfficial={installed}
+            onInstallOfficial={onInstallOfficial}
+            onUninstallOfficial={onUninstallOfficial}
+            onInstall={onInstall}
+            onRemove={() => onRemove(item.id)}
+          />
+        ))}
+        <button
+          type="button"
+          className={styles.addCard}
+          onClick={onFromGit}
+        >
+          <span className="material-icons">link</span>
+          <span className={styles.addLabel}>Git URL</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+const StoreCard: React.FC<{
+  item: CommunityCatalogItem
+  community: CommunityInstalledApp[]
+  installedOfficial: string[]
+  onInstallOfficial: (id: string) => Promise<void>
+  onUninstallOfficial: (id: string) => Promise<void>
+  onInstall: (item: CommunityCatalogItem) => Promise<void>
+  onRemove?: () => void
+}> = ({
+  item,
+  community,
+  installedOfficial,
+  onInstallOfficial,
+  onUninstallOfficial,
+  onInstall,
+  onRemove
+}) => {
+  const appId = item.appId
+  const official = isOfficialAppId(appId)
+  const installed = official
+    ? installedOfficial.includes(appId)
+    : appId
+      ? community.some(app => app.id === appId)
+      : false
+  const [busy, setBusy] = useState(false)
+
+  return (
+    <div className={styles.releaseCard}>
+      <div
+        className={styles.releaseIcon}
+        style={item.color ? { background: item.color } : undefined}
+      >
+        <span className="material-icons">{item.icon || 'extension'}</span>
+      </div>
+      <h3>{item.label}</h3>
+      <p>Version {item.version}</p>
+      {item.downloads ? (
+        <p>{item.downloads.toLocaleString()} downloads</p>
+      ) : null}
+      <p>Made By {item.author}</p>
+      {item.description ? (
+        <p className={styles.cardDesc}>{item.description}</p>
+      ) : null}
+      <button
+        type="button"
+        className={styles.downloadBtn}
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true)
+          try {
+            if (official && installed) await onUninstallOfficial(appId)
+            else if (official) await onInstallOfficial(appId)
+            else await onInstall(item)
+          } finally {
+            setBusy(false)
+          }
+        }}
+      >
+        {busy
+          ? official
+            ? installed
+              ? 'Uninstalling…'
+              : 'Installing…'
+            : 'Opening…'
+          : official
+            ? installed
+              ? 'Uninstall'
+              : 'Install'
+            : installed
+              ? 'Reinstall'
+              : 'Install'}
+        <span className="material-icons">
+          {official && installed
+            ? 'delete'
+            : installed
+              ? 'refresh'
+              : 'download'}
+        </span>
+      </button>
+      {onRemove ? (
+        <button type="button" className={styles.ghost} onClick={onRemove}>
+          Remove
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
+const InstallDisclaimer: React.FC<{
+  title: string
+  author: string
+  issues: CommunityIssue[]
+  confirmLabel: string
+  busyLabel: string
   onClose: () => void
   onError: (message: string) => void
-  onInstalled: () => Promise<void>
-}> = ({ staged, onClose, onError, onInstalled }) => {
+  onConfirm: () => Promise<void>
+}> = ({
+  title,
+  author,
+  issues,
+  confirmLabel,
+  busyLabel,
+  onClose,
+  onError,
+  onConfirm
+}) => {
   const [acked, setAcked] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
 
-  const ready = staged.issues.every(issue => acked.includes(issue.id))
+  const ready = issues.every(issue => acked.includes(issue.id))
 
   async function initialize() {
     if (!ready) return
     setBusy(true)
     try {
-      await window.api.communityConfirm()
-      await onInstalled()
+      await onConfirm()
     } catch (err) {
       setBusy(false)
       onError(ipcError(err))
@@ -608,16 +872,13 @@ const SuccessNotification: React.FC<{
         className={`${styles.overlay} ${styles.wide}`}
         onClick={e => e.stopPropagation()}
       >
-        <h2>
-          Successfully Downloaded {staged.manifest.label} v
-          {staged.manifest.version}
-        </h2>
-        <p className={styles.author}>By {staged.manifest.author}</p>
-        {staged.issues.length ? (
+        <h2>{title}</h2>
+        <p className={styles.author}>By {author}</p>
+        {issues.length ? (
           <>
             <p className={styles.issuesTitle}>Potential Issues Found</p>
             <div className={styles.issues}>
-              {staged.issues.map(issue => {
+              {issues.map(issue => {
                 const on = acked.includes(issue.id)
                 return (
                   <label key={issue.id} className={styles.issue}>
@@ -653,7 +914,7 @@ const SuccessNotification: React.FC<{
             disabled={!ready || busy}
             onClick={initialize}
           >
-            {busy ? 'Installing…' : 'Initialize App'}
+            {busy ? busyLabel : confirmLabel}
           </button>
         </div>
       </div>
@@ -666,7 +927,17 @@ const AppDetails: React.FC<{
   running: boolean
   onClose: () => void
   onToggle: (running: boolean) => void
-}> = ({ app, running, onClose, onToggle }) => {
+  onUninstall: () => void
+}> = ({ app, running, onClose, onToggle, onUninstall }) => {
+  const [autoOpen, setAutoOpen] = useState(true)
+
+  useEffect(() => {
+    if (app.id !== 'mic') return
+    window.api.getStorageValue('micAutoOpen').then(value => {
+      setAutoOpen(value !== false)
+    })
+  }, [app.id])
+
   return (
     <div className={styles.scrim} onClick={onClose}>
       <div className={styles.overlay} onClick={e => e.stopPropagation()}>
@@ -686,12 +957,37 @@ const AppDetails: React.FC<{
         </div>
         <p className={styles.detailsBody}>{app.description}</p>
         {app.credit ? <p className={styles.hint}>{app.credit}</p> : null}
+        {app.id === 'mic' ? (
+          <label className={styles.settingRow}>
+            <div>
+              <strong>Pop up when in use</strong>
+              <span>
+                When on, Mic opens on the Car Thing if a selected
+                microphone is active. Mute still works if you open the app
+                yourself.
+              </span>
+            </div>
+            <Switch
+              value={autoOpen}
+              onChange={value => {
+                setAutoOpen(value)
+                window.api.setStorageValue('micAutoOpen', value)
+              }}
+            />
+          </label>
+        ) : null}
         <p className={styles.hint}>
-          Built-in GlanceThing app. Pause hides it from the Car Thing tray.
+          Pause hides it from the Car Thing tray. Uninstall removes it
+          until you install it again from the Store.
         </p>
         <div className={styles.overlayActions}>
-          <button type="button" className={styles.ghost} onClick={onClose}>
-            Close
+          <button
+            type="button"
+            className={styles.ghost}
+            data-danger="true"
+            onClick={onUninstall}
+          >
+            Uninstall
           </button>
           <button
             type="button"

@@ -21,22 +21,7 @@ Cover at least:
 - AI usage
 - The other current home features that are not already tray apps (for example photo album / screensaver), so they follow the same “app + widgets” model
 
-## 2. Mic app (name can change later)
-
-A simple meeting mute app.
-
-When you open it, the screen is **only a mic icon**.
-
-- Tap once → **mute**
-- Tap again → **unmute**
-
-That mute/unmute should apply to **every microphone connected to this computer**, not just one input.
-
-Typical use: you are in a meeting, swipe to the app, hit the icon, and you are muted everywhere.
-
-Started: built-in **Mic** tray app. Tap or press the dial to mute the selected hardware mics (Mac, Linux via PulseAudio, Windows). A dropdown lists available mics. The app opens on its own when any listed mic becomes active; closing it afterwards is up to you. Virtual devices such as Teams and Zoom are skipped. Rename later if needed.
-
-## 3. Car Thing as a real microphone device (if possible)
+## 2. Car Thing as a real microphone device (if possible)
 
 Expose the Car Thing’s microphone as its **own input device** on the computer.
 
@@ -44,7 +29,7 @@ When you are in a Teams (or similar) meeting and you open the list of microphone
 
 This is “if possible”: it depends on presenting the Car Thing capture as a system audio device on macOS / Windows.
 
-## 4. Widgets for the existing tray apps
+## 3. Widgets for the existing tray apps
 
 The apps that already live in the swipe-down tray should also **ship widgets**, so they can be added to the home pages in the Layout tab — not only opened as a fullscreen app.
 
@@ -59,3 +44,4 @@ That includes at least:
 - Link
 
 Same idea as section 1: pick a widget from the app, drop it on a normal page.
+

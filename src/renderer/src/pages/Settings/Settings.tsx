@@ -507,6 +507,7 @@ const ClientTab: React.FC = () => {
   }>({})
 
   const [autoBrightness, setAutoBrightness] = useState(false)
+  const [micAutoOpen, setMicAutoOpen] = useState(true)
   const [sleepMethod, setSleepMethod] = useState('sleep')
   const [rotateMs, setRotateMs] = useState('30000')
   const [shuffle, setShuffle] = useState(false)
@@ -546,6 +547,9 @@ const ClientTab: React.FC = () => {
       }
       setAutoBrightness(settings.current.autoBrightness ?? false)
       setSleepMethod(settings.current.sleepMethod ?? 'sleep')
+      setMicAutoOpen(
+        (await window.api.getStorageValue('micAutoOpen')) !== false
+      )
 
       const savedRotate = await window.api.getStorageValue(
         'screensaverRotateMs'
@@ -624,6 +628,15 @@ const ClientTab: React.FC = () => {
           onChange={value =>
             window.api.setStorageValue('dateFormat', value as string)
           }
+        />
+        <ToggleSetting
+          label="Mic pop up when in use"
+          description="Open the Mic app on the Car Thing when a selected microphone is active. Turn off to keep Mic closed until you open it."
+          value={micAutoOpen}
+          onChange={value => {
+            setMicAutoOpen(value)
+            window.api.setStorageValue('micAutoOpen', value)
+          }}
         />
         <ToggleSetting
           label="Auto Brightness"

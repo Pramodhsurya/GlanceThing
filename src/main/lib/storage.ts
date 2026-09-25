@@ -48,8 +48,16 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
   hiddenApps: () => {
     serverManager.broadcast({ type: 'layout', data: getLayoutPayload() })
   },
+  installedApps: () => {
+    serverManager.broadcast({ type: 'layout', data: getLayoutPayload() })
+  },
   communityApps: () => {
     serverManager.broadcast({ type: 'layout', data: getLayoutPayload() })
+  },
+  micAutoOpen: () => {
+    void import('./mic.js').then(({ notifyMicAutoOpenChanged }) =>
+      notifyMicAutoOpenChanged()
+    )
   },
   screensaverRotateMs: () => {
     serverManager.broadcast({ type: 'screensaver', action: 'update' })
@@ -114,6 +122,10 @@ export function getLayoutPayload() {
   const aiUsage = getStorageValue('aiUsage') || undefined
   const storedHidden = getStorageValue('hiddenApps')
   const hiddenApps = Array.isArray(storedHidden) ? storedHidden : []
+  const storedInstalled = getStorageValue('installedApps')
+  const installedApps = Array.isArray(storedInstalled)
+    ? storedInstalled
+    : []
   const storedCommunity = getStorageValue('communityApps')
   const communityApps = Array.isArray(storedCommunity)
     ? (storedCommunity as { id: string; label: string; icon?: string; color?: string; enabled?: boolean }[])
@@ -126,7 +138,15 @@ export function getLayoutPayload() {
         }))
     : []
   if (!layout || typeof layout !== 'object' || Array.isArray(layout)) {
-    return { tiles: [], dialNavigation, dialMode, aiUsage, hiddenApps, communityApps }
+    return {
+      tiles: [],
+      dialNavigation,
+      dialMode,
+      aiUsage,
+      hiddenApps,
+      installedApps,
+      communityApps
+    }
   }
   return {
     ...(layout as Record<string, unknown>),
@@ -134,6 +154,7 @@ export function getLayoutPayload() {
     dialMode,
     aiUsage,
     hiddenApps,
+    installedApps,
     communityApps
   }
 }
@@ -224,10 +245,18 @@ export function setStorageValue(
 }
 
 export function getSocketPassword() {
-  let socketPassword = getStorageValue('socketPassword', true)
-  if (!socketPassword) {
+  // Keep this off Keychain. safeStorage.decryptString blocks the whole
+  // process when macOS re-prompts after a re-signed build, so the Car Thing
+  // never gets a client and Chromium shows "Something went wrong".
+  let socketPassword = getStorageValue('socketPassword', false)
+  if (
+    !socketPassword ||
+    (typeof socketPassword === 'string' &&
+      socketPassword.length > 128 &&
+      /^[0-9a-f]+$/i.test(socketPassword))
+  ) {
     socketPassword = random(64)
-    setStorageValue('socketPassword', socketPassword, true)
+    setStorageValue('socketPassword', socketPassword, false)
   }
   return socketPassword
 }

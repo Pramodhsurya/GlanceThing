@@ -16,11 +16,13 @@ const AppTray: React.FC = () => {
     closeTray,
     openApp,
     hiddenApps,
+    installedApps,
     communityApps
   } = useApps()
-  const apps = BUILTIN_APPS.filter(a => hiddenApps.indexOf(a.id) === -1).concat(
-    communityApps
-  )
+  const apps = BUILTIN_APPS.filter(
+    a =>
+      installedApps.indexOf(a.id) !== -1 && hiddenApps.indexOf(a.id) === -1
+  ).concat(communityApps)
   const [selected, setSelected] = useState(0)
   const touchStart = useRef({ x: 0, y: 0 })
 

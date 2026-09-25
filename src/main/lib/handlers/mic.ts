@@ -8,6 +8,7 @@ import {
   onMicChange,
   refreshMic,
   selectMics,
+  setMicAutoOpen,
   setMicMuted,
   toggleMic
 } from '../mic.js'
@@ -88,6 +89,14 @@ export const actions: HandlerAction[] = [
       const names = (data as { names?: unknown })?.names
       if (!Array.isArray(names)) return
       await selectMics(names.map(n => String(n))).catch(err => fail(ws, err))
+    }
+  },
+  {
+    action: 'autoOpen',
+    handle: async (ws, data) => {
+      const on = (data as { on?: unknown })?.on
+      setMicAutoOpen(on !== false)
+      sendState(ws)
     }
   }
 ]

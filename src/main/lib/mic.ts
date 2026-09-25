@@ -21,6 +21,7 @@ export interface MicState {
   active: boolean
   selected: string[]
   devices: MicDevice[]
+  autoOpen: boolean
 }
 
 type Listener = (state: MicState) => void
@@ -28,7 +29,13 @@ type OpenListener = () => void
 
 const listeners = new Set<Listener>()
 const openListeners = new Set<OpenListener>()
-let cached: MicState = { muted: false, active: false, selected: [], devices: [] }
+let cached: MicState = {
+  muted: false,
+  active: false,
+  selected: [],
+  devices: [],
+  autoOpen: true
+}
 let helperPath: string | null = null
 let monitor: ReturnType<typeof setInterval> | null = null
 let wasActive = false
@@ -44,13 +51,27 @@ export function onMicShouldOpen(listener: OpenListener) {
   return () => openListeners.delete(listener)
 }
 
+function micAutoOpen() {
+  return getStorageValue('micAutoOpen') !== false
+}
+
+export function setMicAutoOpen(on: boolean) {
+  setStorageValue('micAutoOpen', on)
+}
+
+export function notifyMicAutoOpenChanged() {
+  if (!micAutoOpen()) pendingOpen = false
+  emit({ ...cached, autoOpen: micAutoOpen() })
+}
+
 function requestOpen() {
+  if (!micAutoOpen()) return
   pendingOpen = true
   openListeners.forEach(l => l())
 }
 
 export function flushMicOpen(send: (payload: unknown) => void) {
-  if (!pendingOpen) return
+  if (!pendingOpen || !micAutoOpen()) return
   send({ type: 'mic', action: 'open' })
 }
 
@@ -80,13 +101,19 @@ function resolveSelected(devices: MicDevice[]) {
   return names.filter(n => saved.indexOf(n) !== -1 || newcomers.indexOf(n) !== -1)
 }
 
-function withSelection(state: Omit<MicState, 'selected'>): MicState {
-  return { ...state, selected: resolveSelected(state.devices) }
+function withSelection(
+  state: Omit<MicState, 'selected' | 'autoOpen'>
+): MicState {
+  return {
+    ...state,
+    selected: resolveSelected(state.devices),
+    autoOpen: micAutoOpen()
+  }
 }
 
 function emit(state: MicState) {
-  cached = state
-  listeners.forEach(l => l(state))
+  cached = { ...state, autoOpen: micAutoOpen() }
+  listeners.forEach(l => l(cached))
 }
 
 export function micState() {
@@ -124,7 +151,7 @@ async function macHelper() {
   return dest
 }
 
-function parseState(raw: string): Omit<MicState, 'selected'> {
+function parseState(raw: string): Omit<MicState, 'selected' | 'autoOpen'> {
   const parsed = JSON.parse(raw) as {
     muted?: boolean
     active?: boolean

@@ -39,7 +39,123 @@ export interface CommunityCatalogItem {
   assetName: string
   htmlUrl: string
   downloads: number
+  official?: boolean
+  appId?: string
+  appPath?: string
+  icon?: string
+  color?: string
+  builtin?: boolean
 }
+
+interface OfficialCatalogApp {
+  id: string
+  label: string
+  version: string
+  author: string
+  description: string
+  icon?: string
+  color?: string
+  path?: string
+  builtin?: boolean
+}
+
+export const OFFICIAL_APPS_REPO = 'Pramodhsurya/GlanceThing-Apps'
+
+const OFFICIAL_FALLBACK: OfficialCatalogApp[] = [
+  {
+    id: 'music',
+    label: 'Music',
+    version: '1.0.0',
+    author: 'GlanceThing',
+    description:
+      'Now playing with seek, skip 10 seconds, shuffle, repeat and volume.',
+    icon: 'music_note',
+    color: '#a855f7',
+    path: 'music'
+  },
+  {
+    id: 'pomodoro',
+    label: 'Pomodoro',
+    version: '1.0.0',
+    author: 'grahamplace',
+    description:
+      'Focus timer with short and long breaks. Timer from grahamplace/pomodoro-thing.',
+    icon: 'timer',
+    color: '#ef4444',
+    path: 'pomodoro'
+  },
+  {
+    id: 'system',
+    label: 'Resource Usage',
+    version: '1.0.0',
+    author: 'GlanceThing',
+    description: 'CPU, memory and uptime of this computer.',
+    icon: 'memory',
+    color: '#10b981',
+    path: 'system'
+  },
+  {
+    id: 'recorder',
+    label: 'Recording Notes',
+    version: '1.0.0',
+    author: 'GlanceThing',
+    description: 'Record voice notes with the Car Thing microphone.',
+    icon: 'mic',
+    color: '#f43f5e',
+    path: 'recorder'
+  },
+  {
+    id: 'github',
+    label: 'GitHub',
+    version: '1.0.0',
+    author: 'GlanceThing',
+    description: 'Your repos, stars, pull requests and issues.',
+    icon: 'code',
+    color: '#238636',
+    path: 'github'
+  },
+  {
+    id: 'logs',
+    label: 'Console Logs',
+    version: '1.0.0',
+    author: 'GlanceThing',
+    description: 'Live GlanceThing logs.',
+    icon: 'list_alt',
+    color: '#0ea5e9',
+    path: 'logs'
+  },
+  {
+    id: 'link',
+    label: 'Link',
+    version: '1.0.0',
+    author: 'GlanceThing',
+    description: 'Shared tap board between connected Car Things.',
+    icon: 'link',
+    color: '#6366f1',
+    path: 'link'
+  },
+  {
+    id: 'mic',
+    label: 'Mic',
+    version: '1.0.0',
+    author: 'GlanceThing',
+    description:
+      'Pick which mics to control. Tap to mute or unmute. Optional pop-up when a mic is in use.',
+    icon: 'mic',
+    color: '#22c55e',
+    path: 'mic'
+  },
+  {
+    id: 'exampleapp',
+    label: 'Example App',
+    version: '1.0.0',
+    author: 'GlanceThing',
+    description: 'A template you can copy to make a new GlanceThing app.',
+    icon: 'widgets',
+    color: '#f59e0b',
+    path: 'exampleapp'
+  }
+]
 
 export interface CommunityInstalledApp {
   id: string
@@ -123,8 +239,10 @@ export function parseRepoUrl(value: string) {
   )
   if (/^[^/]+\/[^/]+$/.test(processed)) {
     processed = `https://api.github.com/repos/${processed}`
-  }
-  if (processed.includes('github.com')) {
+  } else if (
+    processed.includes('github.com') &&
+    !processed.includes('api.github.com/repos')
+  ) {
     processed = processed.replace('github.com', 'api.github.com/repos')
     processed = processed.replace(/\.git$/, '')
     processed = processed.replace(/\/$/, '')
@@ -151,6 +269,17 @@ async function githubHeaders() {
   }
   if (token) headers.Authorization = `Bearer ${token}`
   return headers
+}
+
+function isOfficialRepo(owner: string, repo: string) {
+  return (
+    owner.toLowerCase() === 'pramodhsurya' &&
+    repo.toLowerCase() === 'glancething-apps'
+  )
+}
+
+function isOfficialItem(item: CommunityCatalogItem) {
+  return !!item.official || isOfficialRepo(item.owner, item.repo)
 }
 
 function listCatalog(): CommunityCatalogItem[] {
@@ -345,10 +474,11 @@ async function githubGet<T>(url: string) {
   return res.data
 }
 
-export async function addCommunityRepo(input: string) {
-  const parsed = parseRepoUrl(input)
-  if (!parsed.valid) throw new Error('Invalid repository URL format')
-
+async function fetchRepoReleaseItems(parsed: {
+  processed: string
+  owner: string
+  repo: string
+}): Promise<CommunityCatalogItem[]> {
   const releases = await githubGet<
     {
       html_url: string
@@ -381,7 +511,7 @@ export async function addCommunityRepo(input: string) {
     (n, a) => n + (a.download_count || 0),
     0
   )
-  const items: CommunityCatalogItem[] = zips.map(asset => ({
+  return zips.map(asset => ({
     id: many
       ? `${parsed.owner}/${parsed.repo}:${asset.name}`
       : `${parsed.owner}/${parsed.repo}`,
@@ -399,13 +529,147 @@ export async function addCommunityRepo(input: string) {
     htmlUrl: latest.html_url,
     downloads
   }))
+}
 
+function matchOfficialMeta(
+  assetName: string,
+  meta: OfficialCatalogApp[]
+) {
+  const stem = assetName
+    .replace(/-app-v?[\d.]+.*$/i, '')
+    .replace(/\.(zip|tar\.gz)$/i, '')
+    .toLowerCase()
+  return meta.find(
+    app =>
+      app.id === stem ||
+      (app.path || '').toLowerCase() === stem ||
+      assetName.toLowerCase().startsWith(`${app.id}-`) ||
+      (app.path
+        ? assetName.toLowerCase().startsWith(`${app.path}-`)
+        : false)
+  )
+}
+
+async function fetchOfficialCatalogJson(): Promise<OfficialCatalogApp[]> {
+  try {
+    const res = await axios.get<{ apps?: OfficialCatalogApp[] }>(
+      `https://raw.githubusercontent.com/${OFFICIAL_APPS_REPO}/main/catalog.json`,
+      { timeout: 15000, validateStatus: () => true }
+    )
+    if (res.status === 200 && Array.isArray(res.data?.apps))
+      return res.data.apps
+  } catch {
+    // use the bundled fallback
+  }
+  return OFFICIAL_FALLBACK
+}
+
+export async function refreshOfficialStore() {
+  const parsed = parseRepoUrl(OFFICIAL_APPS_REPO)
+  if (!parsed.valid) throw new Error('Official apps repo is misconfigured.')
+
+  let releaseItems: CommunityCatalogItem[] = []
+  try {
+    releaseItems = await fetchRepoReleaseItems(parsed)
+  } catch (err) {
+    log(
+      `Official store releases unavailable: ${(err as Error).message}`,
+      'Apps'
+    )
+  }
+
+  const meta = await fetchOfficialCatalogJson()
+  const official: CommunityCatalogItem[] = releaseItems.map(item => {
+    const app = matchOfficialMeta(item.assetName, meta)
+    const appId = app?.id || guessAppId(item)
+    return {
+      ...item,
+      official: true,
+      appId,
+      appPath: app?.path || appId,
+      label: app?.label || item.label,
+      author: app?.author || item.author,
+      description: app?.description || item.description,
+      icon: app?.icon,
+      color: app?.color
+    }
+  })
+
+  for (const app of meta) {
+    if (official.some(item => item.appId === app.id)) continue
+    official.push({
+      id: `${parsed.owner}/${parsed.repo}:${app.id}`,
+      owner: parsed.owner,
+      repo: parsed.repo,
+      apiUrl: parsed.processed,
+      label: app.label,
+      version: app.version,
+      author: app.author,
+      description: app.description,
+      downloadUrl: '',
+      assetName: '',
+      htmlUrl: `https://github.com/${OFFICIAL_APPS_REPO}`,
+      downloads: 0,
+      official: true,
+      appId: app.id,
+      appPath: app.path || app.id,
+      icon: app.icon,
+      color: app.color
+    })
+  }
+
+  const user = listCatalog().filter(item => !isOfficialItem(item))
+  saveCatalog([...official, ...user])
+  log(`Official store loaded (${official.length} apps)`, 'Apps')
+  return listCatalog()
+}
+
+function guessAppId(item: Pick<CommunityCatalogItem, 'assetName' | 'label'>) {
+  const stem = (item.assetName || item.label || '')
+    .replace(/-app-v?[\d.]+.*$/i, '')
+    .replace(/\.(zip|tar\.gz)$/i, '')
+    .replace(/\s+/g, '')
+  return safeId(stem)
+}
+
+export function previewInstallIssues(catalogId: string): CommunityIssue[] {
+  const item = listCatalog().find(c => c.id === catalogId)
+  if (!item) throw new Error('App is not in the store.')
+  const appId = item.appId || guessAppId(item)
+  const existing = appId
+    ? listInstalled().find(app => app.id === appId)
+    : undefined
+  return buildIssues(
+    {
+      id: appId || 'unknown',
+      label: item.label,
+      version: item.version,
+      author: item.author,
+      description: item.description,
+      repository: item.htmlUrl
+    },
+    true,
+    existing
+  )
+}
+
+export async function addCommunityRepo(input: string) {
+  const parsed = parseRepoUrl(input)
+  if (!parsed.valid) throw new Error('Invalid repository URL format')
+  if (isOfficialRepo(parsed.owner, parsed.repo)) {
+    return refreshOfficialStore()
+  }
+
+  const items = await fetchRepoReleaseItems(parsed)
   const prefix = `${parsed.owner}/${parsed.repo}`
   const catalog = listCatalog().filter(
-    c => c.id !== prefix && !c.id.startsWith(`${prefix}:`)
+    c =>
+      !isOfficialItem(c) &&
+      c.id !== prefix &&
+      !c.id.startsWith(`${prefix}:`)
   )
-  catalog.unshift(...items)
-  saveCatalog(catalog)
+  const official = listCatalog().filter(isOfficialItem)
+  saveCatalog([...official, ...items, ...catalog])
   log(
     `Added community repo ${prefix} (${items.length} app${items.length === 1 ? '' : 's'})`,
     'Apps'
@@ -442,8 +706,43 @@ function collectStage(
 
 export async function downloadCommunityApp(catalogId: string) {
   const item = listCatalog().find(c => c.id === catalogId)
-  if (!item) throw new Error('Repository is not in the catalog.')
-  return stageFromUrl(item.downloadUrl, item.htmlUrl || item.apiUrl)
+  if (!item) throw new Error('App is not in the store.')
+  if (item.downloadUrl) {
+    return stageFromUrl(item.downloadUrl, item.htmlUrl || item.apiUrl)
+  }
+  if (item.official && item.appPath) {
+    return stageOfficialFolder(item.appPath, item.htmlUrl || item.apiUrl)
+  }
+  throw new Error('This app has no download yet.')
+}
+
+async function stageOfficialFolder(appPath: string, sourceUrl: string) {
+  fs.rmSync(stagedDir(), { recursive: true, force: true })
+  fs.mkdirSync(stagedDir(), { recursive: true })
+  const zipPath = path.join(stagedDir(), 'repo.zip')
+  const extractPath = path.join(stagedDir(), 'repo')
+  const url = `https://api.github.com/repos/${OFFICIAL_APPS_REPO}/zipball`
+  log(`Downloading official app folder ${appPath}`, 'Apps')
+  const res = await axios.get(url, {
+    responseType: 'stream',
+    headers: await githubHeaders(),
+    timeout: 120_000
+  })
+  await pipeline(res.data, fs.createWriteStream(zipPath))
+  await extractArchive(zipPath, extractPath)
+  const roots = fs
+    .readdirSync(extractPath, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+  const repoRoot = roots[0]
+    ? path.join(extractPath, roots[0].name)
+    : extractPath
+  const appRoot = path.join(repoRoot, appPath)
+  if (!fs.existsSync(appRoot))
+    throw new Error(`App folder ${appPath} was not found in the repo.`)
+  const dest = path.join(stagedDir(), 'extracted')
+  fs.cpSync(appRoot, dest, { recursive: true })
+  staged = collectStage(dest, sourceUrl)
+  return staged
 }
 
 export async function stageFromUrl(
@@ -543,6 +842,9 @@ export function removeCommunityApp(id: string) {
 }
 
 export function removeCommunityRepo(id: string) {
+  const item = listCatalog().find(c => c.id === id)
+  if (item && isOfficialItem(item))
+    throw new Error('Official store apps cannot be removed.')
   saveCatalog(listCatalog().filter(c => c.id !== id))
 }
 

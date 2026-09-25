@@ -93,21 +93,29 @@ inspired them are credited in the README; no code was copied from them.
   and a score board. Inspired by DeskThing Link.
 - **Mic**: one icon. Tap (or press the dial) to mute the selected
   microphones. A dropdown lists every hardware mic (built-in, USB, iPhone,
-  and so on) so you can choose which ones the button controls. When any of
-  those mics starts being used, the Mic app opens on the Car Thing by
-  itself; you can then close or leave it. Virtual meeting devices such as
-  Teams and Zoom are left alone. The name can change later.
+  and so on) so you can choose which ones the button controls. **Pop up
+  when in use** (on by default) opens Mic when a selected mic becomes
+  active. Turn it off and the app stays closed until you open it; mute
+  still works. Virtual meeting devices such as Teams and Zoom are left
+  alone. The name can change later.
 
 #### Desktop app
 
 - **Apps** page laid out like DeskThing: Installed list with Settings / Pause /
-  Run, a Download catalog, and **Add App**.
+  Run, a **Store**, and **From Git**.
+- **App store** on the Apps tab. It lists apps from
+  [GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceThing-Apps) on its
+  own — no Git URL to paste. Nothing is preinstalled. On first setup you
+  choose which apps to install. **Install** and **Uninstall** work for every
+  app (Music, Mic, and the rest). Community zips still show the usual
+  acknowledgements, then download from the repo. **From Git** is still there
+  for another `owner/repo` or GitHub URL, plus Upload Local File.
 - Add a community app from a GitHub URL (`owner/repo` or github.com), or upload
   a zip. GlanceThing fetches the latest release zip, reads `manifest.json`, and
   asks you to acknowledge issues before **Initialize App** — including
   “Insecure App”, already installed, wrong platform, and missing web UI.
   A monorepo release with several zips (such as GlanceThing-Apps) adds each
-  zip as its own Download row.
+  zip as its own store row.
 - Installed community apps appear on the Car Thing tray. Their web UI is served
   from this computer on the same port as the socket (`/community/{id}/`).
   DeskThing server-only apps without a client folder can be stored, but they
@@ -156,6 +164,9 @@ inspired them are credited in the README; no code was copied from them.
 
 ### Changed
 
+- Mic has a **Pop up when in use** toggle on the Car Thing, in Apps →
+  Mic settings, and in Settings → Client. Off keeps the app closed when a
+  mic is active; mute still works if you open Mic yourself.
 - **"This computer" on macOS now uses
   [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter).**
   macOS 15.4 and later block apps from reading Now Playing directly, so
@@ -187,6 +198,9 @@ inspired them are credited in the README; no code was copied from them.
   memory, which made memory look almost full.
 - The Car Thing's media listener ignores unrelated playback messages, such as
   the new source list.
+- Apps are no longer preinstalled. First setup asks which ones to put on the
+  Car Thing. The Store is **Install** / **Uninstall** for every app, including
+  Music and Mic. Pause still hides an installed app without removing it.
 
 ### Removed
 
@@ -204,9 +218,33 @@ inspired them are credited in the README; no code was copied from them.
   `adb exec-out` cannot stream audio from the Car Thing at all (it closes
   even for `echo`). The app now waits until the mic is free, records to a
   file on the device, and copies that file back when you stop.
+- Pasting `owner/repo` (including the official GlanceThing-Apps store) was
+  turned into an invalid GitHub URL, so the Store failed with “Official
+  apps repo is misconfigured.”
+- Running from `npm run dev` showed as Electron in the dock, with the
+  default atom icon. The dev Electron.app is now labelled GlanceThing and
+  uses the GlanceThing icon.
+- The first-run app picker opened as soon as GlanceThing launched,
+  covering Home. Home now checks for the Car Thing and installs the
+  client first; **Next** then opens the picker.
+- After a packaged install, macOS Keychain blocked GlanceThing while it
+  decrypted the socket password, so the Car Thing client was never
+  reinstalled and Chromium showed “Something went wrong.” The pairing
+  password is stored in the app settings file now, not Keychain.
+- A reboot lost the bind-mounted client and left
+  `/usr/share/qt-superbird-app/webapp` empty. Install now also copies the
+  files onto that path so Chromium still has `index.html` after a reboot.
+- The Car Thing could show the GlanceThing welcome screen with no layout,
+  shortcuts, or apps tray because the pairing password was written only
+  to `/tmp/webapp`. After a reboot Chromium reads the real webapp folder,
+  so it never connected. The password is now written to both paths.
 
 ### Documentation
 
+- README: first-run order is Home (Car Thing check / install) then **Next**
+  for the app picker, not a picker overlay on launch. Mic **Pop up when
+  in use** is documented with Car Thing shots plus desktop Apps settings
+  and Settings → Client screenshots.
 - README: a Credits table mapping each built-in app to the DeskThing app that
   inspired it, and a credit for mediaremote-adapter.
 - CONTRIBUTING: rules for crediting code, assets or ideas taken from other
@@ -215,23 +253,28 @@ inspired them are credited in the README; no code was copied from them.
   `manifest.json` fields, and how GlanceThing installs and serves it.
 - Official apps collection: [GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceThing-Apps),
   with Music, Pomodoro, Resource Usage, Recording Notes, GitHub, Console Logs,
-  Link and an `exampleapp` template. Adding that repo lists every
-  `*-app-*.zip` on the latest release.
-- AGENTS.md: update this changelog on every project change.
+  Link and an `exampleapp` template. The desktop Store lists that repo
+  automatically.
+- AGENTS.md: update this changelog on every project change. When a feature
+  or app is implemented, also update the README and add screenshots. When
+  a TODO.md item is finished, remove it from the list. When a feature is
+  complete, build and install the packaged GlanceThing (`npm run
+  install:local`) as the only app on the machine, then verify that build.
 - Pomodoro credits [grahamplace/pomodoro-thing](https://github.com/grahamplace/pomodoro-thing)
   in the app UI, Apps details, README, and GlanceThing-Apps, because the
   timer was taken from that repo.
 - GlanceThing-Apps README Credits (and the apps table) link each app to its
   original repo.
-- README screenshots for the Apps tab, the Car Thing tray, and each built-in
-  tray app (Music, Pomodoro, Resource Usage, Recording Notes, GitHub, Console
-  Logs, Link), also used in GlanceThing-Apps. The Link shot sits in the same
-  table layout as the other app shots.
-- TODO.md: planned work to turn weather, calendar, AI usage and the other
-  home features into apps that also offer layout widgets; widgets from the
-  existing tray apps (Music, Pomodoro, and the rest) that can be added to
-  home pages; a one-tap mute app for every mic on the computer; and, if
-  possible, the Car Thing mic as a system input device.
+- First setup (and existing installs that have not chosen yet) asks which
+  apps to install. The Store uses Install / Uninstall for every app.
+- README screenshots for the Apps tab, the Store, the Car Thing tray, and each
+  built-in tray app (Music, Pomodoro, Resource Usage, Recording Notes, GitHub,
+  Console Logs, Link, Mic), also used in GlanceThing-Apps. Link and Mic sit in
+  the same two-column table as the other app shots; Mic also has a picker shot.
+- TODO.md: remaining work is turning weather, calendar, AI usage and the
+  other home features into apps that also offer layout widgets; widgets from
+  the existing tray apps; and, if possible, the Car Thing mic as a system
+  input device. The Mic auto-open toggle is done.
 
 ### Known limitations
 

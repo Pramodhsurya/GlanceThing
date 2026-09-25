@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { DevModeContext } from '@/contexts/DevModeContext.js'
+import ChooseApps from '@/components/ChooseApps/ChooseApps.js'
 
 import icon from '@/assets/icon.png'
 import iconNightly from '@/assets/icon-nightly.png'
@@ -27,6 +28,8 @@ const Home: React.FC = () => {
   )
   const carThingStateRef = useRef(carThingState)
   const [needsPlaybackSetup, setNeedsPlaybackSetup] = useState(false)
+  const [needsApps, setNeedsApps] = useState(false)
+  const [showAppPicker, setShowAppPicker] = useState(false)
 
   const [updateInfo, setUpdateInfo] = useState<{
     currentVersion: string
@@ -70,6 +73,10 @@ const Home: React.FC = () => {
 
     window.api.getStorageValue('playbackHandler').then(handler => {
       if (handler === null) setNeedsPlaybackSetup(true)
+    })
+
+    window.api.getStorageValue('installedApps').then(installed => {
+      setNeedsApps(!Array.isArray(installed))
     })
 
     window.api.checkUpdate().then(setUpdateInfo)
@@ -124,6 +131,13 @@ const Home: React.FC = () => {
         ) : (
           <p>Checking for CarThing...</p>
         )}
+        {needsApps &&
+        carThingState !== null &&
+        carThingState !== CarThingState.Installing ? (
+          <button onClick={() => setShowAppPicker(true)}>
+            Next <span className="material-icons">arrow_forward</span>
+          </button>
+        ) : null}
       </div>
       {needsPlaybackSetup && carThingState === CarThingState.Ready ? (
         <div className={styles.notice}>
@@ -193,6 +207,15 @@ const Home: React.FC = () => {
             )}
           </div>
         </div>
+      ) : null}
+      {showAppPicker ? (
+        <ChooseApps
+          overlay
+          onDone={() => {
+            setShowAppPicker(false)
+            setNeedsApps(false)
+          }}
+        />
       ) : null}
     </div>
   )

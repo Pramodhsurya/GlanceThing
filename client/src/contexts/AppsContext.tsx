@@ -42,12 +42,14 @@ interface AppsContextProps {
   handleBack: () => boolean
   trayOrAppOpen: boolean
   hiddenApps: string[]
+  installedApps: string[]
   communityApps: CommunityTrayApp[]
 }
 
 const AppsContext = createContext<AppsContextProps>({
   communityApps: [],
   hiddenApps: [],
+  installedApps: [],
   trayState: 'hidden',
   currentApp: null,
   openTray: () => {},
@@ -76,6 +78,17 @@ const SWIPE_MIN = 50
 const SWIPE_FULL = 160
 const TOP_EDGE = 60
 
+const NATIVE_APP_IDS = [
+  'music',
+  'pomodoro',
+  'system',
+  'logs',
+  'link',
+  'recorder',
+  'github',
+  'mic'
+]
+
 interface AppsContextProviderProps {
   children: React.ReactNode
 }
@@ -84,9 +97,12 @@ const AppsContextProvider = ({ children }: AppsContextProviderProps) => {
   const [trayState, setTrayState] = useState<AppTrayState>('hidden')
   const [currentApp, setCurrentApp] = useState<AppId | null>(null)
   const [hiddenApps, setHiddenApps] = useState<string[]>([])
+  const [installedApps, setInstalledApps] = useState<string[]>([])
   const [communityApps, setCommunityApps] = useState<CommunityTrayApp[]>([])
   const hiddenRef = useRef(hiddenApps)
   hiddenRef.current = hiddenApps
+  const installedRef = useRef(installedApps)
+  installedRef.current = installedApps
   const { ready, socket } = useContext(SocketContext)
 
   useEffect(() => {
@@ -94,7 +110,11 @@ const AppsContextProvider = ({ children }: AppsContextProviderProps) => {
     function listener(e: MessageEvent) {
       const message = JSON.parse(e.data)
       if (message.type === 'mic' && message.action === 'open') {
-        if (hiddenRef.current.indexOf('mic') !== -1) return
+        if (
+          hiddenRef.current.indexOf('mic') !== -1 ||
+          installedRef.current.indexOf('mic') === -1
+        )
+          return
         setCurrentApp(id => (id === 'mic' ? id : 'mic'))
         setTrayState('hidden')
         return
@@ -102,6 +122,8 @@ const AppsContextProvider = ({ children }: AppsContextProviderProps) => {
       if (message.type !== 'layout' || !message.data) return
       const hidden = message.data.hiddenApps
       setHiddenApps(Array.isArray(hidden) ? hidden : [])
+      const installed = message.data.installedApps
+      setInstalledApps(Array.isArray(installed) ? installed : [])
       const extra = message.data.communityApps
       setCommunityApps(Array.isArray(extra) ? extra : [])
     }
@@ -110,24 +132,19 @@ const AppsContextProvider = ({ children }: AppsContextProviderProps) => {
   }, [ready, socket])
 
   useEffect(() => {
-    if (currentApp && hiddenApps.indexOf(currentApp) !== -1) {
+    if (
+      currentApp &&
+      (hiddenApps.indexOf(currentApp) !== -1 ||
+        (NATIVE_APP_IDS.indexOf(currentApp) !== -1 &&
+          installedApps.indexOf(currentApp) === -1))
+    ) {
       setCurrentApp(null)
     }
-  }, [currentApp, hiddenApps])
+  }, [currentApp, hiddenApps, installedApps])
 
   useEffect(() => {
     if (!currentApp) return
-    const builtin = [
-      'music',
-      'pomodoro',
-      'system',
-      'logs',
-      'link',
-      'recorder',
-      'github',
-      'mic'
-    ]
-    if (builtin.indexOf(currentApp) !== -1) return
+    if (NATIVE_APP_IDS.indexOf(currentApp) !== -1) return
     if (!communityApps.some(app => app.id === currentApp)) {
       setCurrentApp(null)
     }
@@ -223,10 +240,12 @@ const AppsContextProvider = ({ children }: AppsContextProviderProps) => {
       handleBack,
       trayOrAppOpen: trayState !== 'hidden' || currentApp !== null,
       hiddenApps,
+      installedApps,
       communityApps
     }),
     [
       hiddenApps,
+      installedApps,
       communityApps,
       trayState,
       currentApp,

@@ -58,31 +58,45 @@ Turn the dial to move a highlight across the screen, and press it to open the sh
 
 ### Apps tray and community apps
 
-Swipe down from the top of the Car Thing to open the apps tray. Built-in apps (Music, Pomodoro, Resource Usage, Recording Notes, GitHub, Console Logs, Link, Mic) live there.
+Swipe down from the top of the Car Thing to open the apps tray. The tray only shows apps you installed.
 
-On the desktop **Apps** tab you can pause or run those apps, and add more the same way DeskThing does: paste `owner/repo` or a GitHub URL, download the latest release zip, acknowledge any warnings, then **Initialize App**.
+After setup, Home checks for the Car Thing and installs the client first. When that finishes, **Next** opens the app picker (Music, Pomodoro, Resource Usage, Recording Notes, GitHub, Console Logs, Link, Mic). Nothing is preinstalled, and the picker does not appear as soon as GlanceThing opens. The desktop **Apps** tab lists what you installed, with Pause / Run / Uninstall. The **Store** lists everything again so you can **Install** or **Uninstall**. Community zips still show the usual warnings, then download from [GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceThing-Apps). **From Git** is still there if you want another `owner/repo` or a zip.
+
+**Mic** is a mute button for the microphones on this computer. Tap the icon (or press the dial) to mute or unmute the mics you picked. The list in the corner shows every hardware mic — built-in, USB, iPhone, and so on. **Pop up when in use** (on by default) opens Mic on the Car Thing when a selected mic becomes active. Turn that off from the Mic screen, from **Apps → Mic → Settings**, or from **Settings → Client**, and Mic stays closed until you open it yourself — mute still works.
 
 Official apps live in [GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceThing-Apps). To **build** an app, or to see the exact files and `manifest.json` fields GlanceThing reads, see [APPS.md](APPS.md).
 
-| Desktop Apps tab                                                          | Car Thing tray                                                     |
+| Home after the Car Thing is ready                                         | Desktop Apps tab                                                   |
 | ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| <img src=".github/assets/fork/s10-apps-desktop.png?v=1" width="400" />    | <img src=".github/assets/fork/s10-tray.png?v=1" width="400" />     |
+| <img src=".github/assets/fork/s10-home-next.png?v=1" width="400" />       | <img src=".github/assets/fork/s10-apps-desktop.png?v=1" width="400" /> |
 
-| Music                                                              | Pomodoro                                                              |
-| ------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| <img src=".github/assets/fork/s10-music.png?v=1" width="400" />    | <img src=".github/assets/fork/s10-pomodoro.png?v=1" width="400" />    |
+| Car Thing tray                                                            | Music                                                              |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| <img src=".github/assets/fork/s10-tray.png?v=1" width="400" />            | <img src=".github/assets/fork/s10-music.png?v=1" width="400" />    |
 
-| Resource Usage                                                     | Recording Notes                                                       |
-| ------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| <img src=".github/assets/fork/s10-system.png?v=1" width="400" />   | <img src=".github/assets/fork/s10-recorder.png?v=1" width="400" />    |
+| Pomodoro                                                                  | Resource Usage                                                     |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| <img src=".github/assets/fork/s10-pomodoro.png?v=1" width="400" />         | <img src=".github/assets/fork/s10-system.png?v=1" width="400" />    |
 
-| GitHub                                                             | Console Logs                                                          |
-| ------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| <img src=".github/assets/fork/s10-github.png?v=1" width="400" />   | <img src=".github/assets/fork/s10-logs.png?v=1" width="400" />        |
+| Recording Notes                                                           | GitHub                                                             |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| <img src=".github/assets/fork/s10-recorder.png?v=1" width="400" />         | <img src=".github/assets/fork/s10-github.png?v=1" width="400" />    |
 
-| Link                                                               | &nbsp;                                                                |
-| ------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| <img src=".github/assets/fork/s10-link.png?v=1" width="400" />     | &nbsp;                                                                |
+| Console Logs                                                              | Link                                                               |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| <img src=".github/assets/fork/s10-logs.png?v=1" width="400" />             | <img src=".github/assets/fork/s10-link.png?v=1" width="400" />      |
+
+| Mic                                                                       | Mic — pop up off                                                   |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| <img src=".github/assets/fork/s10-mic.png?v=2" width="400" />              | <img src=".github/assets/fork/s10-mic-auto.png?v=1" width="400" />  |
+
+| Mic — pick microphones                                                    | Apps → Mic settings                                                |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| <img src=".github/assets/fork/s10-mic-list.png?v=1" width="400" />         | <img src=".github/assets/fork/s10-mic-desktop-settings.png?v=1" width="400" /> |
+
+| Settings → Client                                                         | &nbsp;                                                             |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| <img src=".github/assets/fork/s10-mic-desktop-client.png?v=1" width="400" /> | &nbsp;                                                             |
 
 ### Sleep and wake actions
 

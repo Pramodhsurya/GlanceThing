@@ -4,6 +4,10 @@ import { app } from 'electron'
 if (process.platform === 'linux')
   app.commandLine.appendSwitch('gtk-version', '3')
 
+// `npm run dev` launches node_modules/electron's Electron.app, so the
+// dock would otherwise say Electron and use the default atom icon.
+if (app.getName() === 'Electron') app.setName('GlanceThing')
+
 import {
   shell,
   BrowserWindow,
@@ -93,6 +97,8 @@ import {
   getCommunityCatalog,
   getStagedCommunityApp,
   pickCommunityZip,
+  previewInstallIssues,
+  refreshOfficialStore,
   removeCommunityApp,
   removeCommunityRepo,
   setCommunityAppEnabled
@@ -110,15 +116,35 @@ import { onMicShouldOpen, startMicMonitor } from './lib/mic.js'
 
 let mainWindow: BrowserWindow | null = null
 
+function glanceThingIcon() {
+  const channel = isNightly ? 'nightly' : 'stable'
+  const candidates = [
+    join(__dirname, '../../build', channel, 'icon.icns'),
+    join(__dirname, '../../resources', channel, 'icon.png'),
+    join(app.getAppPath(), 'build', channel, 'icon.icns'),
+    `${resourceFolder}/icon.png`
+  ]
+  for (const file of candidates) {
+    const image = nativeImage.createFromPath(file)
+    if (!image.isEmpty()) return image
+  }
+  return null
+}
+
+function applyGlanceThingDockIcon() {
+  const icon = glanceThingIcon()
+  if (icon) app.dock?.setIcon(icon)
+  return icon
+}
+
 function createWindow(): void {
+  const icon = glanceThingIcon()
   mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === 'linux'
-      ? { icon: `${resourceFolder}/icon.png` }
-      : {}),
+    ...(icon ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js')
     },
@@ -129,6 +155,7 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', async () => {
+    applyGlanceThingDockIcon()
     mainWindow!.show()
     mainWindow!.center()
     mainWindow?.setWindowButtonVisibility?.(false)
@@ -171,6 +198,8 @@ app.on('second-instance', () => {
 })
 
 app.on('ready', async () => {
+  applyGlanceThingDockIcon()
+
   log('Welcome!', 'GlanceThing')
 
   const gotLock = app.requestSingleInstanceLock()
@@ -342,6 +371,8 @@ enum IPCHandler {
   GetGitHubTokenSource = 'getGitHubTokenSource',
   CommunityCatalog = 'communityCatalog',
   CommunityList = 'communityList',
+  CommunityRefreshStore = 'communityRefreshStore',
+  CommunityPreviewIssues = 'communityPreviewIssues',
   CommunityAddRepo = 'communityAddRepo',
   CommunityDownload = 'communityDownload',
   CommunityPickZip = 'communityPickZip',
@@ -442,6 +473,12 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.CommunityCatalog, () => getCommunityCatalog())
   ipcMain.handle(IPCHandler.CommunityList, () => getCommunityApps())
+  ipcMain.handle(IPCHandler.CommunityRefreshStore, () =>
+    communityCall(() => refreshOfficialStore())
+  )
+  ipcMain.handle(IPCHandler.CommunityPreviewIssues, (_event, id: string) =>
+    communityCall(() => previewInstallIssues(id))
+  )
   ipcMain.handle(IPCHandler.CommunityAddRepo, (_event, url: string) =>
     communityCall(() => addCommunityRepo(url))
   )

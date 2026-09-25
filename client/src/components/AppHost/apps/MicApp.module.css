@@ -88,9 +88,83 @@
   opacity: 0.7;
 }
 
+.auto {
+  all: unset;
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+}
+
+.auto span.material-icons,
+.auto > span:first-child {
+  font-size: 22px;
+  margin-right: 10px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.auto[data-on='true'] > span:first-child {
+  color: #6ee7b7;
+}
+
+.autoText {
+  flex: 1;
+  min-width: 0;
+}
+
+.autoText strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.autoText small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.switch {
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  position: relative;
+  flex-shrink: 0;
+  margin-left: 10px;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.switch[data-on='true'] {
+  background: #34d399;
+}
+
+.switch[data-on='true']::after {
+  left: 21px;
+}
+
 .error {
   position: absolute;
-  bottom: 28px;
+  bottom: 84px;
   left: 24px;
   right: 24px;
   text-align: center;

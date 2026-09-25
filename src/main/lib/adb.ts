@@ -315,6 +315,7 @@ async function runInstall(device: string | null) {
   const adb = await getAdbExecutable()
 
   log('Installing app...', 'adb')
+  await execAsync(`${adb} ${adbSelector(device)} shell "mount -o remount,rw /"`)
   await execAsync(`${adb} ${adbSelector(device)} shell "mkdir -p /tmp/webapp"`)
   await execAsync(
     `${adb} ${adbSelector(device)} push "${appDir}/." /tmp/webapp`
@@ -325,8 +326,10 @@ async function runInstall(device: string | null) {
   await execAsync(
     `${adb} ${adbSelector(device)} shell "touch /tmp/webapp/.glancething"`
   )
+  // Copy onto the real path too. The bind-mount is lost after a reboot,
+  // and an empty stock folder makes Chromium show "Something went wrong".
   await execAsync(
-    `${adb} ${adbSelector(device)} shell "mount --bind /tmp/webapp /usr/share/qt-superbird-app/webapp"`
+    `${adb} ${adbSelector(device)} shell "mkdir -p /usr/share/qt-superbird-app/webapp; cp -a /tmp/webapp/. /usr/share/qt-superbird-app/webapp/; mount --bind /tmp/webapp /usr/share/qt-superbird-app/webapp"`
   )
   await restartChromium(device)
   log('Installed app!', 'adb')
@@ -339,7 +342,7 @@ export async function checkInstalledApp(device: string | null) {
   const adb = await getAdbExecutable()
 
   const res = await execAsync(
-    `${adb} ${adbSelector(device)} shell "if test -f /usr/share/qt-superbird-app/webapp/.glancething; then echo yes; else echo no; fi"`
+    `${adb} ${adbSelector(device)} shell "if test -f /usr/share/qt-superbird-app/webapp/index.html && test -f /usr/share/qt-superbird-app/webapp/.glancething; then echo yes; else echo no; fi"`
   )
 
   return res.includes('yes')
@@ -364,7 +367,17 @@ export async function forwardSocketServer(device: string | null) {
     try {
       fs.writeFileSync(passwordFile, getSocketPassword(), { mode: 0o600 })
       await execAsync(
+        `${adb} ${adbSelector(device)} shell "mkdir -p /tmp/webapp; mount -o remount,rw /"`,
+        8000
+      )
+      // Chromium reads ./ws-password from whichever folder is mounted.
+      // After a reboot the bind-mount is gone and it uses the real path.
+      await execAsync(
         `${adb} ${adbSelector(device)} push "${passwordFile}" /tmp/webapp/ws-password`,
+        8000
+      )
+      await execAsync(
+        `${adb} ${adbSelector(device)} push "${passwordFile}" /usr/share/qt-superbird-app/webapp/ws-password`,
         8000
       )
       passwordPushedFor = target
@@ -380,5 +393,5 @@ export async function forwardSocketServer(device: string | null) {
     8000
   )
 
-  log('Forwarded socket server!', 'adb', LogLevel.DEBUG)
+  log('Forwarded socket server!', 'adb')
 }

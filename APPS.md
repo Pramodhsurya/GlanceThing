@@ -16,21 +16,28 @@ the same kind of monorepo as
 [ItsRiprod/Deskthing-Apps](https://github.com/ItsRiprod/Deskthing-Apps).
 
 It holds every current GlanceThing tray app (Music, Pomodoro, Resource Usage,
-Recording Notes, GitHub, Console Logs, Link) plus `exampleapp`. Official apps
-also ship **built into GlanceThing**. Installing those zips warns
-**Reserved App ID**. Copy `exampleapp` when you want a new id you can
-initialize.
+Recording Notes, GitHub, Console Logs, Link, Mic) plus `exampleapp`. None of
+those are preinstalled. You pick them on first setup, or later from the
+Store. Copy `exampleapp` when you want a new id you can initialize from Git.
 
-In **Apps → Add App**, paste `Pramodhsurya/GlanceThing-Apps`. If the latest
-release has several `*-app-*.zip` files, GlanceThing lists each one.
+Open **Apps → Store**. GlanceThing lists the official repo on its own. If the
+latest release has several `*-app-*.zip` files, each one is a store row.
 
 ## Install an existing app
 
-1. Open GlanceThing → **Apps** → **Add App**.
+From the official store:
+
+1. Open GlanceThing → **Apps** → **Store**.
+2. Click **Install** on the app you want. No Git URL to paste.
+3. Official apps install immediately. Community zips still show
+   **Potential Issues Found**; tick **Acknowledge?** and **Initialize App**.
+
+From another GitHub repo:
+
+1. Open **Apps → From Git**.
 2. Paste `owner/repo` or a `https://github.com/owner/repo` URL.
-3. Click **Add Repository**, then **Download Latest**.
-4. Read **Potential Issues Found**. Tick **Acknowledge?** on each one.
-5. Click **Initialize App**.
+3. Click **Add Repository**, then **Install**.
+4. Acknowledge the warnings and **Initialize App**.
 
 You can also use **Upload Local File** with a `.zip` that matches the layout
 below.
@@ -111,9 +118,11 @@ manifests work as-is.
 
 ## How GlanceThing understands an install
 
-1. **Add Repository** calls GitHub `GET /repos/{owner}/{repo}/releases` and
-   remembers the latest zip URL.
-2. **Download Latest** saves the zip, extracts it, and reads `manifest.json`.
+1. The **Store** loads GlanceThing-Apps (releases when they exist, plus
+   `catalog.json`). **From Git** calls GitHub
+   `GET /repos/{owner}/{repo}/releases` and remembers the latest zip URL.
+2. After you accept the disclaimer, **Install** saves the zip (or the app
+   folder from the official repo), extracts it, and reads `manifest.json`.
 3. It looks for `index.html` in `client/`, `dist/`, `webapp/`, or the same
    folder as the manifest.
 4. It builds a list of warnings (see below). You must acknowledge each one.
@@ -222,7 +231,7 @@ Then in GlanceThing use `yourname/hello-world`.
 
 ### 4. Try it without GitHub
 
-**Apps → Add App → Upload Local File** and choose the zip. The same
+**Apps → From Git → Upload Local File** and choose the zip. The same
 acknowledge step runs.
 
 ## What does not run

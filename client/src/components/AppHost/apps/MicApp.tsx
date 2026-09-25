@@ -17,6 +17,7 @@ interface MicState {
   active: boolean
   selected: string[]
   devices: MicDevice[]
+  autoOpen: boolean
 }
 
 const MicApp: React.FC = () => {
@@ -25,7 +26,8 @@ const MicApp: React.FC = () => {
     muted: false,
     active: false,
     selected: [],
-    devices: []
+    devices: [],
+    autoOpen: true
   })
   const [pending, setPending] = useState(false)
   const [picking, setPicking] = useState(false)
@@ -86,6 +88,17 @@ const MicApp: React.FC = () => {
     socket.send(JSON.stringify({ type: 'mic', action: 'toggle' }))
   }
 
+  function toggleAutoOpen() {
+    if (!socket) return
+    socket.send(
+      JSON.stringify({
+        type: 'mic',
+        action: 'autoOpen',
+        data: { on: !state.autoOpen }
+      })
+    )
+  }
+
   function toggleDevice(name: string) {
     if (!socket) return
     const on = state.selected.indexOf(name) !== -1
@@ -135,6 +148,25 @@ const MicApp: React.FC = () => {
         <span className="material-icons">
           {state.muted ? 'mic_off' : 'mic'}
         </span>
+      </button>
+      <button
+        type="button"
+        className={styles.auto}
+        data-on={state.autoOpen}
+        onClick={toggleAutoOpen}
+      >
+        <span className="material-icons">
+          {state.autoOpen ? 'notifications_active' : 'notifications_off'}
+        </span>
+        <div className={styles.autoText}>
+          <strong>Pop up when in use</strong>
+          <small>
+            {state.autoOpen
+              ? 'On — opens when a selected mic is active'
+              : 'Off — stays closed until you open it'}
+          </small>
+        </div>
+        <span className={styles.switch} data-on={state.autoOpen} />
       </button>
       {error ? <div className={styles.error}>{error}</div> : null}
 

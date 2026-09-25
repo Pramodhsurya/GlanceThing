@@ -25,6 +25,12 @@ declare global {
     assetName: string
     htmlUrl: string
     downloads: number
+    official?: boolean
+    appId?: string
+    appPath?: string
+    icon?: string
+    color?: string
+    builtin?: boolean
   }
 
   interface CommunityInstalledApp {
@@ -196,6 +202,8 @@ declare global {
       getGitHubTokenSource: () => Promise<'saved' | 'gh' | 'none'>
       communityCatalog: () => Promise<CommunityCatalogItem[]>
       communityList: () => Promise<CommunityInstalledApp[]>
+      communityRefreshStore: () => Promise<CommunityCatalogItem[]>
+      communityPreviewIssues: (id: string) => Promise<CommunityIssue[]>
       communityAddRepo: (url: string) => Promise<CommunityCatalogItem[]>
       communityDownload: (id: string) => Promise<StagedCommunityApp>
       communityPickZip: () => Promise<StagedCommunityApp | null>
