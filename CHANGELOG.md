@@ -281,6 +281,9 @@ inspired them are credited in the README; no code was copied from them.
   so it never connected. The password is now written to both paths.
 - GitHub Checks failed on lint: Pomodoro called `Date.now()` while
   rendering, and the shared playback handler had an unused seek argument.
+- The weather home widget stayed about half the height of its tile on the
+  Car Thing. Chrome 69 ignores percentage heights on flex-sized parents, so
+  the widget now fills the tile with absolute edges.
 
 ### Documentation
 
