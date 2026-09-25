@@ -147,8 +147,6 @@ const MediaContextProvider = ({ children }: MediaContextProviderProps) => {
       )
     },
     setVolume: (volume: number) => {
-      if (playerDataRef.current === null) return
-
       socket?.send(
         JSON.stringify({
           type: 'playback',
@@ -159,10 +157,12 @@ const MediaContextProvider = ({ children }: MediaContextProviderProps) => {
         })
       )
 
-      setPlayerData({
-        ...playerDataRef.current!,
-        volume: volume
-      })
+      if (playerDataRef.current) {
+        setPlayerData({
+          ...playerDataRef.current,
+          volume: volume
+        })
+      }
     },
     shuffle: (state: boolean) => {
       if (playerDataRef.current === null) return

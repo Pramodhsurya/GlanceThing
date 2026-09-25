@@ -56,6 +56,8 @@ inspired them are credited in the README; no code was copied from them.
     computer, Apple Music (macOS) and YouTube Music. Sources that aren't ready
     are greyed out with a short explanation.
   - Controls that the current source doesn't support are greyed out.
+  - Turning the dial raises or lowers volume, including when nothing is
+    playing yet. Pressing the dial plays or pauses.
   - Inspired by DeskThing-GMP (controls) and DeskThing Local Audio (source
     picker).
 - **Pomodoro**: focus timer with short and long breaks.
@@ -74,8 +76,9 @@ inspired them are credited in the README; no code was copied from them.
   - Saves recordings on the computer as mono, level-normalised WAV files in
     `<user data>/recordings`.
   - Lists recordings, with play (on the computer), delete, and reveal folder.
-  - The Car Thing's own app is paused while recording, because it holds the
-    microphone. It's resumed afterwards, and also when GlanceThing quits.
+  - The original Car Thing app (`superbird`) is stopped while recording,
+    because it holds the microphone. GlanceThing waits until the mic is free,
+    then resumes `superbird` afterwards and when GlanceThing quits.
   - Inspired by DeskThing Recording Notes.
 - **GitHub**: your repositories and starred repositories, with open or closed
   pull requests and issues for each.
@@ -189,6 +192,11 @@ inspired them are credited in the README; no code was copied from them.
   started on the status bar weren't detected.
 - The "Swipe or tap for apps" bar appeared as a light-grey button with
   unreadable white text on the Car Thing.
+- Recording Notes failed immediately (`error: closed`). Two things were
+  wrong: `superbird` still held the microphone when `arecord` started, and
+  `adb exec-out` cannot stream audio from the Car Thing at all (it closes
+  even for `echo`). The app now waits until the mic is free, records to a
+  file on the device, and copies that file back when you stop.
 
 ### Documentation
 
@@ -220,9 +228,10 @@ inspired them are credited in the README; no code was copied from them.
   an Apple Developer ID certificate.
 - Auto-update installs nothing until a release newer than 1.0.0 is published
   on GitHub.
-- Recording Notes hasn't been tested end to end with the real microphone from
-  inside the app. It's also unknown whether the Car Thing's dial and buttons
-  keep working while its own app is paused during a recording.
+- While Recording Notes is recording, the original Car Thing app is stopped
+  so the microphone is free. The dial still works inside GlanceThing
+  (Chromium stays running), but the stock Car Thing UI is not available
+  until recording ends.
 - YouTube Music (desktop app) and Apple Music haven't been tested with music
   playing.
 

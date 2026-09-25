@@ -1,5 +1,6 @@
 import { ChildProcess, execSync, spawn } from 'child_process'
 import { app, shell } from 'electron'
+import os from 'os'
 import path from 'path'
 import fs from 'fs'
 
@@ -10,6 +11,7 @@ const SAMPLE_RATE = 16000
 const CHANNELS = 2
 const MAX_SECONDS = 15 * 60
 const FILE_RE = /^recording-[\w-]+\.wav$/
+const REMOTE_RAW = '/tmp/gt-recording.raw'
 
 // The stock `superbird` service keeps the microphone open, so it is paused
 // for the length of a recording.
@@ -32,11 +34,10 @@ export type RecorderEvent =
 
 let proc: ChildProcess | null = null
 let prefix: string | null = null
-let chunks: Buffer[] = []
 let startedAt: number | null = null
-let lastLevelAt = 0
 let stopping = false
 let quitHookInstalled = false
+let levelTimer: ReturnType<typeof setInterval> | null = null
 const listeners = new Set<Listener>()
 
 export function recordingsDir() {
@@ -83,37 +84,138 @@ function peakLevel(chunk: Buffer) {
   return peak / 32768
 }
 
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+function spawnArecord(adb: string) {
+  // Write to a file on the device. `adb exec-out` always returns
+  // "error: closed" on the Car Thing, even for `echo`, so we cannot stream
+  // PCM over that channel.
+  const command = `${adb} shell "rm -f ${REMOTE_RAW}; arecord -q -D hw:0,0 -f S16_LE -r ${SAMPLE_RATE} -c ${CHANNELS} -t raw -d ${MAX_SECONDS} ${REMOTE_RAW}"`
+  return spawn(process.platform === 'win32' ? command : `exec ${command}`, {
+    shell: true
+  })
+}
+
+async function remoteBytes(adb: string) {
+  const out = await execAsync(
+    `${adb} shell "if test -f ${REMOTE_RAW}; then wc -c < ${REMOTE_RAW}; else echo 0; fi"`,
+    3000
+  )
+  return parseInt(out.replace(/\r/g, '').trim(), 10) || 0
+}
+
+async function pullRecording(adb: string) {
+  const dest = path.join(os.tmpdir(), `gt-recording-${process.pid}.raw`)
+  try {
+    await execAsync(`${adb} pull ${REMOTE_RAW} "${dest}"`, 20000)
+    return fs.existsSync(dest) ? fs.readFileSync(dest) : Buffer.alloc(0)
+  } finally {
+    fs.rmSync(dest, { force: true })
+    await execAsync(`${adb} shell "rm -f ${REMOTE_RAW}"`, 3000).catch(
+      () => undefined
+    )
+  }
+}
+
+function stopLevelTimer() {
+  if (!levelTimer) return
+  clearInterval(levelTimer)
+  levelTimer = null
+}
+
+function startLevelTimer(adb: string) {
+  stopLevelTimer()
+  levelTimer = setInterval(() => {
+    void (async () => {
+      if (!startedAt) return
+      try {
+        const b64 = await execAsync(
+          `${adb} shell "tail -c 2048 ${REMOTE_RAW} | base64"`,
+          2000
+        )
+        const chunk = Buffer.from(b64.replace(/\s/g, ''), 'base64')
+        if (chunk.length < 2) return
+        emit({
+          kind: 'level',
+          level: peakLevel(chunk),
+          elapsedMs: Date.now() - startedAt
+        })
+      } catch {
+        // ignore a missed poll
+      }
+    })()
+  }, 150)
+}
+
+async function releaseMicrophone(adb: string) {
+  await execAsync(`${adb} shell "${PAUSE_MIC_OWNER}"`, 10000)
+  // superbird can keep hw:0,0 busy for a moment after the stop returns.
+  for (let attempt = 0; attempt < 12; attempt++) {
+    await sleep(attempt === 0 ? 400 : 250)
+    try {
+      await execAsync(
+        `${adb} shell "arecord -q -D hw:0,0 -f S16_LE -r ${SAMPLE_RATE} -c ${CHANNELS} -t raw -d 1 /dev/null"`,
+        4000
+      )
+      return
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      if (!/busy|Device or resource/i.test(message) && attempt > 2) {
+        throw new Error(message.trim() || 'Could not open the Car Thing microphone.')
+      }
+    }
+  }
+  throw new Error(
+    'Microphone is still busy. The original Car Thing app may still be holding it.'
+  )
+}
+
 export async function startRecording() {
   if (proc) return
   installQuitHook()
 
   prefix = await adbCommand(null)
-  await execAsync(`${prefix} shell "${PAUSE_MIC_OWNER}"`, 10000)
+  await releaseMicrophone(prefix)
 
-  const command = `${prefix} exec-out "arecord -q -D hw:0,0 -f S16_LE -r ${SAMPLE_RATE} -c ${CHANNELS} -t raw -d ${MAX_SECONDS}"`
-  const child = spawn(
-    process.platform === 'win32' ? command : `exec ${command}`,
-    { shell: true }
-  )
-
-  chunks = []
   stopping = false
   startedAt = Date.now()
-  proc = child
-  let stderr = ''
 
-  child.stdout?.on('data', (chunk: Buffer) => {
-    chunks.push(chunk)
-    const now = Date.now()
-    if (now - lastLevelAt < 100) return
-    lastLevelAt = now
-    emit({ kind: 'level', level: peakLevel(chunk), elapsedMs: now - startedAt! })
-  })
+  let stderr = ''
+  const child = spawnArecord(prefix)
   child.stderr?.on('data', (d: Buffer) => (stderr += d.toString()))
+
+  let ready = false
+  for (let attempt = 0; attempt < 20; attempt++) {
+    await sleep(200)
+    if (child.exitCode !== null) break
+    if ((await remoteBytes(prefix).catch(() => 0)) > 0) {
+      ready = true
+      break
+    }
+  }
+
+  if (!ready) {
+    child.kill()
+    await execAsync(`${prefix} shell "${RESUME_MIC_OWNER}"`, 10000).catch(
+      () => undefined
+    )
+    throw new Error(
+      stderr.trim() || 'Could not open the Car Thing microphone.'
+    )
+  }
+
+  proc = child
+  startLevelTimer(prefix)
   child.on('exit', () => {
     if (proc !== child) return
     if (!stopping) {
-      log(`Recording ended unexpectedly: ${stderr.trim()}`, 'Recorder', LogLevel.WARN)
+      log(
+        `Recording ended unexpectedly: ${stderr.trim()}`,
+        'Recorder',
+        LogLevel.WARN
+      )
       void finish(stderr.trim() || 'Recording stopped unexpectedly')
     }
   })
@@ -125,20 +227,27 @@ export async function startRecording() {
 export async function stopRecording() {
   if (!proc || stopping) return
   stopping = true
+  if (prefix)
+    await execAsync(`${prefix} shell "pkill arecord"`, 5000).catch(
+      () => undefined
+    )
   proc.kill()
   await finish(null)
 }
 
 async function finish(error: string | null) {
-  const pcm = Buffer.concat(chunks)
-  chunks = []
+  stopLevelTimer()
+  const adb = prefix
   proc = null
   startedAt = null
 
-  if (prefix)
-    await execAsync(`${prefix} shell "${RESUME_MIC_OWNER}"`, 10000).catch(err =>
+  let pcm = Buffer.alloc(0)
+  if (adb) {
+    pcm = await pullRecording(adb).catch(() => Buffer.alloc(0))
+    await execAsync(`${adb} shell "${RESUME_MIC_OWNER}"`, 10000).catch(err =>
       log(`Failed to resume superbird: ${err}`, 'Recorder', LogLevel.WARN)
     )
+  }
 
   emit({ kind: 'state', recording: false, startedAt: null })
   if (error) emit({ kind: 'error', message: error })
