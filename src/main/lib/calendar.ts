@@ -30,8 +30,7 @@ export const CALENDAR_SOURCE_META: Record<
   slack: {
     label: 'Slack',
     icon: 'tag',
-    empty:
-      'No Slack events. Add Slack to Calendar.app, then import again.'
+    empty: 'No Slack events. Add Slack to Calendar.app, then import again.'
   },
   google: {
     label: 'Google Calendar',
@@ -646,8 +645,7 @@ export async function refreshStoredCalendar(source?: CalendarSource) {
   } | null
   const stored = before?.calendar
   const choice =
-    source ||
-    (isCalendarSource(stored?.source) ? stored.source : null)
+    source || (isCalendarSource(stored?.source) ? stored.source : null)
   if (!choice) return null
 
   const result = await importCalendar(choice)
@@ -664,10 +662,17 @@ export async function refreshStoredCalendar(source?: CalendarSource) {
     failed && !source && Array.isArray(stored?.events)
       ? regrid(stored.events)
       : result.events
-  ).map(({ joinUrl, account, calendarName, ...event }) => ({
-    ...event,
-    canJoin: event.canJoin === true || !!joinUrl
-  }))
+  ).map(raw => {
+    const event = { ...raw }
+    const joinUrl = event.joinUrl
+    delete event.joinUrl
+    delete event.account
+    delete event.calendarName
+    return {
+      ...event,
+      canJoin: event.canJoin === true || !!joinUrl
+    }
+  })
 
   const latest = getStorageValue('screenLayout')
   if (!latest || typeof latest !== 'object' || Array.isArray(latest))

@@ -55,8 +55,7 @@ import {
   setBrightnessSmooth,
   getAutoBrightness,
   setAutoBrightness,
-  restore,
-  restartChromium
+  restore
 } from './lib/adb.js'
 import {
   getShortcuts,
@@ -85,10 +84,7 @@ import {
   hasCustomScreensaverImage
 } from './lib/screensaver.js'
 
-import {
-  isCalendarSource,
-  refreshStoredCalendar
-} from './lib/calendar.js'
+import { isCalendarSource, refreshStoredCalendar } from './lib/calendar.js'
 import { refreshStoredWeather } from './lib/weather.js'
 import { refreshAiUsage } from './lib/aiUsage.js'
 import { getGitHubTokenSource, setGitHubToken } from './lib/github.js'
@@ -440,9 +436,7 @@ async function setupIpcHandlers() {
   })
 
   ipcMain.handle(IPCHandler.ImportCalendar, async (_event, source) => {
-    return refreshStoredCalendar(
-      isCalendarSource(source) ? source : 'mac'
-    )
+    return refreshStoredCalendar(isCalendarSource(source) ? source : 'mac')
   })
 
   ipcMain.handle(
