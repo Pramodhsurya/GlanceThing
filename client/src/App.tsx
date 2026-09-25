@@ -43,16 +43,10 @@ const App: React.FC = () => {
 
   return (
     <>
-      <div
-        className={styles.app}
-        data-blurred={blurred || !ready}
-      >
+      <div className={styles.app} data-blurred={blurred || !ready}>
         <Statusbar />
         <Widgets />
-        <FullescreenPlayer
-          shown={playerShown}
-          setShown={setPlayerShown}
-        />
+        <FullescreenPlayer shown={playerShown} setShown={setPlayerShown} />
         <AppHost />
       </div>
       <LoadingScreen />

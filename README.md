@@ -66,29 +66,29 @@ After setup, Home checks for the Car Thing and installs the client first. When t
 
 Official apps live in [GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceThing-Apps). To **build** an app, or to see the exact files and `manifest.json` fields GlanceThing reads, see [APPS.md](APPS.md).
 
-| Home after the Car Thing is ready                                         | Desktop Apps tab                                                   |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| <img src=".github/assets/fork/s10-home-next.png?v=1" width="400" />       | <img src=".github/assets/fork/s10-apps-desktop.png?v=1" width="400" /> |
+| Home after the Car Thing is ready                                   | Desktop Apps tab                                                       |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| <img src=".github/assets/fork/s10-home-next.png?v=1" width="400" /> | <img src=".github/assets/fork/s10-apps-desktop.png?v=1" width="400" /> |
 
-| Car Thing tray                                                            | Music                                                              |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| <img src=".github/assets/fork/s10-tray.png?v=1" width="400" />            | <img src=".github/assets/fork/s10-music.png?v=1" width="400" />    |
+| Car Thing tray                                                 | Music                                                           |
+| -------------------------------------------------------------- | --------------------------------------------------------------- |
+| <img src=".github/assets/fork/s10-tray.png?v=1" width="400" /> | <img src=".github/assets/fork/s10-music.png?v=1" width="400" /> |
 
-| Pomodoro                                                                  | Resource Usage                                                     |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| <img src=".github/assets/fork/s10-pomodoro.png?v=1" width="400" />         | <img src=".github/assets/fork/s10-system.png?v=1" width="400" />    |
+| Pomodoro                                                           | Resource Usage                                                   |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| <img src=".github/assets/fork/s10-pomodoro.png?v=1" width="400" /> | <img src=".github/assets/fork/s10-system.png?v=1" width="400" /> |
 
-| Recording Notes                                                           | GitHub                                                             |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| <img src=".github/assets/fork/s10-recorder.png?v=1" width="400" />         | <img src=".github/assets/fork/s10-github.png?v=1" width="400" />    |
+| Recording Notes                                                    | GitHub                                                           |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| <img src=".github/assets/fork/s10-recorder.png?v=1" width="400" /> | <img src=".github/assets/fork/s10-github.png?v=1" width="400" /> |
 
-| Console Logs                                                              | Link                                                               |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| <img src=".github/assets/fork/s10-logs.png?v=1" width="400" />             | <img src=".github/assets/fork/s10-link.png?v=1" width="400" />      |
+| Console Logs                                                   | Link                                                           |
+| -------------------------------------------------------------- | -------------------------------------------------------------- |
+| <img src=".github/assets/fork/s10-logs.png?v=1" width="400" /> | <img src=".github/assets/fork/s10-link.png?v=1" width="400" /> |
 
-| Mic                                                                       | &nbsp;                                                             |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| <img src=".github/assets/fork/s10-mic.png?v=2" width="400" />              | &nbsp;                                                             |
+| Mic                                                           | &nbsp; |
+| ------------------------------------------------------------- | ------ |
+| <img src=".github/assets/fork/s10-mic.png?v=2" width="400" /> | &nbsp; |
 
 ### Sleep and wake actions
 
@@ -259,16 +259,16 @@ Huge thanks to the [CarThing community](https://discord.gg/car-thing-hax-communi
 
 Most tray apps were written from scratch for GlanceThing after studying what these DeskThing apps do. **Pomodoro is the exception:** its timer is taken directly from [grahamplace/pomodoro-thing](https://github.com/grahamplace/pomodoro-thing) (original contribution by [grahamplace](https://github.com/grahamplace)).
 
-| GlanceThing app                                                                               | Source                                                                            |
-| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Pomodoro (timer taken directly; focus blocks, short/long breaks, session dots, colours)       | [pomodoro-thing](https://github.com/grahamplace/pomodoro-thing) by grahamplace    |
-| Music: full controls (seek, ±10 s, shuffle, repeat, volume)                                   | [DeskThing-GMP](https://github.com/RandomDebugGuy/DeskThing-GMP)                  |
-| Music: source picker (use the computer's now-playing as the source)                           | [Local Audio](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/audio)        |
-| Resource Usage (CPU and RAM gauges, per-core load, history)                                   | [System](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/system)            |
-| Recording Notes (record voice notes with the Car Thing mic, saved on the computer)            | [Recording Notes](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/recorder) |
-| GitHub (repositories, starred, pull requests and issues)                                      | [DeskThing-GitHub](https://github.com/dakota-kallas/DeskThing-GitHub)             |
-| Console Logs (live GlanceThing log with level and scope filters)                              | [Console Logs](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/logs)        |
-| Link (screens connected to the same computer share colours and tap scores)                    | [Link](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/link)                |
+| GlanceThing app                                                                         | Source                                                                            |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Pomodoro (timer taken directly; focus blocks, short/long breaks, session dots, colours) | [pomodoro-thing](https://github.com/grahamplace/pomodoro-thing) by grahamplace    |
+| Music: full controls (seek, ±10 s, shuffle, repeat, volume)                             | [DeskThing-GMP](https://github.com/RandomDebugGuy/DeskThing-GMP)                  |
+| Music: source picker (use the computer's now-playing as the source)                     | [Local Audio](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/audio)        |
+| Resource Usage (CPU and RAM gauges, per-core load, history)                             | [System](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/system)            |
+| Recording Notes (record voice notes with the Car Thing mic, saved on the computer)      | [Recording Notes](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/recorder) |
+| GitHub (repositories, starred, pull requests and issues)                                | [DeskThing-GitHub](https://github.com/dakota-kallas/DeskThing-GitHub)             |
+| Console Logs (live GlanceThing log with level and scope filters)                        | [Console Logs](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/logs)        |
+| Link (screens connected to the same computer share colours and tap scores)              | [Link](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/link)                |
 
 If you contribute an app whose code or assets come **directly** from an existing repository, say so in the PR and credit the source — see [CONTRIBUTING.md](CONTRIBUTING.md#apps-from-existing-repositories).
 

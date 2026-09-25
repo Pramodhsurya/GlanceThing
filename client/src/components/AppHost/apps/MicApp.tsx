@@ -76,7 +76,9 @@ const MicApp: React.FC = () => {
       if (pendingRef.current || !socketRef.current) return
       pendingRef.current = true
       setPending(true)
-      socketRef.current.send(JSON.stringify({ type: 'mic', action: 'toggle' }))
+      socketRef.current.send(
+        JSON.stringify({ type: 'mic', action: 'toggle' })
+      )
     }
     document.addEventListener('keydown', onKey, true)
     return () => document.removeEventListener('keydown', onKey, true)
@@ -109,7 +111,9 @@ const MicApp: React.FC = () => {
       JSON.stringify({
         type: 'mic',
         action: 'select',
-        data: { names: next.length ? next : state.devices.map(d => d.name) }
+        data: {
+          names: next.length ? next : state.devices.map(d => d.name)
+        }
       })
     )
   }
@@ -171,7 +175,10 @@ const MicApp: React.FC = () => {
       {error ? <div className={styles.error}>{error}</div> : null}
 
       {picking ? (
-        <div className={styles.sheetScrim} onClick={() => setPicking(false)}>
+        <div
+          className={styles.sheetScrim}
+          onClick={() => setPicking(false)}
+        >
           <div className={styles.sheet} onClick={e => e.stopPropagation()}>
             <div className={styles.sheetTitle}>Microphones</div>
             {state.devices.map(device => {

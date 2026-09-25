@@ -202,7 +202,8 @@ const Home: React.FC = () => {
               </button>
             ) : (
               <button onClick={() => window.open(updateInfo.downloadUrl)}>
-                Download <span className="material-icons">open_in_new</span>
+                Download{' '}
+                <span className="material-icons">open_in_new</span>
               </button>
             )}
           </div>

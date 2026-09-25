@@ -31,7 +31,11 @@ interface NowPlayingInfo {
   artworkData?: string | null
 }
 
-const REPEAT_FROM_MR: Record<number, RepeatMode> = { 1: 'off', 2: 'one', 3: 'on' }
+const REPEAT_FROM_MR: Record<number, RepeatMode> = {
+  1: 'off',
+  2: 'one',
+  3: 'on'
+}
 const REPEAT_TO_MR: Record<RepeatMode, number> = { off: 1, one: 2, on: 3 }
 
 function adapterDir() {
@@ -191,7 +195,14 @@ class MacNowPlayingHandler extends BasePlaybackHandler {
           total: Math.round(duration * 1000)
         }
       },
-      supportedActions: ['play', 'pause', 'next', 'previous', 'volume', 'image']
+      supportedActions: [
+        'play',
+        'pause',
+        'next',
+        'previous',
+        'volume',
+        'image'
+      ]
     }
     if (duration) data.supportedActions.push('seek')
     if (info.shuffleMode != null) data.supportedActions.push('shuffle')

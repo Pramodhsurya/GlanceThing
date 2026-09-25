@@ -98,7 +98,9 @@ const AppsContextProvider = ({ children }: AppsContextProviderProps) => {
   const [currentApp, setCurrentApp] = useState<AppId | null>(null)
   const [hiddenApps, setHiddenApps] = useState<string[]>([])
   const [installedApps, setInstalledApps] = useState<string[]>([])
-  const [communityApps, setCommunityApps] = useState<CommunityTrayApp[]>([])
+  const [communityApps, setCommunityApps] = useState<CommunityTrayApp[]>(
+    []
+  )
   const hiddenRef = useRef(hiddenApps)
   hiddenRef.current = hiddenApps
   const installedRef = useRef(installedApps)
@@ -201,9 +203,11 @@ const AppsContextProvider = ({ children }: AppsContextProviderProps) => {
       const scroll = start.scroll
       start = null
 
-      if (blockedRef.current || dy < SWIPE_MIN || dy <= Math.abs(dx)) return
+      if (blockedRef.current || dy < SWIPE_MIN || dy <= Math.abs(dx))
+        return
       if (scroll && !fromTop) return
-      if (document.querySelector('[class*="menu"][data-shown="true"]')) return
+      if (document.querySelector('[class*="menu"][data-shown="true"]'))
+        return
       setTrayState(dy >= SWIPE_FULL ? 'full' : 'peek')
     }
 

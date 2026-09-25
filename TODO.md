@@ -44,4 +44,3 @@ That includes at least:
 - Link
 
 Same idea as section 1: pick a widget from the app, drop it on a normal page.
-

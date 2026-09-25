@@ -11,7 +11,9 @@ export const OFFICIAL_APP_IDS = [
 
 export type OfficialAppId = (typeof OFFICIAL_APP_IDS)[number]
 
-export function isOfficialAppId(id: string | undefined): id is OfficialAppId {
+export function isOfficialAppId(
+  id: string | undefined
+): id is OfficialAppId {
   return !!id && (OFFICIAL_APP_IDS as readonly string[]).includes(id)
 }
 

@@ -315,8 +315,12 @@ async function runInstall(device: string | null) {
   const adb = await getAdbExecutable()
 
   log('Installing app...', 'adb')
-  await execAsync(`${adb} ${adbSelector(device)} shell "mount -o remount,rw /"`)
-  await execAsync(`${adb} ${adbSelector(device)} shell "mkdir -p /tmp/webapp"`)
+  await execAsync(
+    `${adb} ${adbSelector(device)} shell "mount -o remount,rw /"`
+  )
+  await execAsync(
+    `${adb} ${adbSelector(device)} shell "mkdir -p /tmp/webapp"`
+  )
   await execAsync(
     `${adb} ${adbSelector(device)} push "${appDir}/." /tmp/webapp`
   )

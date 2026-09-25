@@ -128,7 +128,15 @@ export function getLayoutPayload() {
     : []
   const storedCommunity = getStorageValue('communityApps')
   const communityApps = Array.isArray(storedCommunity)
-    ? (storedCommunity as { id: string; label: string; icon?: string; color?: string; enabled?: boolean }[])
+    ? (
+        storedCommunity as {
+          id: string
+          label: string
+          icon?: string
+          color?: string
+          enabled?: boolean
+        }[]
+      )
         .filter(a => a.enabled !== false)
         .map(a => ({
           id: a.id,

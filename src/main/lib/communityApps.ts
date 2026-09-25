@@ -531,10 +531,7 @@ async function fetchRepoReleaseItems(parsed: {
   }))
 }
 
-function matchOfficialMeta(
-  assetName: string,
-  meta: OfficialCatalogApp[]
-) {
+function matchOfficialMeta(assetName: string, meta: OfficialCatalogApp[]) {
   const stem = assetName
     .replace(/-app-v?[\d.]+.*$/i, '')
     .replace(/\.(zip|tar\.gz)$/i, '')
@@ -566,7 +563,8 @@ async function fetchOfficialCatalogJson(): Promise<OfficialCatalogApp[]> {
 
 export async function refreshOfficialStore() {
   const parsed = parseRepoUrl(OFFICIAL_APPS_REPO)
-  if (!parsed.valid) throw new Error('Official apps repo is misconfigured.')
+  if (!parsed.valid)
+    throw new Error('Official apps repo is misconfigured.')
 
   let releaseItems: CommunityCatalogItem[] = []
   try {
@@ -624,7 +622,9 @@ export async function refreshOfficialStore() {
   return listCatalog()
 }
 
-function guessAppId(item: Pick<CommunityCatalogItem, 'assetName' | 'label'>) {
+function guessAppId(
+  item: Pick<CommunityCatalogItem, 'assetName' | 'label'>
+) {
   const stem = (item.assetName || item.label || '')
     .replace(/-app-v?[\d.]+.*$/i, '')
     .replace(/\.(zip|tar\.gz)$/i, '')

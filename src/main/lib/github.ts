@@ -34,7 +34,13 @@ export interface GitHubItem {
 }
 
 export interface GitHubOverview {
-  user: { login: string; name: string | null; avatar: string | null; followers: number; publicRepos: number }
+  user: {
+    login: string
+    name: string | null
+    avatar: string | null
+    followers: number
+    publicRepos: number
+  }
   repos: GitHubRepo[]
   starred: GitHubRepo[]
   fetchedAt: number
@@ -55,19 +61,24 @@ export function getRefreshMinutes() {
 export async function ghCliToken() {
   for (const bin of GH_PATHS) {
     if (bin.startsWith('/') && !fs.existsSync(bin)) continue
-    const out = await execAsync(`"${bin}" auth token`, 5000).catch(() => null)
+    const out = await execAsync(`"${bin}" auth token`, 5000).catch(
+      () => null
+    )
     if (out?.trim()) return out.trim()
   }
   return null
 }
 
-export async function getGitHubTokenSource(): Promise<'saved' | 'gh' | 'none'> {
+export async function getGitHubTokenSource(): Promise<
+  'saved' | 'gh' | 'none'
+> {
   if (getStorageValue('githubToken', true)) return 'saved'
   return (await ghCliToken()) ? 'gh' : 'none'
 }
 
 async function client(): Promise<AxiosInstance> {
-  const token = getStorageValue('githubToken', true) || (await ghCliToken())
+  const token =
+    getStorageValue('githubToken', true) || (await ghCliToken())
   if (!token) throw new Error('no_token')
   return axios.create({
     baseURL: 'https://api.github.com',
@@ -108,15 +119,25 @@ function mapRepo(r: RawRepo): GitHubRepo {
   }
 }
 
-export async function getOverview(refresh = false): Promise<GitHubOverview> {
-  if (!refresh && cached && Date.now() - cached.fetchedAt < getRefreshMinutes() * 60_000)
+export async function getOverview(
+  refresh = false
+): Promise<GitHubOverview> {
+  if (
+    !refresh &&
+    cached &&
+    Date.now() - cached.fetchedAt < getRefreshMinutes() * 60_000
+  )
     return cached
 
   const api = await client()
   const [user, repos, starred] = await Promise.all([
     api.get('/user'),
-    api.get('/user/repos', { params: { sort: 'updated', per_page: PAGE } }),
-    api.get('/user/starred', { params: { sort: 'updated', per_page: PAGE } })
+    api.get('/user/repos', {
+      params: { sort: 'updated', per_page: PAGE }
+    }),
+    api.get('/user/starred', {
+      params: { sort: 'updated', per_page: PAGE }
+    })
   ])
 
   cached = {
@@ -161,15 +182,24 @@ function mapItem(i: RawItem): GitHubItem {
   }
 }
 
-export async function getRepoDetail(fullName: string, state: 'open' | 'closed') {
-  if (!/^[\w.-]+\/[\w.-]+$/.test(fullName)) throw new Error('Invalid repository')
+export async function getRepoDetail(
+  fullName: string,
+  state: 'open' | 'closed'
+) {
+  if (!/^[\w.-]+\/[\w.-]+$/.test(fullName))
+    throw new Error('Invalid repository')
   const api = await client()
   const [pulls, issues] = await Promise.all([
     api.get(`/repos/${fullName}/pulls`, {
       params: { state, per_page: LIST, sort: 'updated', direction: 'desc' }
     }),
     api.get(`/repos/${fullName}/issues`, {
-      params: { state, per_page: LIST * 2, sort: 'updated', direction: 'desc' }
+      params: {
+        state,
+        per_page: LIST * 2,
+        sort: 'updated',
+        direction: 'desc'
+      }
     })
   ])
 

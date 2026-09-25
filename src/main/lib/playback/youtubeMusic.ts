@@ -161,7 +161,8 @@ class YouTubeMusicHandler extends BasePlaybackHandler {
         if (shuffle?.status === 200)
           this.shuffleOn = shuffle.data.state === true
         if (repeat?.status === 200)
-          this.repeatMode = REPEAT_FROM_YTM[repeat.data.mode ?? ''] ?? 'off'
+          this.repeatMode =
+            REPEAT_FROM_YTM[repeat.data.mode ?? ''] ?? 'off'
       }
       this.ticks++
       this.warned = false
@@ -261,7 +262,8 @@ class YouTubeMusicHandler extends BasePlaybackHandler {
   async repeat(state: RepeatMode): Promise<void> {
     const from = REPEAT_ORDER.indexOf(this.repeatMode)
     const to = REPEAT_ORDER.indexOf(state)
-    const iteration = (to - from + REPEAT_ORDER.length) % REPEAT_ORDER.length
+    const iteration =
+      (to - from + REPEAT_ORDER.length) % REPEAT_ORDER.length
     if (!iteration) return
     this.repeatMode = state
     await this.command('/switch-repeat', { iteration })

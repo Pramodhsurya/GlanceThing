@@ -37,7 +37,9 @@
   border-radius: 0 0 18px 18px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   transform: translateY(-110%);
-  transition: transform 220ms ease, max-height 220ms ease;
+  transition:
+    transform 220ms ease,
+    max-height 220ms ease;
   max-height: 0;
   overflow: hidden;
 }
@@ -110,7 +112,9 @@
   align-items: center;
   justify-content: center;
   border: 2px solid transparent;
-  transition: border-color 160ms ease, transform 120ms ease;
+  transition:
+    border-color 160ms ease,
+    transform 120ms ease;
 }
 
 .icon span {

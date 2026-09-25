@@ -126,7 +126,10 @@ async function download(url: string, dest: string, version: string) {
 }
 
 function runAfterExit(script: string) {
-  const file = path.join(os.tmpdir(), `glancething-update-${Date.now()}.sh`)
+  const file = path.join(
+    os.tmpdir(),
+    `glancething-update-${Date.now()}.sh`
+  )
   fs.writeFileSync(
     file,
     `#!/bin/sh\nwhile kill -0 ${process.pid} 2>/dev/null; do sleep 0.5; done\n${script}\nrm -f "$0"\n`,
@@ -186,12 +189,17 @@ export async function installUpdate() {
   try {
     const info = await checkForUpdate()
     if (!info || !info.updateAvailable) return
-    if (!app.isPackaged) throw new Error('Updates only install in built apps')
+    if (!app.isPackaged)
+      throw new Error('Updates only install in built apps')
     const asset = pickAsset(info.assets)
     if (!asset) throw new Error('No update file for this platform')
 
     log(`Downloading ${info.latestVersion}`, 'Update')
-    setStatus({ state: 'downloading', version: info.latestVersion, progress: 0 })
+    setStatus({
+      state: 'downloading',
+      version: info.latestVersion,
+      progress: 0
+    })
     const dest = path.join(os.tmpdir(), asset.name)
     await download(asset.browser_download_url, dest, info.latestVersion)
 

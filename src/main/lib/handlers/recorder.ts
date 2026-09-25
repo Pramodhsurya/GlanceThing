@@ -22,10 +22,18 @@ export const hasActions = true
 const watchers = new Set<AuthenticatedWebSocket>()
 
 onRecorderEvent(event => {
-  const message = JSON.stringify({ type: 'recorder', action: event.kind, data: event })
+  const message = JSON.stringify({
+    type: 'recorder',
+    action: event.kind,
+    data: event
+  })
   const list =
     event.kind === 'saved'
-      ? JSON.stringify({ type: 'recorder', action: 'list', data: listRecordings() })
+      ? JSON.stringify({
+          type: 'recorder',
+          action: 'list',
+          data: listRecordings()
+        })
       : null
   for (const ws of watchers) {
     if (ws.readyState !== ws.OPEN) {
@@ -46,7 +54,11 @@ function sendStatus(ws: AuthenticatedWebSocket) {
     })
   )
   ws.send(
-    JSON.stringify({ type: 'recorder', action: 'list', data: listRecordings() })
+    JSON.stringify({
+      type: 'recorder',
+      action: 'list',
+      data: listRecordings()
+    })
   )
 }
 
@@ -54,7 +66,11 @@ function fail(ws: AuthenticatedWebSocket, err: unknown) {
   const message = err instanceof Error ? err.message : String(err)
   log(`Recorder error: ${message}`, 'Recorder', LogLevel.WARN)
   ws.send(
-    JSON.stringify({ type: 'recorder', action: 'error', data: { kind: 'error', message } })
+    JSON.stringify({
+      type: 'recorder',
+      action: 'error',
+      data: { kind: 'error', message }
+    })
   )
 }
 
@@ -97,9 +113,9 @@ export const actions: HandlerAction[] = [
   {
     action: 'play',
     handle: async (ws, data) => {
-      await playRecording(String((data as { name?: string })?.name ?? '')).catch(
-        err => fail(ws, err)
-      )
+      await playRecording(
+        String((data as { name?: string })?.name ?? '')
+      ).catch(err => fail(ws, err))
     }
   },
   {

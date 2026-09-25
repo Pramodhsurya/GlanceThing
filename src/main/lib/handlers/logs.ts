@@ -33,7 +33,9 @@ export const actions: HandlerAction[] = [
 
       const stop = onLog(line => {
         if (ws.readyState !== ws.OPEN) return unsubscribe(ws)
-        ws.send(JSON.stringify({ type: 'logs', action: 'line', data: line }))
+        ws.send(
+          JSON.stringify({ type: 'logs', action: 'line', data: line })
+        )
       })
       subscriptions.set(ws, stop)
       ws.once('close', () => unsubscribe(ws))

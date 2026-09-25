@@ -55,7 +55,9 @@ const chrome69Css: Plugin = {
         value: `calc(${rowGap} / -2) calc(${columnGap} / -2)`
       })
       rule
-        .cloneAfter({ selectors: selectors.map(s => `${s} > *${GAP_BOOST}`) })
+        .cloneAfter({
+          selectors: selectors.map(s => `${s} > *${GAP_BOOST}`)
+        })
         .removeAll()
         .append({
           prop: 'margin',

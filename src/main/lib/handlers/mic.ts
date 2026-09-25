@@ -88,7 +88,9 @@ export const actions: HandlerAction[] = [
     handle: async (ws, data) => {
       const names = (data as { names?: unknown })?.names
       if (!Array.isArray(names)) return
-      await selectMics(names.map(n => String(n))).catch(err => fail(ws, err))
+      await selectMics(names.map(n => String(n))).catch(err =>
+        fail(ws, err)
+      )
     }
   },
   {

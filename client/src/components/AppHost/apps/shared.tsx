@@ -54,7 +54,8 @@ export const SeekBar: React.FC<SeekBarProps> = ({
   const [dragRatio, setDragRatio] = useState<number | null>(null)
 
   const ratio =
-    dragRatio ?? (total > 0 ? Math.min(1, Math.max(0, current / total)) : 0)
+    dragRatio ??
+    (total > 0 ? Math.min(1, Math.max(0, current / total)) : 0)
 
   function ratioAt(clientX: number) {
     const rect = barRef.current!.getBoundingClientRect()

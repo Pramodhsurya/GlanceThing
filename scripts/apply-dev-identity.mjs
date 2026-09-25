@@ -11,12 +11,7 @@ const electronRoot = dirname(require.resolve('electron/package.json'))
 const appPath = join(electronRoot, 'dist', 'Electron.app')
 const plistPath = join(appPath, 'Contents', 'Info.plist')
 const iconDest = join(appPath, 'Contents', 'Resources', 'electron.icns')
-const iconSrc = join(
-  process.cwd(),
-  'build',
-  'stable',
-  'icon.icns'
-)
+const iconSrc = join(process.cwd(), 'build', 'stable', 'icon.icns')
 
 if (!existsSync(plistPath)) process.exit(0)
 
@@ -41,7 +36,10 @@ if (plistString('CFBundleDisplayName') !== name)
 
 if (existsSync(iconSrc)) {
   copyFileSync(iconSrc, iconDest)
-  copyFileSync(iconSrc, join(appPath, 'Contents', 'Resources', 'icon.icns'))
+  copyFileSync(
+    iconSrc,
+    join(appPath, 'Contents', 'Resources', 'icon.icns')
+  )
 }
 
 try {

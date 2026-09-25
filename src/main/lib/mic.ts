@@ -98,7 +98,9 @@ function resolveSelected(devices: MicDevice[]) {
     setStorageValue('micKnown', names)
   }
   if (!saved) return names
-  return names.filter(n => saved.indexOf(n) !== -1 || newcomers.indexOf(n) !== -1)
+  return names.filter(
+    n => saved.indexOf(n) !== -1 || newcomers.indexOf(n) !== -1
+  )
 }
 
 function withSelection(
@@ -144,7 +146,9 @@ async function macHelper() {
     !fs.existsSync(stampFile) ||
     fs.readFileSync(stampFile, 'utf8') !== stamp
   ) {
-    await execFileAsync('swiftc', ['-O', '-o', dest, src], { timeout: 60000 })
+    await execFileAsync('swiftc', ['-O', '-o', dest, src], {
+      timeout: 60000
+    })
     fs.writeFileSync(stampFile, stamp)
   }
   helperPath = dest
@@ -157,14 +161,14 @@ function parseState(raw: string): Omit<MicState, 'selected' | 'autoOpen'> {
     active?: boolean
     devices?: MicDevice[]
   }
-  const devices = (Array.isArray(parsed.devices) ? parsed.devices : []).map(
-    d => ({
-      name: String(d.name || ''),
-      muted: !!d.muted,
-      canMute: !!d.canMute,
-      active: !!d.active
-    })
-  )
+  const devices = (
+    Array.isArray(parsed.devices) ? parsed.devices : []
+  ).map(d => ({
+    name: String(d.name || ''),
+    muted: !!d.muted,
+    canMute: !!d.canMute,
+    active: !!d.active
+  }))
   return {
     muted: !!parsed.muted,
     active: !!parsed.active || devices.some(d => d.active),
@@ -202,13 +206,16 @@ async function runLinux(action: 'status' | 'mute' | 'unmute' | 'toggle') {
   const names = linuxSources(list)
   const states = await Promise.all(
     names.map(async name => {
-      const out = await execAsync(`pactl get-source-mute ${name}`, 3000).catch(
-        () => 'Mute: no'
-      )
+      const out = await execAsync(
+        `pactl get-source-mute ${name}`,
+        3000
+      ).catch(() => 'Mute: no')
       return { name, muted: /yes/i.test(out), active: false }
     })
   )
-  const running = await execAsync('pactl list sources', 4000).catch(() => '')
+  const running = await execAsync('pactl list sources', 4000).catch(
+    () => ''
+  )
   for (const s of states) {
     const block = running.split('Name: ').find(b => b.startsWith(s.name))
     s.active = !!block && /State:\s*RUNNING/i.test(block.slice(0, 400))
@@ -239,9 +246,9 @@ async function runLinux(action: 'status' | 'mute' | 'unmute' | 'toggle') {
           targets.some(t => t.name === s.name) ? { ...s, muted: want } : s
         )
   return {
-    muted: targets.length > 0 && targets.every(s =>
-      action === 'status' ? s.muted : want
-    ),
+    muted:
+      targets.length > 0 &&
+      targets.every(s => (action === 'status' ? s.muted : want)),
     active: after.some(s => s.active),
     devices: after.map(s => ({
       name: s.name,
@@ -252,7 +259,9 @@ async function runLinux(action: 'status' | 'mute' | 'unmute' | 'toggle') {
   }
 }
 
-async function runWindows(action: 'status' | 'mute' | 'unmute' | 'toggle') {
+async function runWindows(
+  action: 'status' | 'mute' | 'unmute' | 'toggle'
+) {
   const script = `
 $ErrorActionPreference = 'Stop'
 Add-Type -TypeDefinition @"
@@ -359,12 +368,13 @@ public static class GtMic {
 }
 
 async function run(action: 'status' | 'mute' | 'unmute' | 'toggle') {
-  const names =
-    action === 'status' ? [] : resolveSelected(cached.devices)
+  const names = action === 'status' ? [] : resolveSelected(cached.devices)
   if (process.platform === 'darwin')
     return withSelection(await runMac(action, names))
-  if (process.platform === 'linux') return withSelection(await runLinux(action))
-  if (process.platform === 'win32') return withSelection(await runWindows(action))
+  if (process.platform === 'linux')
+    return withSelection(await runLinux(action))
+  if (process.platform === 'win32')
+    return withSelection(await runWindows(action))
   throw new Error('Mic mute is not available on this system.')
 }
 

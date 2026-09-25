@@ -15,7 +15,14 @@ interface LinkClient {
   score: number
 }
 
-const COLORS = ['#38bdf8', '#f472b6', '#facc15', '#34d399', '#a78bfa', '#fb923c']
+const COLORS = [
+  '#38bdf8',
+  '#f472b6',
+  '#facc15',
+  '#34d399',
+  '#a78bfa',
+  '#fb923c'
+]
 
 const members = new Map<AuthenticatedWebSocket, LinkClient>()
 let joined = 0
@@ -73,7 +80,10 @@ export const actions: HandlerAction[] = [
       const me = member(ws)
       if (!me) return
       const inc = Number((data as { inc?: number })?.inc ?? 1)
-      me.score = Math.max(0, me.score + (isFinite(inc) ? Math.round(inc) : 1))
+      me.score = Math.max(
+        0,
+        me.score + (isFinite(inc) ? Math.round(inc) : 1)
+      )
       broadcast()
     }
   },

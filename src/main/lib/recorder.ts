@@ -93,9 +93,12 @@ function spawnArecord(adb: string) {
   // "error: closed" on the Car Thing, even for `echo`, so we cannot stream
   // PCM over that channel.
   const command = `${adb} shell "rm -f ${REMOTE_RAW}; arecord -q -D hw:0,0 -f S16_LE -r ${SAMPLE_RATE} -c ${CHANNELS} -t raw -d ${MAX_SECONDS} ${REMOTE_RAW}"`
-  return spawn(process.platform === 'win32' ? command : `exec ${command}`, {
-    shell: true
-  })
+  return spawn(
+    process.platform === 'win32' ? command : `exec ${command}`,
+    {
+      shell: true
+    }
+  )
 }
 
 async function remoteBytes(adb: string) {
@@ -163,7 +166,9 @@ async function releaseMicrophone(adb: string) {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       if (!/busy|Device or resource/i.test(message) && attempt > 2) {
-        throw new Error(message.trim() || 'Could not open the Car Thing microphone.')
+        throw new Error(
+          message.trim() || 'Could not open the Car Thing microphone.'
+        )
       }
     }
   }
@@ -244,15 +249,21 @@ async function finish(error: string | null) {
   let pcm = Buffer.alloc(0)
   if (adb) {
     pcm = await pullRecording(adb).catch(() => Buffer.alloc(0))
-    await execAsync(`${adb} shell "${RESUME_MIC_OWNER}"`, 10000).catch(err =>
-      log(`Failed to resume superbird: ${err}`, 'Recorder', LogLevel.WARN)
+    await execAsync(`${adb} shell "${RESUME_MIC_OWNER}"`, 10000).catch(
+      err =>
+        log(
+          `Failed to resume superbird: ${err}`,
+          'Recorder',
+          LogLevel.WARN
+        )
     )
   }
 
   emit({ kind: 'state', recording: false, startedAt: null })
   if (error) emit({ kind: 'error', message: error })
 
-  const saved = pcm.length >= SAMPLE_RATE * CHANNELS * 2 * 0.5 ? save(pcm) : null
+  const saved =
+    pcm.length >= SAMPLE_RATE * CHANNELS * 2 * 0.5 ? save(pcm) : null
   if (saved) log(`Saved ${saved.name}`, 'Recorder')
   emit({ kind: 'saved', recording: saved })
 }
@@ -281,9 +292,16 @@ function save(stereo: Buffer): RecordingInfo {
     .replace(/\..+$/, '')
     .replace(/[:T]/g, '-')
   const name = `recording-${stamp}.wav`
-  fs.writeFileSync(path.join(recordingsDir(), name), Buffer.concat([wavHeader(data.length), data]))
+  fs.writeFileSync(
+    path.join(recordingsDir(), name),
+    Buffer.concat([wavHeader(data.length), data])
+  )
 
-  return { name, createdAt: Date.now(), durationMs: (frames / SAMPLE_RATE) * 1000 }
+  return {
+    name,
+    createdAt: Date.now(),
+    durationMs: (frames / SAMPLE_RATE) * 1000
+  }
 }
 
 function wavHeader(dataLength: number) {

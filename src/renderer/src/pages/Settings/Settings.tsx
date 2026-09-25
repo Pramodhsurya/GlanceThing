@@ -357,9 +357,9 @@ const GeneralTab: React.FC = () => {
   const [loaded, setLoaded] = useState(false)
   const [dialOn, setDialOn] = useState(false)
   const [dialMode, setDialMode] = useState('both')
-  const [githubSource, setGithubSource] = useState<'saved' | 'gh' | 'none'>(
-    'none'
-  )
+  const [githubSource, setGithubSource] = useState<
+    'saved' | 'gh' | 'none'
+  >('none')
   const [githubRefresh, setGithubRefresh] = useState('15')
 
   const settings = useRef<{
@@ -385,7 +385,9 @@ const GeneralTab: React.FC = () => {
       const refresh = Number(
         await window.api.getStorageValue('githubRefreshMinutes')
       )
-      setGithubRefresh(['5', '60'].includes(String(refresh)) ? String(refresh) : '15')
+      setGithubRefresh(
+        ['5', '60'].includes(String(refresh)) ? String(refresh) : '15'
+      )
       setLoaded(true)
     }
 
@@ -476,7 +478,10 @@ const GeneralTab: React.FC = () => {
           ]}
           onChange={value => {
             setGithubRefresh(value)
-            window.api.setStorageValue('githubRefreshMinutes', Number(value))
+            window.api.setStorageValue(
+              'githubRefreshMinutes',
+              Number(value)
+            )
           }}
         />
       </div>

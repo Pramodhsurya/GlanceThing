@@ -238,6 +238,8 @@ inspired them are credited in the README; no code was copied from them.
   shortcuts, or apps tray because the pairing password was written only
   to `/tmp/webapp`. After a reboot Chromium reads the real webapp folder,
   so it never connected. The password is now written to both paths.
+- GitHub Checks failed on lint: Pomodoro called `Date.now()` while
+  rendering, and the shared playback handler had an unused seek argument.
 
 ### Documentation
 

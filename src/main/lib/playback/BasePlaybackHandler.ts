@@ -25,7 +25,7 @@ export abstract class BasePlaybackHandler extends (EventEmitter as new () => Typ
   abstract repeat(stae: RepeatMode): Promise<void>
   abstract getImage(): Promise<Buffer | null>
 
-  async seek(_positionMs: number): Promise<void> {
-    throw new Error('Not implemented')
+  async seek(positionMs: number): Promise<void> {
+    throw new Error(`Not implemented: seek(${positionMs})`)
   }
 }
