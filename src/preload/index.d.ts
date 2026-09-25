@@ -6,6 +6,66 @@ interface Shortcut {
 }
 
 declare global {
+  interface CommunityIssue {
+    id: string
+    title: string
+    message: string
+  }
+
+  interface CommunityCatalogItem {
+    id: string
+    owner: string
+    repo: string
+    apiUrl: string
+    label: string
+    version: string
+    author: string
+    description: string
+    downloadUrl: string
+    assetName: string
+    htmlUrl: string
+    downloads: number
+  }
+
+  interface CommunityInstalledApp {
+    id: string
+    label: string
+    version: string
+    author: string
+    description: string
+    repository: string
+    sourceUrl: string
+    enabled: boolean
+    hasClient: boolean
+    clientPath: string
+    color: string
+    icon: string
+    installedAt: string
+  }
+
+  interface StagedCommunityApp {
+    manifest: {
+      id: string
+      label: string
+      version: string
+      author: string
+      description: string
+      repository: string
+    }
+    issues: CommunityIssue[]
+    sourceUrl: string
+    hasClient: boolean
+    clientPath: string
+    overwrite: boolean
+  }
+
+  interface UpdateStatus {
+    state: 'idle' | 'downloading' | 'installing' | 'restarting' | 'error'
+    version?: string
+    progress?: number
+    error?: string
+  }
+
   interface Window {
     api: {
       on: (
@@ -84,7 +144,11 @@ declare global {
         currentVersion: string
         latestVersion: string
         downloadUrl: string
+        updateAvailable: boolean
+        canInstall: boolean
       } | null>
+      installUpdate: () => Promise<void>
+      getUpdateStatus: () => Promise<UpdateStatus>
       findOpenPort: () => Promise<number>
       isPortOpen: (port: number) => Promise<boolean>
       importCalendar: (source: 'mac') => Promise<{
@@ -128,6 +192,18 @@ declare global {
         query: string
       } | null>
       refreshAiUsage: () => Promise<unknown>
+      setGitHubToken: (token: string) => Promise<void>
+      getGitHubTokenSource: () => Promise<'saved' | 'gh' | 'none'>
+      communityCatalog: () => Promise<CommunityCatalogItem[]>
+      communityList: () => Promise<CommunityInstalledApp[]>
+      communityAddRepo: (url: string) => Promise<CommunityCatalogItem[]>
+      communityDownload: (id: string) => Promise<StagedCommunityApp>
+      communityPickZip: () => Promise<StagedCommunityApp | null>
+      communityStaged: () => Promise<StagedCommunityApp | null>
+      communityConfirm: () => Promise<CommunityInstalledApp>
+      communityRemove: (id: string) => Promise<void>
+      communitySetEnabled: (id: string, enabled: boolean) => Promise<void>
+      communityRemoveRepo: (id: string) => Promise<void>
     }
   }
 }

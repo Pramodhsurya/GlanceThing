@@ -21,6 +21,7 @@ interface MediaContextProps {
     setVolume: (volume: number) => void
     shuffle: (state: boolean) => void
     repeat: (state: RepeatMode) => void
+    seek: (positionMs: number) => void
   }
 }
 
@@ -34,7 +35,8 @@ const MediaContext = createContext<MediaContextProps>({
     skipBackward: () => {},
     setVolume: () => {},
     shuffle: () => {},
-    repeat: () => {}
+    repeat: () => {},
+    seek: () => {}
   }
 })
 
@@ -54,6 +56,7 @@ const MediaContextProvider = ({ children }: MediaContextProviderProps) => {
       const listener = (e: MessageEvent) => {
         const { type, action, data } = JSON.parse(e.data)
         if (type !== 'playback') return
+        if (action && action !== 'image') return
         const playbackData = data as PlaybackData
 
         if (action === 'image') {
@@ -194,6 +197,32 @@ const MediaContextProvider = ({ children }: MediaContextProviderProps) => {
       setPlayerData({
         ...playerDataRef.current!,
         repeat: state as RepeatMode
+      })
+    },
+    seek: (positionMs: number) => {
+      const current = playerDataRef.current
+      if (current === null) return
+      const position = Math.max(
+        0,
+        Math.min(positionMs, current.track.duration.total || positionMs)
+      )
+
+      socket?.send(
+        JSON.stringify({
+          type: 'playback',
+          action: 'seek',
+          data: {
+            position
+          }
+        })
+      )
+
+      setPlayerData({
+        ...current,
+        track: {
+          ...current.track,
+          duration: { ...current.track.duration, current: position }
+        }
       })
     }
   }

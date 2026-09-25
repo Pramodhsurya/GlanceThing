@@ -45,6 +45,9 @@ const Titlebar: React.FC = () => {
         <NavLink to="/layout" className={styles.tab}>
           Layout
         </NavLink>
+        <NavLink to="/apps" className={styles.tab}>
+          Apps
+        </NavLink>
       </div>
       <div className={styles.actions}>
         {buttons.map(({ icon, action }) => (

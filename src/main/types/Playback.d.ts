@@ -9,6 +9,7 @@ export type Action =
   | 'repeat'
   | 'volume'
   | 'image'
+  | 'seek'
 
 export type PlaybackData = {
   isPlaying: boolean

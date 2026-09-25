@@ -5,6 +5,10 @@ import styles from './Playback.module.css'
 import Spotify from './providers/Spotify/Spotify.js'
 import None from './providers/None/None.js'
 import Native from './providers/Native/Native.js'
+import AppleMusic from './providers/AppleMusic/AppleMusic.js'
+import YouTubeMusic from './providers/YouTubeMusic/YouTubeMusic.js'
+
+const isMac = navigator.userAgent.includes('Mac')
 
 interface PlaybackProps {
   onStepComplete: () => void
@@ -55,6 +59,24 @@ const Playback: React.FC<PlaybackProps> = ({ onStepComplete }) => {
           <span className="material-icons">settings_input_component</span>
           Native
         </button>
+        {isMac ? (
+          <button
+            className={styles.provider}
+            onClick={() => setSelectedProvider('applemusic')}
+            data-selected={selectedProvider === 'applemusic'}
+          >
+            <span className="material-icons">library_music</span>
+            Apple Music
+          </button>
+        ) : null}
+        <button
+          className={styles.provider}
+          onClick={() => setSelectedProvider('youtubemusic')}
+          data-selected={selectedProvider === 'youtubemusic'}
+        >
+          <span className="material-icons">smart_display</span>
+          YouTube Music
+        </button>
       </div>
       <div className={styles.setup} key={selectedProvider}>
         {selectedProvider === 'none' ? (
@@ -63,6 +85,10 @@ const Playback: React.FC<PlaybackProps> = ({ onStepComplete }) => {
           <Spotify onStepComplete={complete} />
         ) : selectedProvider === 'native' ? (
           <Native onStepComplete={complete} />
+        ) : selectedProvider === 'applemusic' ? (
+          <AppleMusic onStepComplete={complete} />
+        ) : selectedProvider === 'youtubemusic' ? (
+          <YouTubeMusic onStepComplete={complete} />
         ) : null}
       </div>
     </div>

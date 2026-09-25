@@ -357,9 +357,14 @@ const GeneralTab: React.FC = () => {
   const [loaded, setLoaded] = useState(false)
   const [dialOn, setDialOn] = useState(false)
   const [dialMode, setDialMode] = useState('both')
+  const [githubSource, setGithubSource] = useState<'saved' | 'gh' | 'none'>(
+    'none'
+  )
+  const [githubRefresh, setGithubRefresh] = useState('15')
 
   const settings = useRef<{
     installAutomatically?: boolean
+    autoUpdate?: boolean
   }>({})
 
   useEffect(() => {
@@ -367,13 +372,20 @@ const GeneralTab: React.FC = () => {
       settings.current = {
         installAutomatically:
           (await window.api.getStorageValue('installAutomatically')) ===
-          true
+          true,
+        autoUpdate:
+          (await window.api.getStorageValue('autoUpdate')) !== false
       }
       setDialOn(
         (await window.api.getStorageValue('dialNavigation')) === true
       )
       const mode = await window.api.getStorageValue('dialMode')
       setDialMode(mode === 'pages' || mode === 'items' ? mode : 'both')
+      setGithubSource(await window.api.getGitHubTokenSource())
+      const refresh = Number(
+        await window.api.getStorageValue('githubRefreshMinutes')
+      )
+      setGithubRefresh(['5', '60'].includes(String(refresh)) ? String(refresh) : '15')
       setLoaded(true)
     }
 
@@ -390,6 +402,15 @@ const GeneralTab: React.FC = () => {
           onChange={value =>
             window.api.setStorageValue('installAutomatically', value)
           }
+        />
+        <ToggleSetting
+          label="Auto-update"
+          description="Checks GitHub every hour. When a newer GlanceThing is released, it downloads, installs and restarts on its own."
+          defaultValue={settings.current.autoUpdate ?? true}
+          onChange={value => {
+            window.api.setStorageValue('autoUpdate', value)
+            if (value) window.api.installUpdate()
+          }}
         />
         <ToggleSetting
           label="Dial navigation"
@@ -426,6 +447,37 @@ const GeneralTab: React.FC = () => {
           label="Playback Setup"
           description="Run the playback setup again to change how playback is handled."
           onClick={() => navigate('/setup?step=3')}
+        />
+        <InputSubmitSetting
+          label="GitHub token"
+          description={
+            githubSource === 'saved'
+              ? 'A token is saved. Paste a new one to replace it, or submit an empty value to remove it.'
+              : githubSource === 'gh'
+                ? 'Using your GitHub CLI login (gh). Paste a personal access token to use a different account.'
+                : 'Used by the GitHub app on the Car Thing. Create a token with the repo scope at github.com/settings/tokens.'
+          }
+          placeholder="ghp_…"
+          clearOnSubmit
+          submitLabel="Save"
+          onSubmit={async value => {
+            await window.api.setGitHubToken(value)
+            setGithubSource(await window.api.getGitHubTokenSource())
+          }}
+        />
+        <ChoiceSetting
+          label="GitHub refresh"
+          description="How often the GitHub app refreshes on its own."
+          value={githubRefresh}
+          options={[
+            { value: '5', label: '5 min' },
+            { value: '15', label: '15 min' },
+            { value: '60', label: '1 hour' }
+          ]}
+          onChange={value => {
+            setGithubRefresh(value)
+            window.api.setStorageValue('githubRefreshMinutes', Number(value))
+          }}
         />
       </div>
     )

@@ -8,6 +8,7 @@ import {
 
 import { SocketContext } from '@/contexts/SocketContext.tsx'
 import { SleepContext } from '@/contexts/SleepContext.tsx'
+import { useApps } from '@/contexts/AppsContext.tsx'
 import { macNow, syncMacClock } from '@/lib/macClock.ts'
 
 import MeetingReminder from '@/components/MeetingReminder/MeetingReminder.tsx'
@@ -197,6 +198,7 @@ function TileView({
 const Widgets: React.FC = () => {
   const widgetsRef = useRef<HTMLDivElement>(null)
   const { ready, socket } = useContext(SocketContext)
+  const { trayOrAppOpen, currentApp } = useApps()
   const [config, setConfig] = useState<ScreenConfig | null>(null)
   const [apps, setApps] = useState<AppShortcut[] | null>(null)
   const [pageIndex, setPageIndex] = useState(0)
@@ -208,6 +210,8 @@ const Widgets: React.FC = () => {
   const { sleepState } = useContext(SleepContext)
   const sleepRef = useRef(sleepState)
   sleepRef.current = sleepState
+  const trayBusyRef = useRef(trayOrAppOpen)
+  trayBusyRef.current = trayOrAppOpen
   const [now, setNow] = useState(macNow)
 
   useEffect(() => {
@@ -343,12 +347,18 @@ const Widgets: React.FC = () => {
       )
     }
 
-    function menuOpen() {
-      return !!document.querySelector('[class*="menu"][data-shown="true"]')
+    function blocked() {
+      return (
+        !!document.querySelector('[class*="menu"][data-shown="true"]') ||
+        !!document.querySelector('[data-app-tray][data-state="peek"]') ||
+        !!document.querySelector('[data-app-tray][data-state="full"]') ||
+        !!document.querySelector('[data-app-host][data-shown="true"]') ||
+        trayBusyRef.current
+      )
     }
 
     function onKey(event: KeyboardEvent) {
-      if (sleepRef.current !== 'off' || menuOpen()) return
+      if (sleepRef.current !== 'off' || blocked()) return
       if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
         event.preventDefault()
         event.stopPropagation()
@@ -368,7 +378,7 @@ const Widgets: React.FC = () => {
     }
 
     function onWheel(event: WheelEvent) {
-      if (sleepRef.current !== 'off' || menuOpen()) return
+      if (sleepRef.current !== 'off' || blocked()) return
       const delta =
         Math.abs(event.deltaX) >= Math.abs(event.deltaY)
           ? event.deltaX
@@ -405,13 +415,20 @@ const Widgets: React.FC = () => {
   }
 
   function onTouchEnd(event: TouchEvent) {
+    if (currentApp) return
     const touch = event.changedTouches[0]
     const dx = touch.clientX - touchStart.current.x
     const dy = touch.clientY - touchStart.current.y
+    const absX = Math.abs(dx)
+    const absY = Math.abs(dy)
+
+    // Vertical swipes open the apps tray (handled in AppsContext).
+    if (absY >= 50 && absY > absX) return
+
     const sideways = touchStart.current.scrolling
-      ? Math.abs(dx) >= Math.abs(dy) * 2
-      : Math.abs(dx) >= Math.abs(dy)
-    if (Math.abs(dx) < 50 || !sideways) return
+      ? absX >= absY * 2
+      : absX >= absY
+    if (absX < 50 || !sideways || trayOrAppOpen) return
     if (dx < 0)
       setPageIndex(current => Math.min(pages.length - 1, current + 1))
     else setPageIndex(current => Math.max(0, current - 1))

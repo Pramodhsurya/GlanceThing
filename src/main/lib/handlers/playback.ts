@@ -3,7 +3,10 @@ import {
   HandlerAction,
   HandlerFunction
 } from '../../types/WebSocketHandler.js'
+import { AuthenticatedWebSocket } from '../../types/WebSocketServer.js'
 import { playbackManager } from '../playback/playback.js'
+import { setStorageValue } from '../storage.js'
+import { log } from '../utils.js'
 
 export const name = 'playback'
 
@@ -64,8 +67,50 @@ export const actions: HandlerAction[] = [
     handle: async (_, data) => {
       await playbackManager.repeat((data as { state: RepeatMode }).state)
     }
+  },
+  {
+    action: 'seek',
+    handle: async (_, data) => {
+      const { position } = data as { position: number }
+      if (typeof position !== 'number' || !isFinite(position)) return
+      await playbackManager.seek(position).catch(err => {
+        log(`Seek failed: ${err}`, 'Playback')
+      })
+    }
+  },
+  {
+    action: 'sources',
+    handle: async ws => {
+      await sendSources(ws)
+    }
+  },
+  {
+    action: 'source',
+    handle: async (ws, data) => {
+      const { name } = data as { name: string }
+      const sources = await playbackManager.listSources()
+      const target = sources.find(s => s.name === name)
+      if (!target?.ready) return sendSources(ws)
+
+      setStorageValue('playbackHandler', name)
+      await playbackManager.setup(name)
+      await sendSources(ws)
+    }
   }
 ]
+
+async function sendSources(ws: AuthenticatedWebSocket) {
+  ws.send(
+    JSON.stringify({
+      type: 'playback',
+      action: 'sources',
+      data: {
+        current: playbackManager.getCurrentHandlerName(),
+        sources: await playbackManager.listSources()
+      }
+    })
+  )
+}
 
 export const handle: HandlerFunction = async ws => {
   const res = await playbackManager.getPlayback()

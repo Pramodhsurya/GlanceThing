@@ -1,0 +1,132 @@
+.tray {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 40;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.tray[data-state='peek'],
+.tray[data-state='full'] {
+  pointer-events: all;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.tray[data-state='peek'] .scrim,
+.tray[data-state='full'] .scrim {
+  opacity: 1;
+}
+
+.panel {
+  position: relative;
+  z-index: 1;
+  background: #111;
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  transform: translateY(-110%);
+  transition: transform 220ms ease, max-height 220ms ease;
+  max-height: 0;
+  overflow: hidden;
+}
+
+.tray[data-state='peek'] .panel {
+  transform: translateY(0);
+  max-height: 56px;
+}
+
+.tray[data-state='full'] .panel {
+  transform: translateY(0);
+  max-height: 78%;
+}
+
+.peekBar {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #eee;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.peekBar span {
+  font-size: 22px;
+  color: #8ab4ff;
+}
+
+.handle {
+  width: 42px;
+  height: 4px;
+  border-radius: 999px;
+  background: #444;
+  margin: 8px auto 4px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px 8px;
+  padding: 10px 18px 22px;
+}
+
+.appButton {
+  all: unset;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  transition: border-color 160ms ease, transform 120ms ease;
+}
+
+.icon span {
+  font-size: 30px;
+  color: #fff;
+}
+
+.appButton[data-selected='true'] .icon {
+  border-color: #0064ff;
+  transform: scale(1.05);
+}
+
+.label {
+  font-size: 12px;
+  color: #ddd;
+  text-align: center;
+  max-width: 90px;
+  line-height: 1.2;
+}

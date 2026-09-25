@@ -49,6 +49,31 @@ Pull request titles should also follow [Conventional Commits](https://convention
 fix: prevent crash when configuration for X is missing
 ```
 
+## Building a community app
+
+Official apps belong in
+[GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceThing-Apps). Copy
+`exampleapp/` there. The zip format, required `manifest.json` fields, Chrome 69
+limits, and how GlanceThing finds `index.html` are in [APPS.md](APPS.md).
+
+## Apps from existing repositories
+
+GlanceThing ships a swipe-down apps tray with built-in apps. Some of those apps are inspired by (or may later be adapted from) work that already exists in other open-source projects — for example [DeskThing](https://github.com/ItsRiprod/DeskThing), [deskthing-apps](https://github.com/itsriprod/deskthing-apps), community apps such as [pomodoro-thing](https://github.com/grahamplace/pomodoro-thing), and similar Car Thing projects.
+
+If you add, port, or vendor an app whose code, assets, UI, or behavior is taken **directly** from an existing repository (or a release zip / package from one):
+
+1. **Say so in the pull request** — name the source repo, the license it uses, and what you copied or adapted (code, icons, layout, protocol, etc.).
+2. **Credit it in code or docs** — add a short attribution near the app (comment, README blurb, or Credits section) so maintainers and users can see the origin without digging through history.
+3. **Respect the upstream license** — keep required notices, and do not relicense third-party code in a way that conflicts with its terms.
+4. **Prefer adaptation over blind copy** — call out whether this is a fresh GlanceThing-native implementation inspired by another app, or a direct port of that app’s sources.
+
+Built-in tray apps that are GlanceThing-native but inspired by DeskThing counterparts (for example Music, which combines ideas from DeskThing-GMP and Local Audio) should still note inspiration in Credits when relevant. Direct reuse of upstream sources always needs explicit attribution as above.
+
+The Pomodoro timer is taken directly from
+[grahamplace/pomodoro-thing](https://github.com/grahamplace/pomodoro-thing)
+(contribution by grahamplace). Keep that credit in the app UI, README, and
+CHANGELOG if you change the timer.
+
 ## AI Policy
 
 AI Tools (GitHub Copilot, Cursor, Claude, etc.) can be used for assistance when developing, but the human developer must understand and is responsible for the changes.

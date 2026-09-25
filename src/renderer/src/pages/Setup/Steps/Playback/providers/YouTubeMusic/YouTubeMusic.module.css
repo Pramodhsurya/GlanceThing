@@ -1,0 +1,27 @@
+.provider {
+  position: relative;
+  flex: 1;
+}
+
+.buttons {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.buttons:empty {
+  pointer-events: none;
+}
+
+.provider ol {
+  margin: 10px 0 0 20px;
+  line-height: 1.6;
+  color: #ccc;
+}
+
+.provider a {
+  color: #6aa5ff;
+}

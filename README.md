@@ -24,6 +24,7 @@ Your CarThing as a glanceable action pad!
 - AI usage widget for Codex, Claude and Cursor subscriptions
 - Photo album screensaver with up to 10 rotating photos
 - More reliable adb device detection and reconnects
+- Apps tray on the Car Thing, with built-in apps and community apps from GitHub
 
 ## What's new in this fork
 
@@ -54,6 +55,14 @@ Turn the dial to move a highlight across the screen, and press it to open the sh
 | Settings                                                      | Car Thing                                                            |
 | ------------------------------------------------------------- | -------------------------------------------------------------------- |
 | <img src=".github/assets/fork/s5-settings.png" width="400" /> | <img src=".github/assets/fork/s5-device-dial.png?v=2" width="400" /> |
+
+### Apps tray and community apps
+
+Swipe down from the top of the Car Thing to open the apps tray. Built-in apps (Music, Pomodoro, Resource Usage, Recording Notes, GitHub, Console Logs, Link) live there.
+
+On the desktop **Apps** tab you can pause or run those apps, and add more the same way DeskThing does: paste `owner/repo` or a GitHub URL, download the latest release zip, acknowledge any warnings, then **Initialize App**.
+
+Official apps live in [GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceThing-Apps). To **build** an app, or to see the exact files and `manifest.json` fields GlanceThing reads, see [APPS.md](APPS.md).
 
 ### Sleep and wake actions
 
@@ -220,7 +229,22 @@ For problems with the features added in this fork, please [open an issue on this
 
 GlanceThing was created by [BluDood](https://github.com/BluDood). This fork builds on their work.
 
-Huge thanks to the [CarThing community](https://discord.gg/car-thing-hax-community-1042954149786046604) for feedback and thoughts, and special thanks to [Riprod](https://itsriprod.com/) and their [DeskThing](https://github.com/ItsRiprod/DeskThing) project for inspiration. The AI usage widget follows the approach of [CodexBar](https://github.com/steipete/CodexBar).
+Huge thanks to the [CarThing community](https://discord.gg/car-thing-hax-community-1042954149786046604) for feedback and thoughts, and special thanks to [Riprod](https://itsriprod.com/) and their [DeskThing](https://github.com/ItsRiprod/DeskThing) project for inspiration — including the swipe-down apps tray UX and app ideas such as Spotify, Local Audio, DeskThing-GMP, and Pomodoro. The built-in tray apps in this fork are GlanceThing-native implementations inspired by those experiences, not vendored copies of DeskThing app packages. The AI usage widget follows the approach of [CodexBar](https://github.com/steipete/CodexBar). On macOS, the "This computer" playback source uses [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter) (BSD 3-Clause, bundled in `resources/common/mediaremote`), because macOS 15.4 and later block apps from reading Now Playing directly.
+
+Most tray apps were written from scratch for GlanceThing after studying what these DeskThing apps do. **Pomodoro is the exception:** its timer is taken directly from [grahamplace/pomodoro-thing](https://github.com/grahamplace/pomodoro-thing) (original contribution by [grahamplace](https://github.com/grahamplace)).
+
+| GlanceThing app                                                                               | Source                                                                            |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Pomodoro (timer taken directly; focus blocks, short/long breaks, session dots, colours)       | [pomodoro-thing](https://github.com/grahamplace/pomodoro-thing) by grahamplace    |
+| Music: full controls (seek, ±10 s, shuffle, repeat, volume)                                   | [DeskThing-GMP](https://github.com/RandomDebugGuy/DeskThing-GMP)                  |
+| Music: source picker (use the computer's now-playing as the source)                           | [Local Audio](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/audio)        |
+| Resource Usage (CPU and RAM gauges, per-core load, history)                                   | [System](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/system)            |
+| Recording Notes (record voice notes with the Car Thing mic, saved on the computer)            | [Recording Notes](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/recorder) |
+| GitHub (repositories, starred, pull requests and issues)                                      | [DeskThing-GitHub](https://github.com/dakota-kallas/DeskThing-GitHub)             |
+| Console Logs (live GlanceThing log with level and scope filters)                              | [Console Logs](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/logs)        |
+| Link (screens connected to the same computer share colours and tap scores)                    | [Link](https://github.com/ItsRiprod/Deskthing-Apps/tree/main/link)                |
+
+If you contribute an app whose code or assets come **directly** from an existing repository, say so in the PR and credit the source — see [CONTRIBUTING.md](CONTRIBUTING.md#apps-from-existing-repositories).
 
 The project also mainly utilizes the following technologies:
 

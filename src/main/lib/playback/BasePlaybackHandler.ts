@@ -24,4 +24,8 @@ export abstract class BasePlaybackHandler extends (EventEmitter as new () => Typ
   abstract shuffle(state: boolean): Promise<void>
   abstract repeat(stae: RepeatMode): Promise<void>
   abstract getImage(): Promise<Buffer | null>
+
+  async seek(_positionMs: number): Promise<void> {
+    throw new Error('Not implemented')
+  }
 }

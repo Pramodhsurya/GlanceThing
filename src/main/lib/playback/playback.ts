@@ -4,7 +4,10 @@ import EventEmitter from 'events'
 import { BasePlaybackHandler } from './BasePlaybackHandler.js'
 
 import spotify from './spotify.js'
-import native from './native.js'
+import nativeAddon from './native.js'
+import macNowPlaying from './macNowPlaying.js'
+import appleMusic from './appleMusic.js'
+import youtubeMusic from './youtubeMusic.js'
 
 import {
   PlaybackData,
@@ -14,7 +17,14 @@ import {
 import { log } from '../utils.js'
 import { getPlaybackHandlerConfig, setStorageValue } from '../storage.js'
 
-const handlers: BasePlaybackHandler[] = [spotify, native]
+const native = process.platform === 'darwin' ? macNowPlaying : nativeAddon
+
+const handlers: BasePlaybackHandler[] = [
+  spotify,
+  native,
+  ...(process.platform === 'darwin' ? [appleMusic] : []),
+  youtubeMusic
+]
 
 class PlaybackManager extends (EventEmitter as new () => TypedEmitter<PlaybackHandlerEvents>) {
   private currentHandler: BasePlaybackHandler | null = null
@@ -130,6 +140,26 @@ class PlaybackManager extends (EventEmitter as new () => TypedEmitter<PlaybackHa
   async getImage(): Promise<Buffer | null> {
     if (!this.currentHandler) return null
     return this.currentHandler.getImage()
+  }
+
+  async seek(positionMs: number): Promise<void> {
+    if (!this.currentHandler) return
+    return this.currentHandler.seek(positionMs)
+  }
+
+  getCurrentHandlerName(): string | null {
+    return this.currentHandler?.name ?? null
+  }
+
+  async listSources(): Promise<{ name: string; ready: boolean }[]> {
+    return Promise.all(
+      handlers.map(async handler => ({
+        name: handler.name,
+        ready: await handler
+          .validateConfig(await getPlaybackHandlerConfig(handler.name))
+          .catch(() => false)
+      }))
+    )
   }
 }
 

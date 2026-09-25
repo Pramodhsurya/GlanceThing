@@ -84,9 +84,27 @@ import {
 import { refreshStoredCalendar } from './lib/calendar.js'
 import { refreshStoredWeather } from './lib/weather.js'
 import { refreshAiUsage } from './lib/aiUsage.js'
+import { getGitHubTokenSource, setGitHubToken } from './lib/github.js'
+import {
+  addCommunityRepo,
+  confirmCommunityInstall,
+  downloadCommunityApp,
+  getCommunityApps,
+  getCommunityCatalog,
+  getStagedCommunityApp,
+  pickCommunityZip,
+  removeCommunityApp,
+  removeCommunityRepo,
+  setCommunityAppEnabled
+} from './lib/communityApps.js'
 import { playbackManager } from './lib/playback/playback.js'
 import { applyPatch, getPatches } from './lib/patches.js'
-import { getLatestVersion } from './lib/update.js'
+import {
+  checkForUpdate,
+  getUpdateStatus,
+  installUpdate,
+  startAutoUpdater
+} from './lib/update.js'
 import { serverManager } from './lib/server.js'
 
 let mainWindow: BrowserWindow | null = null
@@ -231,6 +249,7 @@ app.on('ready', async () => {
 
   await setupIpcHandlers()
   await setupTray()
+  startAutoUpdater()
 
   serverManager.on('status', up => {
     mainWindow?.webContents.send('serverStatus', up)
@@ -306,11 +325,25 @@ enum IPCHandler {
   OpenDevTools = 'openDevTools',
   GetChannel = 'getChannel',
   CheckUpdate = 'checkUpdate',
+  InstallUpdate = 'installUpdate',
+  GetUpdateStatus = 'getUpdateStatus',
   FindOpenPort = 'findOpenPort',
   IsPortOpen = 'isPortOpen',
   ImportCalendar = 'importCalendar',
   RefreshWeather = 'refreshWeather',
-  RefreshAiUsage = 'refreshAiUsage'
+  RefreshAiUsage = 'refreshAiUsage',
+  SetGitHubToken = 'setGitHubToken',
+  GetGitHubTokenSource = 'getGitHubTokenSource',
+  CommunityCatalog = 'communityCatalog',
+  CommunityList = 'communityList',
+  CommunityAddRepo = 'communityAddRepo',
+  CommunityDownload = 'communityDownload',
+  CommunityPickZip = 'communityPickZip',
+  CommunityStaged = 'communityStaged',
+  CommunityConfirm = 'communityConfirm',
+  CommunityRemove = 'communityRemove',
+  CommunitySetEnabled = 'communitySetEnabled',
+  CommunityRemoveRepo = 'communityRemoveRepo'
 }
 
 async function setupIpcHandlers() {
@@ -382,6 +415,50 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.RefreshAiUsage, async () => {
     return refreshAiUsage(true)
+  })
+
+  ipcMain.handle(IPCHandler.SetGitHubToken, (_event, token: string) => {
+    setGitHubToken(typeof token === 'string' ? token : '')
+  })
+
+  ipcMain.handle(IPCHandler.GetGitHubTokenSource, () => {
+    return getGitHubTokenSource()
+  })
+
+  const communityCall = async <T>(fn: () => Promise<T> | T) => {
+    try {
+      return await fn()
+    } catch (err) {
+      throw new Error((err as Error).message || String(err))
+    }
+  }
+
+  ipcMain.handle(IPCHandler.CommunityCatalog, () => getCommunityCatalog())
+  ipcMain.handle(IPCHandler.CommunityList, () => getCommunityApps())
+  ipcMain.handle(IPCHandler.CommunityAddRepo, (_event, url: string) =>
+    communityCall(() => addCommunityRepo(url))
+  )
+  ipcMain.handle(IPCHandler.CommunityDownload, (_event, id: string) =>
+    communityCall(() => downloadCommunityApp(id))
+  )
+  ipcMain.handle(IPCHandler.CommunityPickZip, () =>
+    communityCall(() => pickCommunityZip())
+  )
+  ipcMain.handle(IPCHandler.CommunityStaged, () => getStagedCommunityApp())
+  ipcMain.handle(IPCHandler.CommunityConfirm, () =>
+    communityCall(() => confirmCommunityInstall())
+  )
+  ipcMain.handle(IPCHandler.CommunityRemove, (_event, id: string) => {
+    removeCommunityApp(id)
+  })
+  ipcMain.handle(
+    IPCHandler.CommunitySetEnabled,
+    (_event, id: string, enabled: boolean) => {
+      setCommunityAppEnabled(id, enabled)
+    }
+  )
+  ipcMain.handle(IPCHandler.CommunityRemoveRepo, (_event, id: string) => {
+    removeCommunityRepo(id)
   })
 
   ipcMain.handle(IPCHandler.GetStorageValue, (_event, key) => {
@@ -612,16 +689,18 @@ async function setupIpcHandlers() {
   })
 
   ipcMain.handle(IPCHandler.CheckUpdate, async () => {
-    const currentVersion = 'v' + app.getVersion()
-    const latestVersion = await getLatestVersion()
-    if (!latestVersion) return null
-
-    return {
-      currentVersion,
-      latestVersion: latestVersion.version,
-      downloadUrl: latestVersion.downloadUrl
-    }
+    const info = await checkForUpdate()
+    if (!info) return null
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { assets, ...rest } = info
+    return rest
   })
+
+  ipcMain.handle(IPCHandler.InstallUpdate, async () => {
+    await installUpdate()
+  })
+
+  ipcMain.handle(IPCHandler.GetUpdateStatus, () => getUpdateStatus())
 
   ipcMain.handle(IPCHandler.FindOpenPort, async () => {
     return await findOpenPort()

@@ -1,0 +1,14 @@
+.host {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.host[data-shown='true'] {
+  opacity: 1;
+  pointer-events: all;
+}

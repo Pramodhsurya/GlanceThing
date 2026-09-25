@@ -45,6 +45,12 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
   aiUsage: () => {
     serverManager.broadcast({ type: 'layout', data: getLayoutPayload() })
   },
+  hiddenApps: () => {
+    serverManager.broadcast({ type: 'layout', data: getLayoutPayload() })
+  },
+  communityApps: () => {
+    serverManager.broadcast({ type: 'layout', data: getLayoutPayload() })
+  },
   screensaverRotateMs: () => {
     serverManager.broadcast({ type: 'screensaver', action: 'update' })
   },
@@ -106,14 +112,29 @@ export function getLayoutPayload() {
   const dialMode =
     savedMode === 'pages' || savedMode === 'items' ? savedMode : 'both'
   const aiUsage = getStorageValue('aiUsage') || undefined
+  const storedHidden = getStorageValue('hiddenApps')
+  const hiddenApps = Array.isArray(storedHidden) ? storedHidden : []
+  const storedCommunity = getStorageValue('communityApps')
+  const communityApps = Array.isArray(storedCommunity)
+    ? (storedCommunity as { id: string; label: string; icon?: string; color?: string; enabled?: boolean }[])
+        .filter(a => a.enabled !== false)
+        .map(a => ({
+          id: a.id,
+          name: a.label,
+          icon: a.icon || 'extension',
+          color: a.color || '#6366f1'
+        }))
+    : []
   if (!layout || typeof layout !== 'object' || Array.isArray(layout)) {
-    return { tiles: [], dialNavigation, dialMode, aiUsage }
+    return { tiles: [], dialNavigation, dialMode, aiUsage, hiddenApps, communityApps }
   }
   return {
     ...(layout as Record<string, unknown>),
     dialNavigation,
     dialMode,
-    aiUsage
+    aiUsage,
+    hiddenApps,
+    communityApps
   }
 }
 

@@ -32,7 +32,23 @@ const Home: React.FC = () => {
     currentVersion: string
     latestVersion: string
     downloadUrl: string
+    updateAvailable: boolean
+    canInstall: boolean
   } | null>(null)
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({
+    state: 'idle'
+  })
+  const [autoUpdate, setAutoUpdate] = useState(true)
+
+  useEffect(() => {
+    window.api.getUpdateStatus().then(setUpdateStatus)
+    window.api
+      .getStorageValue('autoUpdate')
+      .then(value => setAutoUpdate(value !== false))
+    return window.api.on('updateStatus', s =>
+      setUpdateStatus(s as UpdateStatus)
+    )
+  }, [])
 
   useEffect(() => {
     window.api.getStorageValue('setupComplete').then(setupComplete => {
@@ -133,22 +149,48 @@ const Home: React.FC = () => {
           </button>
         </div>
       ) : null}
-      {updateInfo &&
-      updateInfo.latestVersion !== updateInfo.currentVersion ? (
+      {updateStatus.state === 'downloading' ||
+      updateStatus.state === 'installing' ||
+      updateStatus.state === 'restarting' ? (
+        <div className={styles.update}>
+          <div className={styles.title}>
+            <span className="material-icons">sync</span>
+            {updateStatus.state === 'downloading'
+              ? `Downloading ${updateStatus.version}… ${Math.round(
+                  (updateStatus.progress ?? 0) * 100
+                )}%`
+              : updateStatus.state === 'installing'
+                ? `Installing ${updateStatus.version}…`
+                : 'Restarting GlanceThing…'}
+          </div>
+        </div>
+      ) : updateInfo && updateInfo.updateAvailable ? (
         <div className={styles.update}>
           <div className={styles.title}>
             <span className="material-icons">download</span>A new
             GlanceThing update is available!
           </div>
+          {updateStatus.state === 'error' ? (
+            <p className={styles.version}>
+              Update failed: {updateStatus.error}
+            </p>
+          ) : null}
           <div className={styles.content}>
             <p className={styles.version}>
               {updateInfo.currentVersion}{' '}
               <span className="material-icons">arrow_forward</span>{' '}
               {updateInfo.latestVersion}
             </p>
-            <button onClick={() => window.open(updateInfo.downloadUrl)}>
-              Download <span className="material-icons">open_in_new</span>
-            </button>
+            {updateInfo.canInstall ? (
+              <button onClick={() => window.api.installUpdate()}>
+                {autoUpdate ? 'Update now' : 'Install'}{' '}
+                <span className="material-icons">system_update_alt</span>
+              </button>
+            ) : (
+              <button onClick={() => window.open(updateInfo.downloadUrl)}>
+                Download <span className="material-icons">open_in_new</span>
+              </button>
+            )}
           </div>
         </div>
       ) : null}

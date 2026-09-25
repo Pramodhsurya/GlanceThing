@@ -150,6 +150,13 @@ export async function findCarThing() {
   return null
 }
 
+export async function adbCommand(device: string | null) {
+  if (!device) device = await findCarThing()
+  if (!device) throw new Error('No valid CarThing found')
+
+  return `${await getAdbExecutable()} ${adbSelector(device)}`
+}
+
 export async function restartChromium(device: string | null) {
   if (!device) device = await findCarThing()
   if (!device) throw new Error('No valid CarThing found')
@@ -263,7 +270,7 @@ export async function restore(device: string | null, restart = true) {
 
   log('Restoring original app...', 'adb', LogLevel.DEBUG)
   await execAsync(
-    `${adb} ${adbSelector(device)} shell "mountpoint /usr/share/qt-superbird-app/webapp/ > /dev/null && umount /usr/share/qt-superbird-app/webapp"`
+    `${adb} ${adbSelector(device)} shell "while mountpoint /usr/share/qt-superbird-app/webapp/ > /dev/null; do umount /usr/share/qt-superbird-app/webapp || break; done"`
   )
   await execAsync(
     `${adb} ${adbSelector(device)} shell "rm -rf /tmp/webapp"`
@@ -283,7 +290,19 @@ export async function rebootCarThing(device: string | null) {
   await execAsync(`${adb} ${adbSelector(device)} shell "reboot"`)
 }
 
+let installInFlight: Promise<void> | null = null
+
 export async function installApp(device: string | null) {
+  // Overlapping installs leave stacked mounts and push the client into
+  // /tmp/webapp/<dir>, so Chromium finds no index.html.
+  if (installInFlight) return installInFlight
+  installInFlight = runInstall(device).finally(() => {
+    installInFlight = null
+  })
+  return installInFlight
+}
+
+async function runInstall(device: string | null) {
   if (!device) device = await findCarThing()
   if (!device) throw new Error('No valid CarThing found')
 
@@ -296,8 +315,9 @@ export async function installApp(device: string | null) {
   const adb = await getAdbExecutable()
 
   log('Installing app...', 'adb')
+  await execAsync(`${adb} ${adbSelector(device)} shell "mkdir -p /tmp/webapp"`)
   await execAsync(
-    `${adb} ${adbSelector(device)} push "${appDir}" /tmp/webapp`
+    `${adb} ${adbSelector(device)} push "${appDir}/." /tmp/webapp`
   )
   await execAsync(
     `${adb} ${adbSelector(device)} shell "echo ${WS_PASSWORD} > /tmp/webapp/ws-password"`

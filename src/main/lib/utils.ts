@@ -49,9 +49,17 @@ export function getLogLevel() {
 }
 
 const logs: string[] = []
+const logListeners = new Set<(line: string) => void>()
 
 export function getLogs() {
   return logs
+}
+
+export function onLog(listener: (line: string) => void) {
+  logListeners.add(listener)
+  return () => {
+    logListeners.delete(listener)
+  }
 }
 
 export async function downloadLogs() {
@@ -98,6 +106,8 @@ export function log(text: string, scope?: string, level = LogLevel.INFO) {
 
   logs.push(log)
   if (logs.length > 1000) logs.shift()
+
+  logListeners.forEach(listener => listener(log))
 }
 
 export function safeParse(json: string) {

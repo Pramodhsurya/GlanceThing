@@ -1,6 +1,7 @@
 import TypedEmitter from 'typed-emitter'
 import { WebSocket, WebSocketServer } from 'ws'
 import EventEmitter from 'events'
+import { createServer, Server as HttpServer } from 'http'
 
 import {
   getServerPort,
@@ -13,6 +14,7 @@ import { runServerSetup } from './setup/setup.js'
 import { handlers } from './handlers/handlers.js'
 
 import { AuthenticatedWebSocket } from '../types/WebSocketServer.js'
+import { serveCommunityRequest } from './communityApps.js'
 
 interface ServerInfo {
   running: boolean
@@ -23,6 +25,7 @@ class ServerManager extends (EventEmitter as new () => TypedEmitter<{
   status: (up: ServerInfo) => void
 }>) {
   private wss: WebSocketServer | null = null
+  private http: HttpServer | null = null
   private port: number | null = null
 
   async start() {
@@ -32,7 +35,17 @@ class ServerManager extends (EventEmitter as new () => TypedEmitter<{
     this.port = await getServerPort()
 
     return new Promise<void>(resolve => {
-      this.wss = new WebSocketServer({ port: this.port! })
+      this.http = createServer((req, res) => {
+        if (req.url === '/ws-password' || req.url === '/ws-password/') {
+          res.setHeader('Content-Type', 'text/plain')
+          res.end(WS_PASSWORD)
+          return
+        }
+        if (serveCommunityRequest(req, res)) return
+        res.statusCode = 404
+        res.end()
+      })
+      this.wss = new WebSocketServer({ server: this.http })
 
       this.wss.on('connection', (ws: AuthenticatedWebSocket) => {
         if (getStorageValue('disableSocketAuth') === true)
@@ -98,6 +111,7 @@ class ServerManager extends (EventEmitter as new () => TypedEmitter<{
         await cleanup()
 
         this.wss = null
+        this.http = null
         this.emit('status', {
           running: false,
           port: null
@@ -106,7 +120,7 @@ class ServerManager extends (EventEmitter as new () => TypedEmitter<{
         log('Closed', 'WebSocketServer')
       })
 
-      this.wss.on('listening', () => {
+      this.http.listen(this.port!, () => {
         log(`Started on port ${this.port}`, 'WebSocketServer')
 
         this.emit('status', {
@@ -131,6 +145,7 @@ class ServerManager extends (EventEmitter as new () => TypedEmitter<{
 
       this.on('status', listener)
       this.wss?.clients.forEach(ws => ws.close())
+      this.http?.close()
       this.wss!.close()
     })
   }

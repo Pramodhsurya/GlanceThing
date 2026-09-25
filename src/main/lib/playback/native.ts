@@ -175,6 +175,7 @@ export function filterData(data: NowPlayingMessage): PlaybackData | null {
 
   if (canChangeVolume) playbackData.supportedActions.push('volume')
   if (canSkip) playbackData.supportedActions.push('next', 'previous')
+  if (trackDuration) playbackData.supportedActions.push('seek')
   if (data.thumbnail) playbackData.supportedActions.push('image')
 
   return playbackData
@@ -253,6 +254,12 @@ class NativeHandler extends BasePlaybackHandler {
     if (!this.instance) return
 
     await this.instance.previousTrack()
+  }
+
+  async seek(positionMs: number): Promise<void> {
+    if (!this.instance) return
+
+    await this.instance.seekTo(Math.max(0, Math.round(positionMs)))
   }
 
   async shuffle(): Promise<void> {

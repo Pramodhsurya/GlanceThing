@@ -4,6 +4,7 @@ import Setup from './pages/Setup/Setup.js'
 import Layout from './components/Layout/Layout.js'
 import Home from './pages/Home/Home.js'
 import ScreenLayout from './pages/ScreenLayout/ScreenLayout.js'
+import Apps from './pages/Apps/Apps.js'
 
 const App: React.FC = () => {
   return (
@@ -11,6 +12,7 @@ const App: React.FC = () => {
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="/layout" element={<ScreenLayout />} />
+        <Route path="/apps" element={<Apps />} />
         <Route path="/setup" element={<Setup />} />
       </Route>
     </Routes>

@@ -1,0 +1,1 @@
+Built from https://github.com/ungive/mediaremote-adapter at commit 73f14ab for x86_64 and arm64.

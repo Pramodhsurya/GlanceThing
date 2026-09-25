@@ -51,11 +51,25 @@ enum IPCHandler {
   OpenDevTools = 'openDevTools',
   GetChannel = 'getChannel',
   CheckUpdate = 'checkUpdate',
+  InstallUpdate = 'installUpdate',
+  GetUpdateStatus = 'getUpdateStatus',
   FindOpenPort = 'findOpenPort',
   IsPortOpen = 'isPortOpen',
   ImportCalendar = 'importCalendar',
   RefreshWeather = 'refreshWeather',
-  RefreshAiUsage = 'refreshAiUsage'
+  RefreshAiUsage = 'refreshAiUsage',
+  SetGitHubToken = 'setGitHubToken',
+  GetGitHubTokenSource = 'getGitHubTokenSource',
+  CommunityCatalog = 'communityCatalog',
+  CommunityList = 'communityList',
+  CommunityAddRepo = 'communityAddRepo',
+  CommunityDownload = 'communityDownload',
+  CommunityPickZip = 'communityPickZip',
+  CommunityStaged = 'communityStaged',
+  CommunityConfirm = 'communityConfirm',
+  CommunityRemove = 'communityRemove',
+  CommunitySetEnabled = 'communitySetEnabled',
+  CommunityRemoveRepo = 'communityRemoveRepo'
 }
 
 // Custom APIs for renderer
@@ -140,13 +154,34 @@ const api = {
   openDevTools: () => ipcRenderer.invoke(IPCHandler.OpenDevTools),
   getChannel: () => ipcRenderer.invoke(IPCHandler.GetChannel),
   checkUpdate: () => ipcRenderer.invoke(IPCHandler.CheckUpdate),
+  installUpdate: () => ipcRenderer.invoke(IPCHandler.InstallUpdate),
+  getUpdateStatus: () => ipcRenderer.invoke(IPCHandler.GetUpdateStatus),
   findOpenPort: () => ipcRenderer.invoke(IPCHandler.FindOpenPort),
   isPortOpen: port => ipcRenderer.invoke(IPCHandler.IsPortOpen, port),
   importCalendar: (source: 'mac') =>
     ipcRenderer.invoke(IPCHandler.ImportCalendar, source),
   refreshWeather: (query?: string, unit?: 'auto' | 'C' | 'F') =>
     ipcRenderer.invoke(IPCHandler.RefreshWeather, query, unit),
-  refreshAiUsage: () => ipcRenderer.invoke(IPCHandler.RefreshAiUsage)
+  refreshAiUsage: () => ipcRenderer.invoke(IPCHandler.RefreshAiUsage),
+  setGitHubToken: (token: string) =>
+    ipcRenderer.invoke(IPCHandler.SetGitHubToken, token),
+  getGitHubTokenSource: () =>
+    ipcRenderer.invoke(IPCHandler.GetGitHubTokenSource),
+  communityCatalog: () => ipcRenderer.invoke(IPCHandler.CommunityCatalog),
+  communityList: () => ipcRenderer.invoke(IPCHandler.CommunityList),
+  communityAddRepo: (url: string) =>
+    ipcRenderer.invoke(IPCHandler.CommunityAddRepo, url),
+  communityDownload: (id: string) =>
+    ipcRenderer.invoke(IPCHandler.CommunityDownload, id),
+  communityPickZip: () => ipcRenderer.invoke(IPCHandler.CommunityPickZip),
+  communityStaged: () => ipcRenderer.invoke(IPCHandler.CommunityStaged),
+  communityConfirm: () => ipcRenderer.invoke(IPCHandler.CommunityConfirm),
+  communityRemove: (id: string) =>
+    ipcRenderer.invoke(IPCHandler.CommunityRemove, id),
+  communitySetEnabled: (id: string, enabled: boolean) =>
+    ipcRenderer.invoke(IPCHandler.CommunitySetEnabled, id, enabled),
+  communityRemoveRepo: (id: string) =>
+    ipcRenderer.invoke(IPCHandler.CommunityRemoveRepo, id)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
