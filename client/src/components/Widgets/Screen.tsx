@@ -18,7 +18,8 @@ import {
   type UsageStyle,
   type UsageTarget,
   type UsageWindow,
-  type WeatherInfo
+  type WeatherInfo,
+  type PhotosInfo
 } from './screenModel'
 
 import styles from './Widgets.module.css'
@@ -887,8 +888,9 @@ export const UsageFace: React.FC<{
   usage?: AiUsageInfo
   target?: UsageTarget
   usageStyle?: UsageStyle
+  compact?: boolean
   now: number
-}> = ({ usage, target = 'all', usageStyle = 'auto', now }) => {
+}> = ({ usage, target = 'all', usageStyle = 'auto', compact = false, now }) => {
   const all = usage?.providers || []
   const providers =
     target === 'all' ? all : all.filter(provider => provider.id === target)
@@ -924,12 +926,13 @@ export const UsageFace: React.FC<{
     return (
       <ProviderUsage
         boxRef={boxRef}
-        base={base}
+        base={compact ? Math.min(base, 12) : base}
         tier={tier}
         provider={provider || undefined}
         brand={brand}
         name={USAGE_NAMES[target]}
         loading={loading}
+        compact={compact}
         now={now}
       />
     )
@@ -1302,6 +1305,7 @@ function ProviderUsage({
   brand,
   name,
   loading,
+  compact,
   now
 }: {
   boxRef: React.RefObject<HTMLDivElement | null>
@@ -1311,6 +1315,7 @@ function ProviderUsage({
   brand: string
   name: string
   loading: boolean
+  compact?: boolean
   now: number
 }) {
   const off =
@@ -1328,27 +1333,31 @@ function ProviderUsage({
   const showChips = tier === 'full' || tier === 'tall'
   const showFooter = tier === 'full' || tier === 'tall'
   const showChart =
-    tier === 'full' || (tier === 'tall' && others.length <= 1)
+    !compact &&
+    (tier === 'full' || (tier === 'tall' && others.length <= 1))
   const showReset = tier !== 'quarter'
   const headerSpend = tier === 'wide'
-  const nameSize =
-    tier === 'full'
+  const nameSize = compact
+    ? '1.45em'
+    : tier === 'full'
       ? '2.25em'
       : tier === 'tall'
         ? '2em'
         : tier === 'wide'
           ? '1.75em'
           : '1.625em'
-  const pSize =
-    tier === 'full'
+  const pSize = compact
+    ? '2.35em'
+    : tier === 'full'
       ? '4.5em'
       : tier === 'tall'
         ? '3.75em'
         : tier === 'wide'
           ? '3.5em'
           : '3em'
-  const pUnit =
-    tier === 'full'
+  const pUnit = compact
+    ? '1.1em'
+    : tier === 'full'
       ? '2em'
       : tier === 'tall'
         ? '1.6em'
@@ -1382,6 +1391,7 @@ function ProviderUsage({
       className={styles.usage}
       data-layout="detail"
       data-tier={tier}
+      data-compact={compact ? 'true' : 'false'}
       data-low={lowOne ? 'true' : 'false'}
       style={{
         fontSize: base + 'px',
@@ -1540,6 +1550,33 @@ function ProviderUsage({
           </>
         ) : null}
       </div>
+    </BaseWidget>
+  )
+}
+
+export const PhotosFace: React.FC<{ photos?: PhotosInfo }> = ({
+  photos
+}) => {
+  const image = photos?.image
+  const ready = !!image
+  return (
+    <BaseWidget
+      className={styles.photos}
+      data-ready={ready ? 'true' : 'false'}
+    >
+      {ready ? (
+        <img
+          src={image}
+          alt=""
+          className={styles.photosImage}
+          data-fit={photos?.fit === 'fit' ? 'fit' : 'fill'}
+        />
+      ) : (
+        <div className={styles.photosEmpty}>
+          <span className="material-icons">photo_library</span>
+          <p>{photos?.message || 'Add photos in Settings'}</p>
+        </div>
+      )}
     </BaseWidget>
   )
 }

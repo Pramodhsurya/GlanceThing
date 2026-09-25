@@ -131,6 +131,29 @@
   color: #e2a15a;
 }
 
+.widgetGroup {
+  margin-top: 12px;
+}
+
+.widgetGroup:first-of-type {
+  margin-top: 0;
+}
+
+.widgetGroupTitle {
+  display: flex;
+  align-items: center;
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9aa0a6;
+}
+
+.widgetGroupTitle span {
+  font-size: 16px;
+  margin-right: 6px;
+}
+
 .frameGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -208,6 +231,35 @@
 .field > span {
   font-size: 12px;
   color: #aaa;
+}
+
+.sourceGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.sourceBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #1f1f1f;
+  color: #fff;
+  border: 1px solid #333;
+}
+
+.sourceBtn > span {
+  font-size: 18px;
+}
+
+.sourceBtn[data-active='true'] {
+  border-color: #f59e0b;
+  background: #2a1f0c;
+}
+
+.sourceBtn:disabled {
+  opacity: 0.6;
 }
 
 .primary {

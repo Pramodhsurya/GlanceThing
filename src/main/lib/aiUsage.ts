@@ -5,7 +5,11 @@ import os from 'os'
 import path from 'path'
 
 import { log, LogLevel } from './utils.js'
-import { getStorageValue, setStorageValue } from './storage.js'
+import {
+  getStorageValue,
+  isAppInstalled,
+  setStorageValue
+} from './storage.js'
 
 export type UsageProviderId = 'codex' | 'claude' | 'cursor'
 
@@ -801,7 +805,8 @@ let running: Promise<AiUsageReport | null> | null = null
 export function refreshAiUsage(
   force = false
 ): Promise<AiUsageReport | null> {
-  if (!force && !hasUsageTile()) return Promise.resolve(null)
+  if (!force && !hasUsageTile() && !isAppInstalled('usage'))
+    return Promise.resolve(null)
   if (running) return running
   running = (async () => {
     const stored = getStorageValue('aiUsage') as AiUsageReport | null

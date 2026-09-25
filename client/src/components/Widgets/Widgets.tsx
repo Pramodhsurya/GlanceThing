@@ -1,8 +1,10 @@
 import {
+  useCallback,
   useContext,
   useEffect,
   useRef,
   useState,
+  type ReactNode,
   type TouchEvent
 } from 'react'
 
@@ -17,6 +19,7 @@ import {
   ActionsFace,
   CalendarFace,
   LayoutFace,
+  PhotosFace,
   UsageFace,
   WeatherFace
 } from './Screen.tsx'
@@ -27,6 +30,7 @@ import {
   type AppShortcut,
   type CalendarEvent,
   type CalendarInfo,
+  type PhotosInfo,
   type ScreenConfig,
   type Tile,
   type WeatherInfo
@@ -133,6 +137,142 @@ const CalendarTile: React.FC<{ calendar?: CalendarInfo; now: number }> = ({
   )
 }
 
+const PhotosTile: React.FC = () => {
+  const { ready, socket } = useContext(SocketContext)
+  const [photos, setPhotos] = useState<PhotosInfo>({
+    message: 'Add photos in Settings'
+  })
+  const idsRef = useRef<string[]>([])
+  const indexRef = useRef(0)
+  const imagesRef = useRef<Record<string, string>>({})
+  const fitsRef = useRef<Record<string, boolean>>({})
+  const rotateRef = useRef(30000)
+  const shuffleRef = useRef(false)
+
+  const show = useCallback((index: number) => {
+    const ids = idsRef.current
+    if (!ids.length) {
+      setPhotos({ message: 'Add photos in Settings' })
+      return
+    }
+    const id = ids[index]
+    setPhotos({
+      image: imagesRef.current[id],
+      fit: fitsRef.current[id] ? 'fit' : 'fill',
+      count: ids.length,
+      message: imagesRef.current[id] ? undefined : 'Loading photo…'
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!ready || !socket) return
+
+    const requestImage = (id: string) => {
+      socket.send(
+        JSON.stringify({
+          type: 'screensaver',
+          action: 'getImage',
+          data: { id }
+        })
+      )
+    }
+
+    const listener = (e: MessageEvent) => {
+      const message = JSON.parse(e.data)
+      if (message.type !== 'screensaver') return
+      if (message.action === 'album') {
+        const list = (message.data && message.data.photos) || []
+        const ids: string[] = []
+        const fits: Record<string, boolean> = {}
+        for (let i = 0; i < list.length; i += 1) {
+          if (list[i] && list[i].id) {
+            const id = String(list[i].id)
+            ids.push(id)
+            fits[id] = list[i].fit === 'fit'
+          }
+        }
+        idsRef.current = ids
+        fitsRef.current = fits
+        indexRef.current = 0
+        const rotate = Number(message.data && message.data.rotateMs)
+        rotateRef.current =
+          rotate === 30000 || rotate === 60000 || rotate === 300000
+            ? rotate
+            : 30000
+        shuffleRef.current = Boolean(message.data && message.data.shuffle)
+        if (ids.length === 0) {
+          imagesRef.current = {}
+          setPhotos({ message: 'Add photos in Settings' })
+        } else {
+          for (let i = 0; i < ids.length; i += 1) requestImage(ids[i])
+          show(0)
+        }
+        return
+      }
+      if (message.action === 'image' && message.data && message.data.id) {
+        imagesRef.current[message.data.id] = message.data.image
+        if (idsRef.current[indexRef.current] === message.data.id) {
+          show(indexRef.current)
+        }
+        return
+      }
+      if (message.action === 'update') {
+        socket.send(
+          JSON.stringify({ type: 'screensaver', action: 'getAlbum' })
+        )
+      }
+      if (message.action === 'removed') {
+        idsRef.current = []
+        imagesRef.current = {}
+        setPhotos({ message: 'Add photos in Settings' })
+      }
+    }
+
+    socket.addEventListener('message', listener)
+    socket.send(
+      JSON.stringify({ type: 'screensaver', action: 'getAlbum' })
+    )
+    return () => socket.removeEventListener('message', listener)
+  }, [ready, socket, show])
+
+  useEffect(() => {
+    if (idsRef.current.length < 2) return
+    const timer = setInterval(() => {
+      const ids = idsRef.current
+      if (ids.length < 2) return
+      let next = (indexRef.current + 1) % ids.length
+      if (shuffleRef.current) {
+        next = Math.floor(Math.random() * ids.length)
+      }
+      indexRef.current = next
+      show(next)
+    }, rotateRef.current)
+    return () => clearInterval(timer)
+  }, [photos.count, show])
+
+  return <PhotosFace photos={photos} />
+}
+
+function OpenAppWrap({
+  appId,
+  children
+}: {
+  appId: string
+  children: ReactNode
+}) {
+  const { openApp, installedApps, hiddenApps } = useApps()
+  const canOpen =
+    installedApps.indexOf(appId) !== -1 && hiddenApps.indexOf(appId) === -1
+  return (
+    <div
+      className={styles.openApp}
+      onClick={canOpen ? () => openApp(appId) : undefined}
+    >
+      {children}
+    </div>
+  )
+}
+
 function isConfig(value: unknown): value is ScreenConfig {
   if (!value || typeof value !== 'object' || Array.isArray(value))
     return false
@@ -159,18 +299,37 @@ function TileView({
   if (tile.kind === 'playback') return <Player />
   if (tile.kind === 'usage') {
     return (
-      <UsageFace
-        usage={aiUsage}
-        target={tile.provider}
-        usageStyle={tile.usageStyle}
-        now={now}
-      />
+      <OpenAppWrap appId="usage">
+        <UsageFace
+          usage={aiUsage}
+          target={tile.provider}
+          usageStyle={tile.usageStyle}
+          now={now}
+        />
+      </OpenAppWrap>
     )
   }
   if (tile.kind === 'calendar') {
-    return <CalendarTile calendar={calendar} now={now} />
+    return (
+      <OpenAppWrap appId="calendar">
+        <CalendarTile calendar={calendar} now={now} />
+      </OpenAppWrap>
+    )
   }
-  if (tile.kind === 'weather') return <WeatherFace weather={weather} />
+  if (tile.kind === 'weather') {
+    return (
+      <OpenAppWrap appId="weather">
+        <WeatherFace weather={weather} />
+      </OpenAppWrap>
+    )
+  }
+  if (tile.kind === 'photos') {
+    return (
+      <OpenAppWrap appId="photos">
+        <PhotosTile />
+      </OpenAppWrap>
+    )
+  }
   if (tile.kind === 'actions') {
     const ids = tile.actionIds
     const visible = Array.isArray(ids)

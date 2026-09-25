@@ -9,6 +9,7 @@ export type TileKind =
   | 'calendar'
   | 'weather'
   | 'usage'
+  | 'photos'
 
 export type UsageTarget = 'all' | 'codex' | 'claude' | 'cursor'
 
@@ -153,6 +154,7 @@ export interface WeatherInfo {
   tomorrowDay?: string
   tomorrowHigh?: number | null
   tomorrowLow?: number | null
+  days?: WeatherDay[]
   isDay?: boolean
   hours?: WeatherHour[]
   message?: string
@@ -165,6 +167,25 @@ export interface WeatherHour {
   kind?: 'hour' | 'sunrise' | 'sunset'
 }
 
+export interface WeatherDay {
+  date?: string
+  day?: string
+  high?: number | null
+  low?: number | null
+  icon?: string
+  label?: string
+  rain?: number | null
+}
+
+export interface PhotosInfo {
+  count?: number
+  rotateMs?: number
+  shuffle?: boolean
+  image?: string
+  fit?: 'fill' | 'fit'
+  message?: string
+}
+
 export interface ScreenConfig {
   tiles: Tile[]
   pages?: ScreenPage[]
@@ -172,6 +193,7 @@ export interface ScreenConfig {
   calendar?: CalendarInfo
   weather?: WeatherInfo
   aiUsage?: AiUsageInfo
+  photos?: PhotosInfo
   dialNavigation?: boolean
   dialMode?: 'pages' | 'items' | 'both'
 }

@@ -19,9 +19,8 @@ Your CarThing as a glanceable action pad!
 - Customizable screen layout with a live preview of the Car Thing screen
 - Multiple pages you swipe between
 - Dial navigation across pages, apps and shortcuts
-- Weather widget
-- Calendar widget with a Join button and meeting reminders (macOS)
-- AI usage widget for Codex, Claude and Cursor subscriptions
+- Weather, Calendar, AI usage and Photos as tray apps that also ship home-page widgets
+- Calendar Join button and meeting reminders (macOS)
 - Photo album screensaver with up to 10 rotating photos
 - More reliable adb device detection and reconnects
 - Apps tray on the Car Thing, with built-in apps and community apps from GitHub
@@ -60,7 +59,9 @@ Turn the dial to move a highlight across the screen, and press it to open the sh
 
 Swipe down from the top of the Car Thing to open the apps tray. The tray only shows apps you installed.
 
-After setup, Home checks for the Car Thing and installs the client first. When that finishes, **Next** opens the app picker (Music, Pomodoro, Resource Usage, Recording Notes, GitHub, Console Logs, Link, Mic). Nothing is preinstalled, and the picker does not appear as soon as GlanceThing opens. The desktop **Apps** tab lists what you installed, with Pause / Run / Uninstall. The **Store** lists everything again so you can **Install** or **Uninstall**. Community zips still show the usual warnings, then download from [GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceThing-Apps). **From Git** is still there if you want another `owner/repo` or a zip.
+After setup, Home checks for the Car Thing and installs the client first. When that finishes, **Next** opens the app picker (Music, Pomodoro, Resource Usage, Recording Notes, GitHub, Console Logs, Link, Mic, Weather, Calendar, AI usage, Photos). Nothing is preinstalled, and the picker does not appear as soon as GlanceThing opens. The desktop **Apps** tab lists what you installed, with Pause / Run / Uninstall. The **Store** lists everything again so you can **Install** or **Uninstall**. Community zips still show the usual warnings, then download from [GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceThing-Apps). **From Git** is still there if you want another `owner/repo` or a zip.
+
+Weather, Calendar, AI usage and Photos are the same features you can put on a home page. Install the app to open it from the tray; in the Layout tab, pick that app's widget and drop it on a page. Tapping the widget opens the app if it is installed.
 
 **Mic** is a mute button for the microphones on this computer. Tap the icon (or press the dial) to mute or unmute the mics you picked. The list in the corner shows every hardware mic — built-in, USB, iPhone, and so on. **Pop up when in use** (on by default) opens Mic on the Car Thing when a selected mic becomes active. Turn that off from the Mic screen, from **Apps → Mic → Settings**, or from **Settings → Client**, and Mic stays closed until you open it yourself — mute still works.
 
@@ -86,9 +87,17 @@ Official apps live in [GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceT
 | -------------------------------------------------------------- | -------------------------------------------------------------- |
 | <img src=".github/assets/fork/s10-logs.png?v=1" width="400" /> | <img src=".github/assets/fork/s10-link.png?v=1" width="400" /> |
 
-| Mic                                                           | &nbsp; |
-| ------------------------------------------------------------- | ------ |
-| <img src=".github/assets/fork/s10-mic.png?v=2" width="400" /> | &nbsp; |
+| Mic                                                           | Weather                                                           |
+| ------------------------------------------------------------- | ----------------------------------------------------------------- |
+| <img src=".github/assets/fork/s10-mic.png?v=2" width="400" /> | <img src=".github/assets/fork/s10-weather.png?v=3" width="400" /> |
+
+| Calendar                                                           | AI usage                                                        |
+| ------------------------------------------------------------------ | --------------------------------------------------------------- |
+| <img src=".github/assets/fork/s10-calendar.png?v=3" width="400" /> | <img src=".github/assets/fork/s10-usage.png?v=3" width="400" /> |
+
+| Photos                                                           | &nbsp; |
+| ---------------------------------------------------------------- | ------ |
+| <img src=".github/assets/fork/s10-photos.png?v=1" width="400" /> | &nbsp; |
 
 ### Sleep and wake actions
 
@@ -98,7 +107,7 @@ Two preset actions next to **Lock**. **Sleep** puts the computer to sleep, and *
 
 ### Weather
 
-A weather frame with the current temperature, conditions, the day's high and low, and an hourly strip that includes sunrise and sunset. The layout adapts to the frame's size and shape.
+Install **Weather** from the Store to open a fullscreen forecast from the tray. The app shows the current temperature and an iPhone-style **10-day forecast** — weekday, condition icon, rain chance, and a min-to-max temperature bar for each day — plus the hourly strip. The same app ships a **weather widget** you add from the Layout tab. The widget stays the compact current view: temperature, conditions, the day's high and low, and an hourly strip that includes sunrise and sunset. Tapping the widget opens Weather if the app is installed.
 
 | Desktop app                                                         | Car Thing                                                       |
 | ------------------------------------------------------------------- | --------------------------------------------------------------- |
@@ -106,7 +115,7 @@ A weather frame with the current temperature, conditions, the day's high and low
 
 ### Calendar and meeting reminders (macOS)
 
-A calendar frame for today and tomorrow, read from **macOS Calendar**. It works with Exchange, Google, iCloud or any account added under System Settings → Internet Accounts. Online meetings get a **Join** button, and a reminder pops up on the Car Thing 15 minutes before each meeting with **Join**, **Snooze** and **Dismiss**.
+Install **Calendar** from the Store to open today and tomorrow fullscreen from the tray. The app shows import options for **Teams**, **Mac Calendar**, **Slack**, and **Google Calendar**. Events still come from accounts added under System Settings → Internet Accounts — pick a source to show that calendar. The same app ships the **calendar widget**. Online meetings get a **Join** button, and a reminder pops up on the Car Thing 15 minutes before each meeting with **Join**, **Snooze** and **Dismiss**.
 
 | Desktop app                                                          | Car Thing                                                                | Reminder                                                                 |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
@@ -116,11 +125,13 @@ _(The meetings in these screenshots are demo data.)_
 
 ### AI usage
 
+Install **AI usage** from the Store to open Codex, Claude and Cursor limits fullscreen from the tray. **Limits** shows the three per-subscription cards (remaining %, reset windows, notes, spend and tokens). **Overview** shows the tinted all-provider cards. The same app ships those widgets for home pages.
+
 See how much of your **Codex**, **Claude** and **Cursor** subscription limits is left, when each limit resets, and how many tokens you used and what they cost today and over the last 30 days.
 
-In the Layout tab, pick an overview style — **Cards + dial**, **Tinted cards**, **List rows**, **Rings** or **Compact** — or add one detail frame per subscription. The lowest limit leads in every layout; bars turn amber under 30% and red under 15%.
+In the Layout tab, under **AI usage**, pick an overview style — **Cards + dial**, **Tinted cards**, **List rows**, **Rings** or **Compact** — or add one detail frame per subscription. The lowest limit leads in every layout; bars turn amber under 30% and red under 15%.
 
-Usage is read with the sign-ins those apps already keep on your computer, so there's nothing new to sign in to. Requests are read-only, and it only refreshes while a usage frame is on the layout.
+Usage is read with the sign-ins those apps already keep on your computer, so there's nothing new to sign in to. Requests are read-only. It refreshes while a usage frame is on the layout or the AI usage app is installed.
 
 | Cards + dial overview                                                   | Two detail frames                                                     |
 | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
@@ -130,7 +141,9 @@ Usage is read with the sign-ins those apps already keep on your computer, so the
 | ------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | <img src=".github/assets/fork/s8-usage-full.png?v=3" width="400" /> | <img src=".github/assets/fork/s8-usage-editor.png?v=3" width="400" /> |
 
-### Photo album screensaver
+### Photos and the photo album screensaver
+
+Install **Photos** from the Store to browse the album from the tray. The same app ships a **photo widget** you can drop on a home page; it rotates through the album.
 
 Under **Settings → Client**, set **Sleep Method** to **Screensaver** and upload up to **10 photos**. When the Car Thing goes to sleep, the photos rotate every **30 seconds**, **1 minute** or **5 minutes** (**Photo Rotation**). Turn on **Shuffle Photos** for random order, and **Show Clock** for the time and date over the photos. Each thumbnail has a fill/fit control so tall photos can sit inside the screen instead of being cropped. Remove photos one at a time or clear the whole album. With no photos, the default animated screensaver is shown.
 
@@ -144,10 +157,10 @@ Under **Settings → Client**, set **Sleep Method** to **Screensaver** and uploa
 
 - **Home, Layout and Apps tabs:** the titlebar has **Layout** and **Apps** next to **Home**. Layout opens the editor. Apps lists built-in and community apps.
 - **Layout editor sections:** the left side has collapsible sections, and the app remembers which ones you left open.
-  - **Add to screen:** click a frame type, or drag it onto the preview.
+  - **Add to screen:** widgets are grouped by the app they come from (Home, Weather, Calendar, AI usage, Photos). Click one, or drag it onto the preview.
   - **Shortcuts:** manage app shortcuts.
   - **Actions:** add your own actions with an icon, label and command, next to the Lock, Sleep and Wake presets.
-  - **Calendar:** import events from macOS Calendar.
+  - **Calendar:** import from Teams, Mac Calendar, Slack, or Google Calendar.
   - **Weather:** set the location and units, and refresh.
   - **AI usage:** pick an overview style (cards, tinted, list, rings or compact) or one frame per subscription, and refresh.
 - **Preview:** drag and resize frames directly on the preview, and remove a frame with ×. Page tabs above the preview add, reorder and remove pages.

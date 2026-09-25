@@ -160,8 +160,9 @@ const api = {
   getUpdateStatus: () => ipcRenderer.invoke(IPCHandler.GetUpdateStatus),
   findOpenPort: () => ipcRenderer.invoke(IPCHandler.FindOpenPort),
   isPortOpen: port => ipcRenderer.invoke(IPCHandler.IsPortOpen, port),
-  importCalendar: (source: 'mac') =>
-    ipcRenderer.invoke(IPCHandler.ImportCalendar, source),
+  importCalendar: (
+    source: 'mac' | 'google' | 'teams' | 'slack'
+  ) => ipcRenderer.invoke(IPCHandler.ImportCalendar, source),
   refreshWeather: (query?: string, unit?: 'auto' | 'C' | 'F') =>
     ipcRenderer.invoke(IPCHandler.RefreshWeather, query, unit),
   refreshAiUsage: () => ipcRenderer.invoke(IPCHandler.RefreshAiUsage),

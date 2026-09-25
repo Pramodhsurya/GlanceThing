@@ -92,6 +92,46 @@ const BUILTIN: {
       'Pick which mics to control. Tap to mute or unmute. Optional pop-up when a mic is in use.',
     author: 'GlanceThing',
     version: '1.0.0'
+  },
+  {
+    id: 'weather',
+    name: 'Weather',
+    icon: 'wb_sunny',
+    color: '#38bdf8',
+    description:
+      'Open weather fullscreen from the tray. The same app ships a weather widget for the Layout tab.',
+    author: 'GlanceThing',
+    version: '1.0.0'
+  },
+  {
+    id: 'calendar',
+    name: 'Calendar',
+    icon: 'calendar_today',
+    color: '#f59e0b',
+    description:
+      'Today and tomorrow from Mac Calendar, with Join. Ships a calendar widget for home pages.',
+    author: 'GlanceThing',
+    version: '1.0.0'
+  },
+  {
+    id: 'usage',
+    name: 'AI usage',
+    icon: 'data_usage',
+    color: '#a78bfa',
+    description:
+      'Codex, Claude and Cursor subscription limits. Ships overview and detail widgets for the layout.',
+    author: 'GlanceThing',
+    version: '1.0.0'
+  },
+  {
+    id: 'photos',
+    name: 'Photos',
+    icon: 'photo_library',
+    color: '#fb7185',
+    description:
+      'Browse the screensaver album. Ships a photo widget you can drop on a home page.',
+    author: 'GlanceThing',
+    version: '1.0.0'
   }
 ]
 

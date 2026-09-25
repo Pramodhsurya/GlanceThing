@@ -5,12 +5,14 @@ import {
   ActionsFace,
   CalendarFace,
   LayoutFace,
+  PhotosFace,
   PlayerFace,
   StatusFace,
   UsageFace,
   WeatherFace,
   type ItemProps
 } from '../../../../../client/src/components/Widgets/Screen'
+import { WIDGET_GROUPS } from '../../../../../client/src/components/AppHost/apps/widgetCatalog'
 import {
   USAGE_NAMES,
   USAGE_STYLES,
@@ -32,8 +34,9 @@ type TileKind =
   | 'calendar'
   | 'weather'
   | 'usage'
+  | 'photos'
 
-type CalendarSource = 'mac'
+type CalendarSource = 'mac' | 'google' | 'teams' | 'slack'
 
 interface Tile {
   id: string
@@ -66,7 +69,8 @@ const KIND_LABELS: Record<TileKind, string> = {
   actions: 'Actions',
   calendar: 'Calendar',
   weather: 'Weather',
-  usage: 'AI usage'
+  usage: 'AI usage',
+  photos: 'Photo'
 }
 
 interface CalendarEvent {
@@ -102,6 +106,7 @@ interface WeatherInfo {
   tomorrowDay: string
   tomorrowHigh: number | null
   tomorrowLow: number | null
+  days: WeatherDay[]
   isDay: boolean
   hours: WeatherHour[]
   message: string
@@ -112,6 +117,16 @@ interface WeatherHour {
   temp: number | null
   icon: string
   kind: 'hour' | 'sunrise' | 'sunset'
+}
+
+interface WeatherDay {
+  date: string
+  day: string
+  high: number | null
+  low: number | null
+  icon: string
+  label: string
+  rain: number | null
 }
 
 interface ScreenConfig {
@@ -389,7 +404,13 @@ function writePageTiles(
 function readCalendar(value: unknown): CalendarInfo | undefined {
   if (!value || typeof value !== 'object') return undefined
   const raw = value as CalendarInfo
-  const source: CalendarSource = 'mac'
+  const source: CalendarSource =
+    raw.source === 'google' ||
+    raw.source === 'teams' ||
+    raw.source === 'slack' ||
+    raw.source === 'mac'
+      ? raw.source
+      : 'mac'
   const events = Array.isArray(raw.events)
     ? raw.events.filter(
         event =>
@@ -434,6 +455,19 @@ function readWeather(value: unknown): WeatherInfo | undefined {
       typeof raw.tomorrowDay === 'string' ? raw.tomorrowDay : '',
     tomorrowHigh: readOptionalNumber(raw.tomorrowHigh),
     tomorrowLow: readOptionalNumber(raw.tomorrowLow),
+    days: Array.isArray(raw.days)
+      ? raw.days
+          .filter(day => !!day && typeof day.day === 'string')
+          .map(day => ({
+            date: typeof day.date === 'string' ? day.date : '',
+            day: day.day,
+            high: readOptionalNumber(day.high),
+            low: readOptionalNumber(day.low),
+            icon: typeof day.icon === 'string' ? day.icon : 'cloud',
+            label: typeof day.label === 'string' ? day.label : '',
+            rain: readOptionalNumber(day.rain)
+          }))
+      : [],
     isDay: raw.isDay !== false,
     hours: Array.isArray(raw.hours)
       ? raw.hours
@@ -468,7 +502,8 @@ function isTile(value: unknown): value is Tile {
       tile.kind === 'actions' ||
       tile.kind === 'calendar' ||
       tile.kind === 'weather' ||
-      tile.kind === 'usage')
+      tile.kind === 'usage' ||
+      tile.kind === 'photos')
   )
 }
 
@@ -594,55 +629,27 @@ function loadConfig(value: unknown): ScreenConfig {
   }
 }
 
-const FRAME_CARDS: {
-  kind: TileKind
-  icon: string
-  label: string
-  hint: string
-}[] = [
-  {
-    kind: 'layout',
-    icon: 'grid_view',
-    label: 'Layout',
-    hint: 'App shortcuts'
-  },
-  {
-    kind: 'actions',
-    icon: 'touch_app',
-    label: 'Actions',
-    hint: 'Lock, sleep…'
-  },
-  {
-    kind: 'playback',
-    icon: 'music_note',
-    label: 'Playback',
-    hint: 'Now playing'
-  },
-  {
-    kind: 'calendar',
-    icon: 'calendar_today',
-    label: 'Calendar',
-    hint: 'Today, tomorrow'
-  },
-  {
-    kind: 'weather',
-    icon: 'wb_sunny',
-    label: 'Weather',
-    hint: 'Now and hourly'
-  },
-  {
-    kind: 'usage',
-    icon: 'data_usage',
-    label: 'AI usage',
-    hint: 'Codex, Claude, Cursor'
-  }
-]
+const UNIQUE_KINDS: TileKind[] = ['calendar', 'weather', 'photos']
 
 const USAGE_TARGETS: UsageTarget[] = ['all', 'codex', 'claude', 'cursor']
 
 const CALENDAR_NAMES: Record<CalendarSource, string> = {
-  mac: 'Mac Calendar'
+  teams: 'Teams',
+  mac: 'Mac Calendar',
+  slack: 'Slack',
+  google: 'Google Calendar'
 }
+
+const CALENDAR_IMPORTS: {
+  id: CalendarSource
+  label: string
+  icon: string
+}[] = [
+  { id: 'teams', label: 'Teams', icon: 'groups' },
+  { id: 'mac', label: 'Mac', icon: 'laptop_mac' },
+  { id: 'slack', label: 'Slack', icon: 'tag' },
+  { id: 'google', label: 'Google', icon: 'event' }
+]
 
 const PAGE_DRAG_TYPE = 'application/glancething-page'
 const CHIP_DRAG_TYPE = 'application/glancething-chip'
@@ -791,6 +798,11 @@ const ScreenLayout: React.FC = () => {
   const [openSections, setOpenSections] = useState(loadOpenSections)
   const [aiUsage, setAiUsage] = useState<AiUsageInfo | null>(null)
   const [loadingUsage, setLoadingUsage] = useState(false)
+  const [photoPreview, setPhotoPreview] = useState<{
+    image?: string
+    fit?: 'fill' | 'fit'
+    message?: string
+  }>({ message: 'Add photos in Settings → Client' })
 
   useEffect(() => {
     const load = () =>
@@ -801,6 +813,27 @@ const ScreenLayout: React.FC = () => {
     load()
     const timer = setInterval(load, 60 * 1000)
     return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    window.api.listScreensaverPhotos().then(async list => {
+      if (cancelled) return
+      if (!Array.isArray(list) || list.length === 0) {
+        setPhotoPreview({ message: 'Add photos in Settings → Client' })
+        return
+      }
+      const image = await window.api.getScreensaverPhotoPreview(list[0].id)
+      if (cancelled) return
+      setPhotoPreview({
+        image: image || undefined,
+        fit: list[0].fit === 'fit' ? 'fit' : 'fill',
+        message: image ? undefined : 'Add photos in Settings → Client'
+      })
+    })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   async function updateUsage() {
@@ -973,7 +1006,7 @@ const ScreenLayout: React.FC = () => {
       styleSize?.h ??
       (kind === 'layout'
         ? 48
-        : kind === 'weather'
+        : kind === 'weather' || kind === 'photos'
           ? 54
           : kind === 'usage'
             ? 60
@@ -1043,10 +1076,21 @@ const ScreenLayout: React.FC = () => {
     if (!config.weather?.place) updateWeather()
   }
 
+  function addPhotosFrame() {
+    const pages = ensurePages(config)
+    if (
+      pages.some(page => page.tiles.some(tile => tile.kind === 'photos'))
+    ) {
+      return
+    }
+    addFrame('photos', 75, 50)
+  }
+
   function addFrameCard(kind: TileKind) {
     if (kind === 'actions') addActionsLayout()
     else if (kind === 'calendar') addCalendarFrame()
     else if (kind === 'weather') addWeatherFrame()
+    else if (kind === 'photos') addPhotosFrame()
     else if (kind === 'usage') addFrame('usage', 75, 50)
     else if (kind === 'playback') {
       if (!hasTile('playback')) addFrame('playback', 25, 50)
@@ -1067,10 +1111,10 @@ const ScreenLayout: React.FC = () => {
     setLoadingWeather(false)
   }
 
-  async function importCalendar() {
+  async function importCalendar(source: CalendarSource = 'mac') {
     setImporting(true)
-    setStatus('Reading the calendar…')
-    const result = await window.api.importCalendar('mac')
+    setStatus(`Reading ${CALENDAR_NAMES[source]}…`)
+    const result = await window.api.importCalendar(source)
     skipSave.current = false
     setConfig(current => {
       const next: ScreenConfig = {
@@ -1266,6 +1310,9 @@ const ScreenLayout: React.FC = () => {
           weather={config.weather as ScreenWeather | undefined}
         />
       )
+    }
+    if (tile.kind === 'photos') {
+      return <PhotosFace photos={photoPreview} />
     }
     if (tile.kind === 'usage') {
       return (
@@ -1477,7 +1524,7 @@ const ScreenLayout: React.FC = () => {
   ).length
   const calendarCount = config.calendar?.events.length || 0
   const calendarSummary = config.calendar
-    ? `${CALENDAR_NAMES[config.calendar.source]} · ${calendarCount} ${calendarCount === 1 ? 'event' : 'events'}`
+    ? `${CALENDAR_NAMES[config.calendar.source] || config.calendar.source} · ${calendarCount} ${calendarCount === 1 ? 'event' : 'events'}`
     : 'Not imported yet'
   const weatherSummary = config.weather?.message
     ? config.weather.message
@@ -1516,51 +1563,67 @@ const ScreenLayout: React.FC = () => {
             onToggle={() => toggleSection('add')}
           >
             <p className={styles.hint}>
-              Click to add to this page, or drag onto the preview.
+              Widgets come from apps. Home frames stay here for shortcuts,
+              actions and playback. Click to add, or drag onto the preview.
             </p>
-            <div className={styles.frameGrid}>
-              {FRAME_CARDS.map(card => {
-                const used =
-                  card.kind === 'playback'
-                    ? hasTile('playback')
-                    : card.kind === 'calendar' || card.kind === 'weather'
-                      ? ensurePages(config).some(page =>
-                          page.tiles.some(tile => tile.kind === card.kind)
-                        )
-                      : false
-                return (
-                  <div
-                    key={card.kind}
-                    role="button"
-                    tabIndex={used ? -1 : 0}
-                    aria-disabled={used}
-                    className={styles.frameCard}
-                    data-used={used}
-                    title={used ? 'Already on the screen' : card.hint}
-                    draggable={!used}
-                    onDragStart={e =>
-                      e.dataTransfer.setData(
-                        'application/glancething-frame',
-                        JSON.stringify({ kind: card.kind })
-                      )
-                    }
-                    onClick={() => {
-                      if (!used) addFrameCard(card.kind)
-                    }}
-                    onKeyDown={e => {
-                      if (used || (e.key !== 'Enter' && e.key !== ' '))
-                        return
-                      e.preventDefault()
-                      addFrameCard(card.kind)
-                    }}
+            {WIDGET_GROUPS.map(group => (
+              <div key={group.appId} className={styles.widgetGroup}>
+                <p className={styles.widgetGroupTitle}>
+                  <span
+                    className="material-icons"
+                    style={{ color: group.color }}
                   >
-                    <span className="material-icons">{card.icon}</span>
-                    <strong>{card.label}</strong>
-                    <small>{used ? 'Added' : card.hint}</small>
-                  </div>
-                )
-              })}
-            </div>
+                    {group.icon}
+                  </span>
+                  {group.name}
+                </p>
+                <div className={styles.frameGrid}>
+                  {group.widgets.map(card => {
+                    const used =
+                      card.kind === 'playback'
+                        ? hasTile('playback')
+                        : UNIQUE_KINDS.indexOf(card.kind) !== -1
+                          ? ensurePages(config).some(page =>
+                              page.tiles.some(
+                                tile => tile.kind === card.kind
+                              )
+                            )
+                          : false
+                    return (
+                      <div
+                        key={card.id}
+                        role="button"
+                        tabIndex={used ? -1 : 0}
+                        aria-disabled={used}
+                        className={styles.frameCard}
+                        data-used={used}
+                        title={used ? 'Already on the screen' : card.hint}
+                        draggable={!used}
+                        onDragStart={e =>
+                          e.dataTransfer.setData(
+                            'application/glancething-frame',
+                            JSON.stringify({ kind: card.kind })
+                          )
+                        }
+                        onClick={() => {
+                          if (!used) addFrameCard(card.kind)
+                        }}
+                        onKeyDown={e => {
+                          if (used || (e.key !== 'Enter' && e.key !== ' '))
+                            return
+                          e.preventDefault()
+                          addFrameCard(card.kind)
+                        }}
+                      >
+                        <span className="material-icons">{card.icon}</span>
+                        <strong>{card.label}</strong>
+                        <small>{used ? 'Added' : card.hint}</small>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </Section>
 
           <Section
@@ -1778,19 +1841,26 @@ const ScreenLayout: React.FC = () => {
             open={openSections.calendar}
             onToggle={() => toggleSection('calendar')}
           >
-            <button
-              className={styles.primary}
-              disabled={importing}
-              onClick={importCalendar}
-            >
-              <span className="material-icons">sync</span>
-              {importing ? 'Importing…' : 'Import now'}
-            </button>
+            <div className={styles.sourceGrid}>
+              {CALENDAR_IMPORTS.map(source => (
+                <button
+                  key={source.id}
+                  className={styles.sourceBtn}
+                  data-active={config.calendar?.source === source.id}
+                  disabled={importing}
+                  onClick={() => importCalendar(source.id)}
+                >
+                  <span className="material-icons">{source.icon}</span>
+                  {importing && config.calendar?.source === source.id
+                    ? 'Importing…'
+                    : source.label}
+                </button>
+              ))}
+            </div>
             <p className={styles.hint}>
-              Reads today and tomorrow from macOS Calendar and refreshes
-              every 5 minutes. Work accounts such as Exchange or Google
-              show up once they are added in System Settings → Internet
-              Accounts.
+              Pick Teams, Mac Calendar, Slack, or Google Calendar. Events
+              come from accounts added in System Settings → Internet
+              Accounts, and refresh every 5 minutes.
             </p>
             {config.calendar?.message ? (
               <p className={styles.hint}>{config.calendar.message}</p>
@@ -1939,9 +2009,11 @@ const ScreenLayout: React.FC = () => {
               {loadingUsage ? 'Loading…' : 'Update now'}
             </button>
             <p className={styles.hint}>
-              Refreshes by itself every 5 minutes while a usage frame is on
-              the screen. Reads the sign-ins of the Codex, Claude Code and
-              Cursor apps on this computer; nothing is sent anywhere else.
+              Widgets from the AI usage app. More styles and
+              per-subscription frames live here. Refreshes every 5 minutes
+              while a usage frame is on the screen or the app is installed.
+              Reads the sign-ins of the Codex, Claude Code and Cursor apps
+              on this computer; nothing is sent anywhere else.
             </p>
           </Section>
         </div>

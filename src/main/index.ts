@@ -85,7 +85,10 @@ import {
   hasCustomScreensaverImage
 } from './lib/screensaver.js'
 
-import { refreshStoredCalendar } from './lib/calendar.js'
+import {
+  isCalendarSource,
+  refreshStoredCalendar
+} from './lib/calendar.js'
 import { refreshStoredWeather } from './lib/weather.js'
 import { refreshAiUsage } from './lib/aiUsage.js'
 import { getGitHubTokenSource, setGitHubToken } from './lib/github.js'
@@ -436,8 +439,10 @@ async function setupIpcHandlers() {
     return app.getVersion()
   })
 
-  ipcMain.handle(IPCHandler.ImportCalendar, async () => {
-    return refreshStoredCalendar('mac')
+  ipcMain.handle(IPCHandler.ImportCalendar, async (_event, source) => {
+    return refreshStoredCalendar(
+      isCalendarSource(source) ? source : 'mac'
+    )
   })
 
   ipcMain.handle(
@@ -604,7 +609,7 @@ async function setupIpcHandlers() {
       type: 'layout',
       data: getLayoutPayload()
     })
-    await restartChromium(null)
+    await installApp(null)
   })
 
   ipcMain.handle(IPCHandler.IsDevMode, async () => {

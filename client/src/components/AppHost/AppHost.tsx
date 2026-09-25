@@ -1,15 +1,19 @@
 import { useEffect } from 'react'
 
 import { useApps } from '@/contexts/AppsContext.tsx'
+import CalendarApp from './apps/CalendarApp.tsx'
 import CommunityApp from './apps/CommunityApp.tsx'
 import GitHubApp from './apps/GitHubApp.tsx'
 import LinkApp from './apps/LinkApp.tsx'
 import LogsApp from './apps/LogsApp.tsx'
 import MicApp from './apps/MicApp.tsx'
 import MusicApp from './apps/MusicApp.tsx'
+import PhotosApp from './apps/PhotosApp.tsx'
 import PomodoroApp from './apps/PomodoroApp.tsx'
 import RecorderApp from './apps/RecorderApp.tsx'
 import SystemApp from './apps/SystemApp.tsx'
+import UsageApp from './apps/UsageApp.tsx'
+import WeatherApp from './apps/WeatherApp.tsx'
 
 import styles from './AppHost.module.css'
 
@@ -47,6 +51,14 @@ const AppHost: React.FC = () => {
     content = <GitHubApp />
   } else if (currentApp === 'mic') {
     content = <MicApp />
+  } else if (currentApp === 'weather') {
+    content = <WeatherApp />
+  } else if (currentApp === 'calendar') {
+    content = <CalendarApp />
+  } else if (currentApp === 'usage') {
+    content = <UsageApp />
+  } else if (currentApp === 'photos') {
+    content = <PhotosApp />
   } else if (currentApp) {
     content = <CommunityApp id={currentApp} />
   }

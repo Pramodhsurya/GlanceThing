@@ -6,7 +6,11 @@ export const OFFICIAL_APP_IDS = [
   'github',
   'logs',
   'link',
-  'mic'
+  'mic',
+  'weather',
+  'calendar',
+  'usage',
+  'photos'
 ] as const
 
 export type OfficialAppId = (typeof OFFICIAL_APP_IDS)[number]

@@ -16,9 +16,10 @@ the same kind of monorepo as
 [ItsRiprod/Deskthing-Apps](https://github.com/ItsRiprod/Deskthing-Apps).
 
 It holds every current GlanceThing tray app (Music, Pomodoro, Resource Usage,
-Recording Notes, GitHub, Console Logs, Link, Mic) plus `exampleapp`. None of
-those are preinstalled. You pick them on first setup, or later from the
-Store. Copy `exampleapp` when you want a new id you can initialize from Git.
+Recording Notes, GitHub, Console Logs, Link, Mic, Weather, Calendar, AI usage,
+Photos) plus `exampleapp`. None of those are preinstalled. You pick them on
+first setup, or later from the Store. Copy `exampleapp` when you want a new
+id you can initialize from Git.
 
 Open **Apps → Store**. GlanceThing lists the official repo on its own. If the
 latest release has several `*-app-*.zip` files, each one is a store row.
@@ -114,7 +115,8 @@ Only `id` is strictly required. Everything else has a fallback.
 manifests work as-is.
 
 **Reserved ids** (cannot be used): `music`, `pomodoro`, `system`, `logs`,
-`link`, `recorder`, `github`, `mic`, `spotify`, `gmp`, `local`.
+`link`, `recorder`, `github`, `mic`, `weather`, `calendar`, `usage`,
+`photos`, `spotify`, `gmp`, `local`.
 
 ## How GlanceThing understands an install
 

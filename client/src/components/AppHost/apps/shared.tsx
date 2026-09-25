@@ -35,6 +35,24 @@ export function useSocketMessage<T>(
   return { ready, socket }
 }
 
+export function useLayoutData<T = Record<string, unknown>>() {
+  const { ready, socket } = useContext(SocketContext)
+  const [data, setData] = useState<T | null>(null)
+
+  useEffect(() => {
+    if (!ready || !socket) return
+    const listener = (e: MessageEvent) => {
+      const msg = JSON.parse(e.data)
+      if (msg.type === 'layout' && msg.data) setData(msg.data as T)
+    }
+    socket.addEventListener('message', listener)
+    socket.send(JSON.stringify({ type: 'layout' }))
+    return () => socket.removeEventListener('message', listener)
+  }, [ready, socket])
+
+  return data
+}
+
 interface SeekBarProps {
   current: number
   total: number

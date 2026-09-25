@@ -146,6 +146,54 @@ const OFFICIAL_FALLBACK: OfficialCatalogApp[] = [
     path: 'mic'
   },
   {
+    id: 'weather',
+    label: 'Weather',
+    version: '1.0.0',
+    author: 'GlanceThing',
+    description:
+      'Fullscreen weather from the tray, plus a weather widget for home pages.',
+    icon: 'wb_sunny',
+    color: '#38bdf8',
+    path: 'weather',
+    builtin: true
+  },
+  {
+    id: 'calendar',
+    label: 'Calendar',
+    version: '1.0.0',
+    author: 'GlanceThing',
+    description:
+      'Today and tomorrow from Mac Calendar. Ships a calendar widget for the layout.',
+    icon: 'calendar_today',
+    color: '#f59e0b',
+    path: 'calendar',
+    builtin: true
+  },
+  {
+    id: 'usage',
+    label: 'AI usage',
+    version: '1.0.0',
+    author: 'GlanceThing',
+    description:
+      'Codex, Claude and Cursor limits, with widgets you drop on a page.',
+    icon: 'data_usage',
+    color: '#a78bfa',
+    path: 'usage',
+    builtin: true
+  },
+  {
+    id: 'photos',
+    label: 'Photos',
+    version: '1.0.0',
+    author: 'GlanceThing',
+    description:
+      'Browse the photo album from the tray. Ships a photo widget for home pages.',
+    icon: 'photo_library',
+    color: '#fb7185',
+    path: 'photos',
+    builtin: true
+  },
+  {
     id: 'exampleapp',
     label: 'Example App',
     version: '1.0.0',
@@ -191,6 +239,10 @@ const RESERVED = new Set([
   'recorder',
   'github',
   'mic',
+  'weather',
+  'calendar',
+  'usage',
+  'photos',
   'spotify',
   'gmp',
   'local'

@@ -113,6 +113,11 @@ function writeStorage(storage: Record<string, unknown>) {
   fs.writeFileSync(storagePath, JSON.stringify(storage, null, 2), 'utf8')
 }
 
+export function isAppInstalled(id: string) {
+  const installed = getStorageValue('installedApps')
+  return Array.isArray(installed) && installed.includes(id)
+}
+
 export function getLayoutPayload() {
   const layout = getStorageValue('screenLayout')
   const dialNavigation = getStorageValue('dialNavigation') === true

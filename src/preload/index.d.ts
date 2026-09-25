@@ -157,8 +157,10 @@ declare global {
       getUpdateStatus: () => Promise<UpdateStatus>
       findOpenPort: () => Promise<number>
       isPortOpen: (port: number) => Promise<boolean>
-      importCalendar: (source: 'mac') => Promise<{
-        source: 'mac'
+      importCalendar: (
+        source: 'mac' | 'google' | 'teams' | 'slack'
+      ) => Promise<{
+        source: 'mac' | 'google' | 'teams' | 'slack'
         events: {
           title: string
           start: string
@@ -187,6 +189,15 @@ declare global {
         tomorrowDay: string
         tomorrowHigh: number | null
         tomorrowLow: number | null
+        days: {
+          date: string
+          day: string
+          high: number | null
+          low: number | null
+          icon: string
+          label: string
+          rain: number | null
+        }[]
         isDay: boolean
         hours: {
           time: string

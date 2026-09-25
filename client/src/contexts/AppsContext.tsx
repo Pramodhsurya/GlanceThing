@@ -20,6 +20,10 @@ export type BuiltInAppId =
   | 'recorder'
   | 'github'
   | 'mic'
+  | 'weather'
+  | 'calendar'
+  | 'usage'
+  | 'photos'
 
 export type AppId = BuiltInAppId | string
 
@@ -86,7 +90,11 @@ const NATIVE_APP_IDS = [
   'link',
   'recorder',
   'github',
-  'mic'
+  'mic',
+  'weather',
+  'calendar',
+  'usage',
+  'photos'
 ]
 
 interface AppsContextProviderProps {

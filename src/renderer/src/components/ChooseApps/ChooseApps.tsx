@@ -66,6 +66,34 @@ const APPS: {
     icon: 'mic',
     color: '#22c55e',
     description: 'Mute or unmute the microphones on this computer.'
+  },
+  {
+    id: 'weather',
+    name: 'Weather',
+    icon: 'wb_sunny',
+    color: '#38bdf8',
+    description: 'Fullscreen weather, plus a home-page widget.'
+  },
+  {
+    id: 'calendar',
+    name: 'Calendar',
+    icon: 'calendar_today',
+    color: '#f59e0b',
+    description: 'Today and tomorrow, plus a home-page widget.'
+  },
+  {
+    id: 'usage',
+    name: 'AI usage',
+    icon: 'data_usage',
+    color: '#a78bfa',
+    description: 'Codex, Claude and Cursor limits, plus layout widgets.'
+  },
+  {
+    id: 'photos',
+    name: 'Photos',
+    icon: 'photo_library',
+    color: '#fb7185',
+    description: 'Browse the photo album, plus a home-page widget.'
   }
 ]
 

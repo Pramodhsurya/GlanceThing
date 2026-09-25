@@ -3,7 +3,43 @@ import { execFile } from 'child_process'
 import { getStorageValue, setStorageValue } from './storage.js'
 import { log, LogLevel } from './utils.js'
 
-export type CalendarSource = 'mac'
+export const CALENDAR_SOURCES = [
+  'teams',
+  'mac',
+  'slack',
+  'google'
+] as const
+
+export type CalendarSource = (typeof CALENDAR_SOURCES)[number]
+
+export const CALENDAR_SOURCE_META: Record<
+  CalendarSource,
+  { label: string; icon: string; empty: string }
+> = {
+  teams: {
+    label: 'Teams',
+    icon: 'groups',
+    empty:
+      'No Teams meetings. Add Outlook or Exchange in System Settings → Internet Accounts, then import again.'
+  },
+  mac: {
+    label: 'Mac Calendar',
+    icon: 'laptop_mac',
+    empty: 'No events in Calendar for today and tomorrow.'
+  },
+  slack: {
+    label: 'Slack',
+    icon: 'tag',
+    empty:
+      'No Slack events. Add Slack to Calendar.app, then import again.'
+  },
+  google: {
+    label: 'Google Calendar',
+    icon: 'event',
+    empty:
+      'No Google Calendar events. Add Google in System Settings → Internet Accounts, then import again.'
+  }
+}
 
 export interface CalendarEvent {
   title: string
@@ -20,6 +56,8 @@ export interface CalendarEvent {
   canJoin?: boolean
   reminderMin?: number
   joinUrl?: string
+  account?: string
+  calendarName?: string
 }
 
 const TEAMS_JOIN =
@@ -299,7 +337,8 @@ function parseEvents(raw: string): CalendarEvent[] {
         ...gridPlace(occurrence.start, occurrence.end),
         online,
         canceled,
-        ...(join ? { joinUrl: join[0] } : {})
+        ...(join ? { joinUrl: join[0] } : {}),
+        ...(parts[17] ? { calendarName: parts[17].slice(0, 80) } : {})
       })
     }
   }
@@ -368,6 +407,16 @@ if (status !== 3) {
     } catch (err) {}
     const notes = text(e.notes)
     const joinAt = notes.search(/https:\\/\\/teams\\.microsoft\\.com\\/l\\/meetup-join\\//)
+    let account = ''
+    let calendar = ''
+    try {
+      if (e.calendar && !e.calendar.isNil()) {
+        calendar = text(e.calendar.title)
+        if (e.calendar.source && !e.calendar.source.isNil()) {
+          account = text(e.calendar.source.title)
+        }
+      }
+    } catch (err) {}
     events.push({
       title: text(e.title),
       start: Number(e.startDate.timeIntervalSince1970) * 1000,
@@ -376,7 +425,9 @@ if (status !== 3) {
       organizer: organizer,
       canceled: Number(e.status) === 3,
       teams: /teams\\.microsoft\\.com|Microsoft Teams/i.test(notes + ' ' + link),
-      join: joinAt >= 0 ? notes.slice(joinAt, joinAt + 1200) : link
+      join: joinAt >= 0 ? notes.slice(joinAt, joinAt + 1200) : link,
+      account: account,
+      calendar: calendar
     })
   }
   JSON.stringify({ status: status, events: events })
@@ -392,6 +443,8 @@ interface EventKitEvent {
   canceled: boolean
   teams: boolean
   join: string
+  account?: string
+  calendar?: string
 }
 
 function eventsFromEventKit(raw: string): CalendarEvent[] | null {
@@ -432,7 +485,11 @@ function eventsFromEventKit(raw: string): CalendarEvent[] | null {
       ...(item.organizer
         ? { organizer: item.organizer.slice(0, 60) }
         : {}),
-      ...(join ? { joinUrl: join[0] } : {})
+      ...(join ? { joinUrl: join[0] } : {}),
+      ...(item.account ? { account: item.account.slice(0, 80) } : {}),
+      ...(item.calendar
+        ? { calendarName: item.calendar.slice(0, 80) }
+        : {})
     })
   }
   events.sort((a, b) => a.start.localeCompare(b.start))
@@ -517,7 +574,7 @@ tell application "Calendar"
           try
             set state to status of e as text
           end try
-          set out to out & title & sep & (year of s as integer as text) & sep & (month of s as integer as text) & sep & (day of s as integer as text) & sep & (hours of s as integer as text) & sep & (minutes of s as integer as text) & sep & (year of en as integer as text) & sep & (month of en as integer as text) & sep & (day of en as integer as text) & sep & (hours of en as integer as text) & sep & (minutes of en as integer as text) & sep & loc & sep & rule & sep & skipped & sep & note & sep & link & sep & state & rec
+          set out to out & title & sep & (year of s as integer as text) & sep & (month of s as integer as text) & sep & (day of s as integer as text) & sep & (hours of s as integer as text) & sep & (minutes of s as integer as text) & sep & (year of en as integer as text) & sep & (month of en as integer as text) & sep & (day of en as integer as text) & sep & (hours of en as integer as text) & sep & (minutes of en as integer as text) & sep & loc & sep & rule & sep & skipped & sep & note & sep & link & sep & state & sep & cname & rec
         end if
       end repeat
     end if
@@ -547,8 +604,40 @@ function regrid(events: CalendarEvent[]) {
     }))
 }
 
-function isSource(value: unknown): value is CalendarSource {
-  return value === 'mac'
+export function isCalendarSource(value: unknown): value is CalendarSource {
+  return (
+    value === 'mac' ||
+    value === 'google' ||
+    value === 'teams' ||
+    value === 'slack'
+  )
+}
+
+function sourceHay(event: CalendarEvent) {
+  return [
+    event.account,
+    event.calendarName,
+    event.where,
+    event.title,
+    event.joinUrl,
+    event.online ? 'teams' : ''
+  ].join(' ')
+}
+
+function matchesSource(event: CalendarEvent, source: CalendarSource) {
+  if (source === 'mac') return true
+  const hay = sourceHay(event)
+  if (source === 'google') return /google|gmail/i.test(hay)
+  if (source === 'slack') return /slack/i.test(hay)
+  return (
+    !!event.joinUrl ||
+    event.online === true ||
+    /teams|exchange|outlook|office 365|microsoft/i.test(hay)
+  )
+}
+
+function filterEvents(events: CalendarEvent[], source: CalendarSource) {
+  return events.filter(event => matchesSource(event, source))
 }
 
 export async function refreshStoredCalendar(source?: CalendarSource) {
@@ -557,7 +646,8 @@ export async function refreshStoredCalendar(source?: CalendarSource) {
   } | null
   const stored = before?.calendar
   const choice =
-    source || (isSource(stored?.source) ? stored.source : null)
+    source ||
+    (isCalendarSource(stored?.source) ? stored.source : null)
   if (!choice) return null
 
   const result = await importCalendar(choice)
@@ -574,7 +664,7 @@ export async function refreshStoredCalendar(source?: CalendarSource) {
     failed && !source && Array.isArray(stored?.events)
       ? regrid(stored.events)
       : result.events
-  ).map(({ joinUrl, ...event }) => ({
+  ).map(({ joinUrl, account, calendarName, ...event }) => ({
     ...event,
     canJoin: event.canJoin === true || !!joinUrl
   }))
@@ -617,14 +707,15 @@ export async function importCalendar(
   }
 
   try {
-    const events = await importMacCalendar()
+    const events = filterEvents(await importMacCalendar(), source)
+    const meta = CALENDAR_SOURCE_META[source]
     return {
       source,
       events,
       message:
         events.length > 0
-          ? `Imported ${events.length} from Mac Calendar.`
-          : 'No events in Calendar for today and tomorrow.'
+          ? `Imported ${events.length} from ${meta.label}.`
+          : meta.empty
     }
   } catch (error) {
     const err = error as {

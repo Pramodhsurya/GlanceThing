@@ -6,13 +6,12 @@ and versions follow [Semantic Versioning](https://semver.org/).
 
 Versions up to 0.0.16 come from the upstream project,
 [BluDood/GlanceThing](https://github.com/BluDood/GlanceThing).
-Versions 0.1.0 and 0.1.1, and the upcoming 1.0.0, are from this fork,
+Versions 0.1.0 and 0.1.1, and 1.0.0, are from this fork,
 [Pramodhsurya/GlanceThing](https://github.com/Pramodhsurya/GlanceThing).
 
-## [1.0.0] - Unreleased
+## [1.0.0] - 2026-09-25
 
-First major release of this fork. Everything currently in progress, and
-upcoming work until this ships, belongs here.
+First major release of this fork.
 
 This version adds a swipe-down apps tray to the Car Thing, with built-in apps
 inspired by DeskThing apps and written natively for GlanceThing. It also adds
@@ -98,6 +97,25 @@ inspired them are credited in the README; no code was copied from them.
   active. Turn it off and the app stays closed until you open it; mute
   still works. Virtual meeting devices such as Teams and Zoom are left
   alone. The name can change later.
+- **Weather**: fullscreen forecast from the apps tray — temperature,
+  conditions, hourly strip, a 10-day forecast like the iPhone Weather app
+  (daily rows with icons, rain chance, and min-to-max temperature bars),
+  and feels / humidity / wind / rain. The home-page widget stays the
+  compact current view. Tapping that widget opens Weather if the app is
+  installed.
+- **Calendar**: today and tomorrow from Teams, Mac Calendar, Slack, or
+  Google Calendar, with Join. The app and the Layout tab show those
+  import options. Events come from accounts added in macOS Calendar.
+  Ships the calendar widget for home pages. Tapping the widget opens
+  Calendar if the app is installed.
+- **AI usage**: Codex, Claude and Cursor subscription limits in a
+  fullscreen app. Limits view shows the three per-subscription detail
+  cards (remaining %, reset windows, notes, spend and tokens). Overview
+  shows the tinted all-provider cards. The same app ships those widgets
+  in the Layout tab.
+- **Photos**: browse the screensaver album from the tray. Ships a photo
+  widget that rotates album pictures on a home page. Add photos in
+  Settings → Client, same as the screensaver.
 
 #### Desktop app
 
@@ -158,12 +176,31 @@ inspired them are credited in the README; no code was copied from them.
   `source` actions to list playback sources and switch between them.
 - Spotify and the native source support seeking.
 - New WebSocket handlers: `system`, `logs`, `link`, `recorder`, `github`
-  and `mic`.
+  and `mic`. Weather, calendar, AI usage and photos reuse the existing
+  `layout` and `screensaver` messages.
 - The layout message now includes `hiddenApps`, so the Car Thing knows which
   apps to hide.
 
 ### Changed
 
+- The Weather app now shows the next 10 days with iPhone-style daily
+  rows. The weather widget on a home page fills its tile again.
+- The AI usage Limits view swipes sideways to show Cursor fully, with
+  no visible scrollbars. Each card fits on the screen.
+- The AI usage app now includes the per-subscription detail cards
+  (Codex, Claude, Cursor) plus the tinted overview, not only a single
+  summary.
+- The Calendar app and the Layout tab let you import from Teams, Mac
+  Calendar, Slack, or Google Calendar. Calendar and AI usage use the
+  Mac clock on the Car Thing, so events and reset times stay correct.
+- GlanceThing-Apps weather, calendar and AI usage packages match the
+  new fullscreen app UIs.
+- The Layout tab **Add to screen** palette groups widgets by the app they
+  come from (Home, Weather, Calendar, AI usage, Photos) instead of a flat
+  list of built-in frames. Weather, calendar, AI usage and the photo album
+  are tray apps that also ship those widgets. Existing tiles keep working.
+  Weather and AI usage also refresh when the matching app is installed, not
+  only when a frame is on a page.
 - Mic has a **Pop up when in use** toggle on the Car Thing, in Apps →
   Mic settings, and in Settings → Client. Off keeps the app closed when a
   mic is active; mute still works if you open Mic yourself.
@@ -209,6 +246,10 @@ inspired them are credited in the README; no code was copied from them.
 
 ### Fixed
 
+- Installing Weather, Calendar, AI usage or Photos on the desktop did not
+  show them in the Car Thing drawer until the device had the new client.
+  **Refresh Car Thing** now reinstalls the client, not only restarts
+  Chromium.
 - Swiping down didn't open the apps tray on the device, because swipes that
   started on the status bar weren't detected.
 - The "Swipe or tap for apps" bar appeared as a light-grey button with
@@ -254,8 +295,11 @@ inspired them are credited in the README; no code was copied from them.
   `manifest.json` fields, and how GlanceThing installs and serves it.
 - Official apps collection: [GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceThing-Apps),
   with Music, Pomodoro, Resource Usage, Recording Notes, GitHub, Console Logs,
-  Link and an `exampleapp` template. The desktop Store lists that repo
-  automatically.
+  Link, Mic, Weather, Calendar, AI usage, Photos and an `exampleapp`
+  template. Weather, Calendar, AI usage and Photos have the same folder
+  layout as the other official apps (`manifest.json`, `src/` React source,
+  `client/` web UI) and install or uninstall from the Store like Music.
+  The desktop Store lists that repo automatically.
 - Agent notes stay on this machine only (`AGENTS.md` and `.cursor/` are not
   in the repo). Changelog, README, screenshot, TODO, and packaged-app rules
   still apply locally.
@@ -268,7 +312,8 @@ inspired them are credited in the README; no code was copied from them.
   apps to install. The Store uses Install / Uninstall for every app.
 - README screenshots for the Apps tab, the Store, the Car Thing tray, and each
   built-in tray app (Music, Pomodoro, Resource Usage, Recording Notes, GitHub,
-  Console Logs, Link, Mic), also used in GlanceThing-Apps. Each app has one
+  Console Logs, Link, Mic, Weather, Calendar, AI usage, Photos), also used in
+  GlanceThing-Apps. Each app has one
   representative shot; Mic is not split into picker, toggle, and settings rows.
 - TODO.md: remaining work is turning weather, calendar, AI usage and the
   other home features into apps that also offer layout widgets, and widgets
@@ -522,7 +567,7 @@ First release from this fork.
 
 - Initial release.
 
-[1.0.0]: https://github.com/Pramodhsurya/GlanceThing/compare/v0.1.1...HEAD
+[1.0.0]: https://github.com/Pramodhsurya/GlanceThing/compare/v0.1.1...v1.0.0
 [0.1.1]: https://github.com/Pramodhsurya/GlanceThing/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Pramodhsurya/GlanceThing/releases/tag/v0.1.0
 [0.0.16]: https://github.com/BluDood/GlanceThing/releases/tag/v0.0.16

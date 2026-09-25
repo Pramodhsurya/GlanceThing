@@ -1,7 +1,11 @@
 import axios from 'axios'
 
 import { log, LogLevel } from './utils.js'
-import { getStorageValue, setStorageValue } from './storage.js'
+import {
+  getStorageValue,
+  isAppInstalled,
+  setStorageValue
+} from './storage.js'
 
 export interface WeatherReport {
   query: string
@@ -22,6 +26,7 @@ export interface WeatherReport {
   tomorrowDay: string
   tomorrowHigh: number | null
   tomorrowLow: number | null
+  days: WeatherDay[]
   isDay: boolean
   hours: WeatherHour[]
   message: string
@@ -33,6 +38,16 @@ export interface WeatherHour {
   temp: number | null
   icon: string
   kind: 'hour' | 'sunrise' | 'sunset'
+}
+
+export interface WeatherDay {
+  date: string
+  day: string
+  high: number | null
+  low: number | null
+  icon: string
+  label: string
+  rain: number | null
 }
 
 const CONDITIONS: {
@@ -272,11 +287,11 @@ export async function fetchWeather(
           'temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,is_day',
         hourly: 'temperature_2m,weather_code,is_day',
         daily:
-          'temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset',
+          'temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,sunrise,sunset',
         temperature_unit: unit === 'F' ? 'fahrenheit' : 'celsius',
         wind_speed_unit: unit === 'F' ? 'mph' : 'kmh',
         timezone: 'auto',
-        forecast_days: 2
+        forecast_days: 10
       },
       timeout: 8000,
       validateStatus: () => true
@@ -292,9 +307,21 @@ export async function fetchWeather(
     return Number.isFinite(parsed) ? parsed : null
   }
   const daily = forecast.data.daily || {}
-  const tomorrowDate = Array.isArray(daily.time)
-    ? String(daily.time[1] || '')
-    : ''
+  const dailyDates = Array.isArray(daily.time) ? daily.time : []
+  const tomorrowDate = String(dailyDates[1] || '')
+  const days: WeatherDay[] = dailyDates.slice(0, 10).map((date, index) => {
+    const code = Number(daily.weather_code?.[index]) || 0
+    const skyForDay = condition(code)
+    return {
+      date: String(date),
+      day: index === 0 ? 'Today' : weekday(String(date)),
+      high: numberOrNull(daily.temperature_2m_max?.[index]),
+      low: numberOrNull(daily.temperature_2m_min?.[index]),
+      icon: iconFor(code, true),
+      label: skyForDay.label,
+      rain: numberOrNull(daily.precipitation_probability_max?.[index])
+    }
+  })
   const direction = numberOrNull(forecast.data.current.wind_direction_10m)
   const isDay = forecast.data.current.is_day !== 0
   return {
@@ -316,6 +343,7 @@ export async function fetchWeather(
     tomorrowDay: weekday(tomorrowDate),
     tomorrowHigh: numberOrNull(daily.temperature_2m_max?.[1]),
     tomorrowLow: numberOrNull(daily.temperature_2m_min?.[1]),
+    days,
     isDay,
     hours: upcomingHours(forecast.data, unit),
     message: '',
@@ -342,7 +370,12 @@ export async function refreshStoredWeather(query?: string) {
   if (!stored || typeof stored !== 'object' || Array.isArray(stored))
     return null
   const layout = stored as Record<string, unknown>
-  if (query === undefined && !hasWeatherTile(layout)) return null
+  if (
+    query === undefined &&
+    !hasWeatherTile(layout) &&
+    !isAppInstalled('weather')
+  )
+    return null
   const previous = (layout.weather || {}) as Partial<WeatherReport>
   const placeQuery = query !== undefined ? query : previous.query || ''
   const save = (weather: Partial<WeatherReport>) => {

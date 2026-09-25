@@ -53,5 +53,29 @@ export const BUILTIN_APPS: AppDefinition[] = [
     name: 'Mic',
     icon: 'mic',
     color: '#22c55e'
+  },
+  {
+    id: 'weather',
+    name: 'Weather',
+    icon: 'wb_sunny',
+    color: '#38bdf8'
+  },
+  {
+    id: 'calendar',
+    name: 'Calendar',
+    icon: 'calendar_today',
+    color: '#f59e0b'
+  },
+  {
+    id: 'usage',
+    name: 'AI usage',
+    icon: 'data_usage',
+    color: '#a78bfa'
+  },
+  {
+    id: 'photos',
+    name: 'Photos',
+    icon: 'photo_library',
+    color: '#fb7185'
   }
 ]

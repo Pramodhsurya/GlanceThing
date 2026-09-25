@@ -1,6 +1,10 @@
 import { execFile } from 'child_process'
 
-import { joinLinkFor } from '../calendar.js'
+import {
+  isCalendarSource,
+  joinLinkFor,
+  refreshStoredCalendar
+} from '../calendar.js'
 import { log, LogLevel } from '../utils.js'
 
 import {
@@ -33,6 +37,17 @@ export const actions: HandlerAction[] = [
             LogLevel.WARN
           )
       })
+    }
+  },
+  {
+    action: 'import',
+    handle: async (_, data) => {
+      const source = (data || {}) as { source?: unknown }
+      if (!isCalendarSource(source.source)) {
+        log('Unknown calendar source', 'Calendar', LogLevel.WARN)
+        return
+      }
+      await refreshStoredCalendar(source.source)
     }
   }
 ]
