@@ -266,7 +266,11 @@ For problems with the features added in this fork, please [open an issue on this
 
 ## Credits
 
-GlanceThing was created by [BluDood](https://github.com/BluDood). This fork builds on their work.
+This fork is inspired by the original [GlanceThing](https://github.com/BluDood/GlanceThing), created and maintained by **Drew Bled** ([@BluDood](https://github.com/BluDood)). Thank you, Drew, for building something this solid — I've been following it for a very long time.
+
+It also draws inspiration from [DeskThing](https://github.com/ItsRiprod/DeskThing) by [Riprod](https://github.com/ItsRiprod).
+
+What you see here is just my own vision on top of that work. It is not meant to replace or take away from those projects. GlanceThing and DeskThing stay their own things; I'll keep exploring these ideas in this fork.
 
 Huge thanks to the [CarThing community](https://discord.gg/car-thing-hax-community-1042954149786046604) for feedback and thoughts, and special thanks to [Riprod](https://itsriprod.com/) and their [DeskThing](https://github.com/ItsRiprod/DeskThing) project for inspiration — including the swipe-down apps tray UX and app ideas such as Spotify, Local Audio, DeskThing-GMP, and Pomodoro. The built-in tray apps in this fork are GlanceThing-native implementations inspired by those experiences, not vendored copies of DeskThing app packages. The AI usage widget follows the approach of [CodexBar](https://github.com/steipete/CodexBar). On macOS, the "This computer" playback source uses [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter) (BSD 3-Clause, bundled in `resources/common/mediaremote`), because macOS 15.4 and later block apps from reading Now Playing directly.
 
