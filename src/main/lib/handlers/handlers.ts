@@ -7,6 +7,7 @@ import * as github from './github.js'
 import * as layout from './layout.js'
 import * as link from './link.js'
 import * as lock from './lock.js'
+import * as mic from './mic.js'
 import * as logs from './logs.js'
 import * as ping from './ping.js'
 import * as playback from './playback.js'
@@ -30,6 +31,7 @@ export const handlers: Handler[] = [
   link,
   lock,
   logs,
+  mic,
   ping,
   playback,
   reboot,

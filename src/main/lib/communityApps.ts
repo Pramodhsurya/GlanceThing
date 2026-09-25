@@ -74,6 +74,7 @@ const RESERVED = new Set([
   'link',
   'recorder',
   'github',
+  'mic',
   'spotify',
   'gmp',
   'local'

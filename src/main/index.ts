@@ -106,6 +106,7 @@ import {
   startAutoUpdater
 } from './lib/update.js'
 import { serverManager } from './lib/server.js'
+import { onMicShouldOpen, startMicMonitor } from './lib/mic.js'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -200,8 +201,13 @@ app.on('ready', async () => {
     else log(`Using downloaded ADB from path: ${adbPath}`, 'adb')
   }
 
-  if (getStorageValue('setupComplete') === true)
+  onMicShouldOpen(() => {
+    serverManager.broadcast({ type: 'mic', action: 'open' })
+  })
+  if (getStorageValue('setupComplete') === true) {
     await serverManager.start()
+    startMicMonitor()
+  }
 
   refreshStoredWeather().catch(err =>
     log(
@@ -380,6 +386,7 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.StartServer, async () => {
     await serverManager.start()
+    startMicMonitor()
   })
 
   ipcMain.handle(IPCHandler.StopServer, async () => {

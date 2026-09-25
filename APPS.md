@@ -107,7 +107,7 @@ Only `id` is strictly required. Everything else has a fallback.
 manifests work as-is.
 
 **Reserved ids** (cannot be used): `music`, `pomodoro`, `system`, `logs`,
-`link`, `recorder`, `github`, `spotify`, `gmp`, `local`.
+`link`, `recorder`, `github`, `mic`, `spotify`, `gmp`, `local`.
 
 ## How GlanceThing understands an install
 

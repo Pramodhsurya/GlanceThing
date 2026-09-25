@@ -19,6 +19,7 @@ export type BuiltInAppId =
   | 'link'
   | 'recorder'
   | 'github'
+  | 'mic'
 
 export type AppId = BuiltInAppId | string
 
@@ -84,12 +85,20 @@ const AppsContextProvider = ({ children }: AppsContextProviderProps) => {
   const [currentApp, setCurrentApp] = useState<AppId | null>(null)
   const [hiddenApps, setHiddenApps] = useState<string[]>([])
   const [communityApps, setCommunityApps] = useState<CommunityTrayApp[]>([])
+  const hiddenRef = useRef(hiddenApps)
+  hiddenRef.current = hiddenApps
   const { ready, socket } = useContext(SocketContext)
 
   useEffect(() => {
     if (ready !== true || !socket) return
     function listener(e: MessageEvent) {
       const message = JSON.parse(e.data)
+      if (message.type === 'mic' && message.action === 'open') {
+        if (hiddenRef.current.indexOf('mic') !== -1) return
+        setCurrentApp(id => (id === 'mic' ? id : 'mic'))
+        setTrayState('hidden')
+        return
+      }
       if (message.type !== 'layout' || !message.data) return
       const hidden = message.data.hiddenApps
       setHiddenApps(Array.isArray(hidden) ? hidden : [])
@@ -115,7 +124,8 @@ const AppsContextProvider = ({ children }: AppsContextProviderProps) => {
       'logs',
       'link',
       'recorder',
-      'github'
+      'github',
+      'mic'
     ]
     if (builtin.indexOf(currentApp) !== -1) return
     if (!communityApps.some(app => app.id === currentApp)) {

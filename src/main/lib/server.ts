@@ -70,6 +70,9 @@ class ServerManager extends (EventEmitter as new () => TypedEmitter<{
                   data: 'Authenticated'
                 })
               )
+              void import('./mic.js').then(({ flushMicOpen }) => {
+                flushMicOpen(payload => ws.send(JSON.stringify(payload)))
+              })
             } else {
               ws.send(
                 JSON.stringify({

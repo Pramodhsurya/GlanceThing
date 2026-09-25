@@ -47,5 +47,11 @@ export const BUILTIN_APPS: AppDefinition[] = [
     name: 'Link',
     icon: 'link',
     color: '#6366f1'
+  },
+  {
+    id: 'mic',
+    name: 'Mic',
+    icon: 'mic',
+    color: '#22c55e'
   }
 ]

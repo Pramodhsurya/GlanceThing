@@ -5,6 +5,7 @@ import CommunityApp from './apps/CommunityApp.tsx'
 import GitHubApp from './apps/GitHubApp.tsx'
 import LinkApp from './apps/LinkApp.tsx'
 import LogsApp from './apps/LogsApp.tsx'
+import MicApp from './apps/MicApp.tsx'
 import MusicApp from './apps/MusicApp.tsx'
 import PomodoroApp from './apps/PomodoroApp.tsx'
 import RecorderApp from './apps/RecorderApp.tsx'
@@ -44,6 +45,8 @@ const AppHost: React.FC = () => {
     content = <RecorderApp />
   } else if (currentApp === 'github') {
     content = <GitHubApp />
+  } else if (currentApp === 'mic') {
+    content = <MicApp />
   } else if (currentApp) {
     content = <CommunityApp id={currentApp} />
   }

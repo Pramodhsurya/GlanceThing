@@ -91,6 +91,12 @@ inspired them are credited in the README; no code was copied from them.
   DeskThing Console Logs.
 - **Link**: screens connected to the same computer share a tap pad, colours
   and a score board. Inspired by DeskThing Link.
+- **Mic**: one icon. Tap (or press the dial) to mute the selected
+  microphones. A dropdown lists every hardware mic (built-in, USB, iPhone,
+  and so on) so you can choose which ones the button controls. When any of
+  those mics starts being used, the Mic app opens on the Car Thing by
+  itself; you can then close or leave it. Virtual meeting devices such as
+  Teams and Zoom are left alone. The name can change later.
 
 #### Desktop app
 
@@ -143,7 +149,8 @@ inspired them are credited in the README; no code was copied from them.
 - Playback: new `seek` action (position in milliseconds), plus `sources` and
   `source` actions to list playback sources and switch between them.
 - Spotify and the native source support seeking.
-- New WebSocket handlers: `system`, `logs`, `link`, `recorder` and `github`.
+- New WebSocket handlers: `system`, `logs`, `link`, `recorder`, `github`
+  and `mic`.
 - The layout message now includes `hiddenApps`, so the Car Thing knows which
   apps to hide.
 
@@ -220,6 +227,11 @@ inspired them are credited in the README; no code was copied from them.
   tray app (Music, Pomodoro, Resource Usage, Recording Notes, GitHub, Console
   Logs, Link), also used in GlanceThing-Apps. The Link shot sits in the same
   table layout as the other app shots.
+- TODO.md: planned work to turn weather, calendar, AI usage and the other
+  home features into apps that also offer layout widgets; widgets from the
+  existing tray apps (Music, Pomodoro, and the rest) that can be added to
+  home pages; a one-tap mute app for every mic on the computer; and, if
+  possible, the Car Thing mic as a system input device.
 
 ### Known limitations
 

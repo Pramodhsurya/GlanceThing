@@ -78,6 +78,16 @@ const BUILTIN: {
     description: 'Shared tap board between connected Car Things.',
     author: 'GlanceThing',
     version: '1.0.0'
+  },
+  {
+    id: 'mic',
+    name: 'Mic',
+    icon: 'mic',
+    color: '#22c55e',
+    description:
+      'Pick which mics to control. Tap to mute or unmute. Opens when a mic is in use.',
+    author: 'GlanceThing',
+    version: '1.0.0'
   }
 ]
 

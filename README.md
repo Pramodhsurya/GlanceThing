@@ -58,7 +58,7 @@ Turn the dial to move a highlight across the screen, and press it to open the sh
 
 ### Apps tray and community apps
 
-Swipe down from the top of the Car Thing to open the apps tray. Built-in apps (Music, Pomodoro, Resource Usage, Recording Notes, GitHub, Console Logs, Link) live there.
+Swipe down from the top of the Car Thing to open the apps tray. Built-in apps (Music, Pomodoro, Resource Usage, Recording Notes, GitHub, Console Logs, Link, Mic) live there.
 
 On the desktop **Apps** tab you can pause or run those apps, and add more the same way DeskThing does: paste `owner/repo` or a GitHub URL, download the latest release zip, acknowledge any warnings, then **Initialize App**.
 
