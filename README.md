@@ -89,11 +89,11 @@ Official apps live in [GlanceThing-Apps](https://github.com/Pramodhsurya/GlanceT
 
 | Mic                                                           | Weather                                                           |
 | ------------------------------------------------------------- | ----------------------------------------------------------------- |
-| <img src=".github/assets/fork/s10-mic.png?v=2" width="400" /> | <img src=".github/assets/fork/s10-weather.png?v=3" width="400" /> |
+| <img src=".github/assets/fork/s10-mic.png?v=2" width="400" /> | <img src=".github/assets/fork/s10-weather.png?v=4" width="400" /> |
 
 | Calendar                                                           | AI usage                                                        |
 | ------------------------------------------------------------------ | --------------------------------------------------------------- |
-| <img src=".github/assets/fork/s10-calendar.png?v=3" width="400" /> | <img src=".github/assets/fork/s10-usage.png?v=3" width="400" /> |
+| <img src=".github/assets/fork/s10-calendar.png?v=4" width="400" /> | <img src=".github/assets/fork/s10-usage.png?v=4" width="400" /> |
 
 | Photos                                                           | &nbsp; |
 | ---------------------------------------------------------------- | ------ |
@@ -133,13 +133,15 @@ In the Layout tab, under **AI usage**, pick an overview style — **Cards + dial
 
 Usage is read with the sign-ins those apps already keep on your computer, so there's nothing new to sign in to. Requests are read-only. It refreshes while a usage frame is on the layout or the AI usage app is installed.
 
+_(The numbers in these screenshots are demo data.)_
+
 | Cards + dial overview                                                   | Two detail frames                                                     |
 | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| <img src=".github/assets/fork/s8-usage-overview.png?v=3" width="400" /> | <img src=".github/assets/fork/s8-usage-halves.png?v=3" width="400" /> |
+| <img src=".github/assets/fork/s8-usage-overview.png?v=4" width="400" /> | <img src=".github/assets/fork/s8-usage-halves.png?v=4" width="400" /> |
 
 | Single subscription (full)                                          | Layout editor — pick a style                                          |
 | ------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| <img src=".github/assets/fork/s8-usage-full.png?v=3" width="400" /> | <img src=".github/assets/fork/s8-usage-editor.png?v=3" width="400" /> |
+| <img src=".github/assets/fork/s8-usage-full.png?v=4" width="400" /> | <img src=".github/assets/fork/s8-usage-editor.png?v=4" width="400" /> |
 
 ### Photos and the photo album screensaver
 
